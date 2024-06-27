@@ -1,6 +1,6 @@
 # KokuTalk-Anonymous 💻
 
-[![GitHub stars](https://img.shields.io/github/stars/USERNAME/REPOSITORY.svg?style=social)](https://github.com/USERNAME/REPOSITORY) [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/YOURUSERNAME)
+[![GitHub stars](https://img.shields.io/github/stars/Mohamedo-desu/KokuTalk-Anonymous.svg?style=social)](https://github.com/Mohamedo-desu/KokuTalk-Anonymous) [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/YOURUSERNAME)
 
 ## Description
 
@@ -24,7 +24,7 @@ KokuTalk-Anonymous is a confession app where users can share their secrets and c
 
 To install and run the KokuTalk-Anonymous app, follow these steps:
 
-1. Clone the repository: `git clone https://github.com/USERNAME/REPOSITORY.git`
+1. Clone the repository: `git clone https://github.com/Mohamedo-desu/KokuTalk-Anonymous.git`
 2. Navigate to the project directory: `cd REPOSITORY`
 3. Install dependencies: `npm install`
 4. Start the app: `npx expo start`
