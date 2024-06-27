@@ -1,57 +1,53 @@
-import { signIn, startTokenRefreshTimer } from '@/services/authActions'
-import { getUserDataFromFirestore } from '@/services/userActions'
-import { useAppDispatch } from '@/store/store'
-import { AUTHENTICATE_USER, SET_CURRENT_USER, SET_DID_TRY_AUTO_LOGIN } from '@/store/userSlice'
-import { getStoredValues } from '@/utils'
+import { signIn, useAuthStoreSelectors } from '@/store/authStore'
+import { deleteStoredValues, getStoredValues } from '@/utils'
 import { auth } from '@/utils/firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 import React, { useEffect } from 'react'
 import { ActivityIndicator, View } from 'react-native'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
+
 const SplashScreen = () => {
 	const { styles, theme } = useStyles(stylesheet)
-	const { email, password } = getStoredValues(['email', 'password'])
-	const { rememberMe } = getStoredValues(['rememberMe'])
+	const { email, password, userDoc, rememberMe } = getStoredValues([
+		'email',
+		'password',
+		'userDoc',
+		'rememberMe',
+	])
 
-	const dispatch = useAppDispatch()
+	const setDidTryAutoLogin = useAuthStoreSelectors.use.setDidTryAutoLogin()
+	const setCurrentUser = useAuthStoreSelectors.use.setCurrentUser()
+	const authenticateUser = useAuthStoreSelectors.use.authenticateUser()
 
 	useEffect(() => {
 		const tryLogin = async () => {
 			try {
-				if (email && password && rememberMe) {
+				if (email && password && rememberMe && userDoc) {
 					onAuthStateChanged(auth, async (user) => {
 						if (user) {
 							try {
-								const userDoc = await getUserDataFromFirestore(user.uid)
-
-								const intervalId = startTokenRefreshTimer()
-
-								dispatch(
-									SET_CURRENT_USER({
-										...userDoc,
-										rTokenTimerIntervalId: intervalId,
-									}),
-								)
-								dispatch(SET_DID_TRY_AUTO_LOGIN())
-								dispatch(AUTHENTICATE_USER())
+								setCurrentUser(JSON.parse(userDoc))
+								authenticateUser()
+								setDidTryAutoLogin()
 							} catch (error) {
-								dispatch(SET_DID_TRY_AUTO_LOGIN())
+								setDidTryAutoLogin()
 							}
 						} else {
-							dispatch(SET_DID_TRY_AUTO_LOGIN())
-							await dispatch(signIn({ email, password }))
+							deleteStoredValues(['intervalId', 'userDoc'])
+							await signIn({ email, password })
 						}
 					})
 				} else {
-					dispatch(SET_DID_TRY_AUTO_LOGIN())
+					setDidTryAutoLogin()
 				}
 			} catch (error) {
-				dispatch(SET_DID_TRY_AUTO_LOGIN())
+				console.log(error)
+				setDidTryAutoLogin()
 			}
 		}
 
 		tryLogin()
-	}, [dispatch, email, password])
+	}, [email, password, rememberMe, userDoc])
 
 	return (
 		<View
