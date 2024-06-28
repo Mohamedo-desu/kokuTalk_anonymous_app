@@ -1,6 +1,5 @@
 import Input from '@/components/Input'
 import Loader from '@/components/Loader'
-import { getStoredValues } from '@/utils'
 import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
 import { Formik } from 'formik'
@@ -12,23 +11,31 @@ import { UnistylesRuntime, createStyleSheet, useStyles } from 'react-native-unis
 import * as Yup from 'yup'
 
 const validationSchema = Yup.object().shape({
-	userName: Yup.string().min(3).max(15).required().label('user name'),
-	password: Yup.string().min(8).max(35).required().label('password'),
+	userName: Yup.string()
+		.test('no-white-space', 'user name cannot contain white spaces', (value) => {
+			return !/\s/.test(value as string)
+		}) // Test if value contains white spaces
+		.matches(/^@[^-]/, 'user name must start with "@" symbol')
+		.min(3)
+		.max(15)
+		.required()
+		.label('user name'),
+	password: Yup.string()
+		.min(8)
+		.max(35)
+		.matches(
+			/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/,
+			'password must contain at least one uppercase letter, one lowercase letter, and one number',
+		)
+		.required()
+		.label('password'),
 })
 
-const SignInPage = () => {
+const SignUpPage = () => {
 	const { theme, styles } = useStyles(stylesheet)
 	const [loading, setLoading] = useState(false)
 
-	const [userName, setUserName] = useState('')
-	const [password, setPassword] = useState('')
-
 	useEffect(() => {
-		const { userName, password } = getStoredValues(['userName', 'password'])
-
-		setUserName(userName)
-		setPassword(password)
-
 		// Set the color of the status bar
 		UnistylesRuntime.statusBar.setColor(theme.colors.primary[300])
 		// Set the color of the navigation bar
@@ -40,14 +47,15 @@ const SignInPage = () => {
 		}
 	}, [])
 
-	const handleSignIn = async ({ userName, password }: { userName: string; password: string }) => {
+	const handleSignUp = async ({ userName, password }: { userName: string; password: string }) => {
 		try {
 		} catch (error) {}
 	}
 
-	const goToSignUp = () => {
-		router.navigate('/sign_up')
+	const goToSignIn = () => {
+		router.back()
 	}
+
 	return (
 		<LinearGradient
 			colors={[theme.colors.primary[300], theme.colors.primary[500], theme.colors.primary[400]]}
@@ -63,10 +71,10 @@ const SignInPage = () => {
 					flexGrow: 1,
 				}}>
 				<Formik
-					initialValues={{ userName, password }}
+					initialValues={{ userName: '', password: '' }}
 					enableReinitialize
 					validationSchema={validationSchema}
-					onSubmit={(values) => handleSignIn(values)}>
+					onSubmit={(values) => handleSignUp(values)}>
 					{({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
 						<View style={styles.formikContainer}>
 							<View style={[styles.form, { backgroundColor: theme.colors.primary[500] }]}>
@@ -77,7 +85,7 @@ const SignInPage = () => {
 									value={values.userName}
 									handleChange={handleChange('userName')}
 									handleBlur={handleBlur('userName')}
-									autoComplete={'username'}
+									autoComplete={'username-new'}
 									maxLength={15}
 								/>
 								<Input
@@ -87,7 +95,7 @@ const SignInPage = () => {
 									value={values.password}
 									handleChange={handleChange('password')}
 									handleBlur={handleBlur('password')}
-									autoComplete={'password'}
+									autoComplete={'new-password'}
 									maxLength={35}
 									secureTextEntry={true}
 								/>
@@ -96,15 +104,15 @@ const SignInPage = () => {
 							<TouchableOpacity
 								onPress={handleSubmit as any}
 								activeOpacity={0.8}
-								style={[styles.signInButton, { backgroundColor: theme.colors.primary[400] }]}>
-								<Text style={[styles.signInButtonText, { color: theme.colors.white }]}>
-									Sign In
+								style={[styles.signUpButton, { backgroundColor: theme.colors.primary[400] }]}>
+								<Text style={[styles.signUpButtonText, { color: theme.colors.white }]}>
+									Sign Up
 								</Text>
 							</TouchableOpacity>
 							<View style={{ marginTop: moderateScale(30) }}>
-								<TouchableOpacity activeOpacity={0.7} onPress={goToSignUp}>
-									<Text style={[styles.signUpText, { color: theme.colors.primary[300] }]}>
-										Don't have an account?{' '}
+								<TouchableOpacity activeOpacity={0.7} onPress={goToSignIn}>
+									<Text style={[styles.signInText, { color: theme.colors.primary[300] }]}>
+										Have an account already?{' '}
 										<Text
 											style={{
 												color: theme.colors.primary[400],
@@ -118,12 +126,12 @@ const SignInPage = () => {
 					)}
 				</Formik>
 			</KeyboardAwareScrollView>
-			<Loader text="Authorizing..." visible={loading} />
+			<Loader text="Signing up..." visible={loading} />
 		</LinearGradient>
 	)
 }
 
-export default SignInPage
+export default SignUpPage
 
 const stylesheet = createStyleSheet({
 	error: {
@@ -131,7 +139,7 @@ const stylesheet = createStyleSheet({
 		fontSize: moderateScale(14),
 		marginTop: moderateScale(5),
 	},
-	signInButton: {
+	signUpButton: {
 		marginTop: moderateScale(20),
 		width: '100%',
 		justifyContent: 'center',
@@ -139,7 +147,7 @@ const stylesheet = createStyleSheet({
 		padding: moderateScale(10),
 		borderRadius: moderateScale(5),
 	},
-	signInButtonText: {
+	signUpButtonText: {
 		fontFamily: 'Medium',
 		fontSize: moderateScale(18),
 	},
@@ -156,7 +164,7 @@ const stylesheet = createStyleSheet({
 		alignItems: 'center',
 		paddingHorizontal: moderateScale(15),
 	},
-	signUpText: {
+	signInText: {
 		fontFamily: 'Italic',
 		fontSize: moderateScale(16),
 	},
