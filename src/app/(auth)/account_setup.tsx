@@ -3,7 +3,7 @@ import GenderSetup from '@/components/GenderSetup'
 import ProfileSetup from '@/components/ProfileSetup'
 import { LinearGradient } from 'expo-linear-gradient'
 import React, { useEffect, useState } from 'react'
-import { Animated, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import { Animated, ScrollView, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { moderateScale } from 'react-native-size-matters'
 import { UnistylesRuntime, createStyleSheet, useStyles } from 'react-native-unistyles'
@@ -43,10 +43,6 @@ const AccountSetupPage = () => {
 		}
 	}, [])
 
-	const renderOption = (option: any) => {
-		return <option.component />
-	}
-
 	const handleGoBack = () => {
 		if (activeOption.index <= STEPS[0].index) {
 			return
@@ -61,6 +57,9 @@ const AccountSetupPage = () => {
 			setActiveOption(STEPS[activeOption.index + 1])
 		}
 	}
+	const RenderOption = (option: (typeof STEPS)[0]) => {
+		return <option.component handleGoNext={handleGoNext} handleGoBack={handleGoBack} />
+	}
 
 	return (
 		<LinearGradient
@@ -68,12 +67,7 @@ const AccountSetupPage = () => {
 			start={{ x: 0, y: 0 }}
 			end={{ x: 0, y: 1 }}
 			style={{ flex: 1 }}>
-			<SafeAreaView
-				style={{
-					flex: 1,
-					paddingBottom: moderateScale(10),
-					paddingHorizontal: moderateScale(15),
-				}}>
+			<SafeAreaView style={styles.container}>
 				<ScrollView
 					keyboardShouldPersistTaps="handled"
 					style={{
@@ -82,50 +76,24 @@ const AccountSetupPage = () => {
 					contentContainerStyle={{
 						flexGrow: 1,
 					}}>
-					<View
-						style={{
-							flexDirection: 'row',
-							alignItems: 'center',
-							width: '100%',
-							columnGap: moderateScale(5),
-						}}>
+					<View style={styles.content}>
 						{STEPS.map((step) => (
 							<Animated.View
 								key={step.id}
-								style={{
-									backgroundColor:
-										step.index <= activeOption.index
-											? theme.colors.primary[400]
-											: 'rgba(255, 255, 255, 0.2)',
-									height: moderateScale(5),
-									flex: 1,
-									borderRadius: moderateScale(5),
-								}}
+								style={[
+									styles.step,
+									{
+										backgroundColor:
+											step.index <= activeOption.index
+												? theme.colors.primary[400]
+												: 'rgba(255, 255, 255, 0.2)',
+									},
+								]}
 							/>
 						))}
 					</View>
-					{renderOption(activeOption)}
+					{RenderOption(activeOption)}
 				</ScrollView>
-				<View
-					style={{
-						flexDirection: 'row',
-						justifyContent: 'space-between',
-						alignItems: 'center',
-						width: '100%',
-					}}>
-					<TouchableOpacity
-						onPress={handleGoBack}
-						activeOpacity={0.7}
-						style={[styles.button, { backgroundColor: theme.colors.primary[400] }]}>
-						<Text style={[styles.buttonText, { color: theme.colors.white }]}>BACK</Text>
-					</TouchableOpacity>
-					<TouchableOpacity
-						activeOpacity={0.7}
-						onPress={handleGoNext}
-						style={[styles.button, { backgroundColor: theme.colors.primary[400] }]}>
-						<Text style={[styles.buttonText, { color: theme.colors.white }]}>NEXT</Text>
-					</TouchableOpacity>
-				</View>
 			</SafeAreaView>
 		</LinearGradient>
 	)
@@ -134,16 +102,21 @@ const AccountSetupPage = () => {
 export default AccountSetupPage
 
 const stylesheet = createStyleSheet({
-	button: {
-		width: moderateScale(100),
-		aspectRatio: 1,
-		borderRadius: moderateScale(50),
-		justifyContent: 'center',
-		alignItems: 'center',
+	container: {
+		flex: 1,
+		paddingBottom: moderateScale(10),
+		paddingHorizontal: moderateScale(15),
+		paddingTop: moderateScale(10),
 	},
-	buttonText: {
-		fontFamily: 'Medium',
-		fontSize: moderateScale(18),
-		letterSpacing: 1,
+	content: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		width: '100%',
+		columnGap: moderateScale(5),
+	},
+	step: {
+		height: moderateScale(5),
+		flex: 1,
+		borderRadius: moderateScale(5),
 	},
 })
