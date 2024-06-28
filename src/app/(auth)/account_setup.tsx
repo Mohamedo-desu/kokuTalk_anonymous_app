@@ -1,6 +1,9 @@
 import AgeSetup from '@/components/AgeSetup'
 import GenderSetup from '@/components/GenderSetup'
+import Loader from '@/components/Loader'
 import ProfileSetup from '@/components/ProfileSetup'
+import { signUpStore } from '@/store/authStore'
+import { useUserStoreSelectors } from '@/store/useUserStore'
 import { LinearGradient } from 'expo-linear-gradient'
 import React, { useEffect, useState } from 'react'
 import { Animated, ScrollView, View } from 'react-native'
@@ -31,6 +34,9 @@ const AccountSetupPage = () => {
 	const [loading, setLoading] = useState(false)
 	const [activeOption, setActiveOption] = useState(STEPS[0])
 
+	const { displayName, userName, age, profile, gender, password } =
+		useUserStoreSelectors.use.userData()
+
 	useEffect(() => {
 		// Set the color of the status bar
 		UnistylesRuntime.statusBar.setColor(theme.colors.primary[300])
@@ -50,9 +56,11 @@ const AccountSetupPage = () => {
 			setActiveOption(STEPS[activeOption.index - 1])
 		}
 	}
-	const handleGoNext = () => {
+	const handleGoNext = async () => {
 		if (activeOption.index >= STEPS.length - 1) {
-			return
+			setLoading(true)
+			await signUpStore({ userName, password, body: { gender, profile, age, displayName } })
+			setLoading(false)
 		} else {
 			setActiveOption(STEPS[activeOption.index + 1])
 		}
@@ -95,6 +103,7 @@ const AccountSetupPage = () => {
 					{RenderOption(activeOption)}
 				</ScrollView>
 			</SafeAreaView>
+			<Loader text="Signing up..." visible={loading} />
 		</LinearGradient>
 	)
 }

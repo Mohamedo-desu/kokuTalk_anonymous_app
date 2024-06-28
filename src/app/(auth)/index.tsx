@@ -1,5 +1,6 @@
 import Input from '@/components/Input'
 import Loader from '@/components/Loader'
+import { SignInValidationSchema } from '@/services/validations'
 import { getStoredValues } from '@/utils'
 import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
@@ -9,12 +10,6 @@ import { Text, TouchableOpacity, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { moderateScale } from 'react-native-size-matters'
 import { UnistylesRuntime, createStyleSheet, useStyles } from 'react-native-unistyles'
-import * as Yup from 'yup'
-
-const validationSchema = Yup.object().shape({
-	userName: Yup.string().min(3).max(15).required().label('user name'),
-	password: Yup.string().min(8).max(35).required().label('password'),
-})
 
 const SignInPage = () => {
 	const { theme, styles } = useStyles(stylesheet)
@@ -65,7 +60,7 @@ const SignInPage = () => {
 				<Formik
 					initialValues={{ userName, password }}
 					enableReinitialize
-					validationSchema={validationSchema}
+					validationSchema={SignInValidationSchema}
 					onSubmit={(values) => handleSignIn(values)}>
 					{({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
 						<View style={styles.formikContainer}>

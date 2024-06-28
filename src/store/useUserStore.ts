@@ -2,28 +2,25 @@ import { create } from 'zustand'
 import { createSelectors } from './createSelectors'
 
 export interface UserState {
-	gender: string
-	age: string
-	profile: string
+	userData: {
+		gender: string
+		age: string
+		profile: string
+		email: string
+	}
 }
 
 interface AuthActions {
-	setGender: (user: UserState['gender']) => void
-	setAge: (user: UserState['age']) => void
-	setProfile: (user: UserState['profile']) => void
+	updateUser: (user: any) => void
 }
 
 const initialState: UserState = {
-	gender: '',
-	age: '',
-	profile: '',
+	userData: {} as UserState['userData'],
 }
 
 const useUserStore = create<UserState & AuthActions>((set) => ({
 	...initialState,
-	setGender: (gender) => set(() => ({ gender: gender })),
-	setAge: (age) => set(() => ({ age: age })),
-	setProfile: (profile) => set(() => ({ profile: profile })),
+	updateUser: (user: any) => set((state) => ({ userData: { ...state.userData, ...user } })),
 }))
 
 export const useUserStoreSelectors = createSelectors(useUserStore)

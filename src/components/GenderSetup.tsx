@@ -14,13 +14,13 @@ const GenderSetup = ({
 }) => {
 	const { theme, styles } = useStyles(stylesheet)
 
-	const setGender = useUserStoreSelectors.use.setGender()
-	const gender = useUserStoreSelectors.use.gender()
+	const updateUser = useUserStoreSelectors.use.updateUser()
+	const { gender } = useUserStoreSelectors.use.userData()
 
-	const [isValid, setIsValid] = useState(gender.trim().length > 0 ? true : false)
+	const [isValid, setIsValid] = useState(gender?.trim().length > 0 ? true : false)
 
 	const handleSelectGender = (gender: string) => {
-		setGender(gender)
+		updateUser({ gender })
 		setIsValid(true)
 	}
 	return (

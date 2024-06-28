@@ -16,13 +16,13 @@ const ProfileSetup = ({
 }) => {
 	const { theme, styles } = useStyles(stylesheet)
 
-	const setProfile = useUserStoreSelectors.use.setProfile()
-	const profile = useUserStoreSelectors.use.profile()
+	const updateUser = useUserStoreSelectors.use.updateUser()
+	const { profile } = useUserStoreSelectors.use.userData()
 
-	const [isValid, setIsValid] = useState(profile.trim().length > 0 ? true : false)
+	const [isValid, setIsValid] = useState(profile?.trim().length > 0 ? true : false)
 
-	const handleSelectprofile = (avatar: string) => {
-		setProfile(avatar)
+	const handleSelectprofile = (profile: string) => {
+		updateUser({ profile })
 		setIsValid(true)
 	}
 	return (
@@ -30,6 +30,7 @@ const ProfileSetup = ({
 			<View style={styles.content}>
 				{PROFILE_AVATARS.map((avatar, index) => (
 					<TouchableOpacity
+						key={avatar}
 						activeOpacity={0.7}
 						onPress={() => handleSelectprofile(avatar)}
 						style={[

@@ -1,4 +1,4 @@
-export const appName = 'KokuTalk-Anonymous'
+export const appName = 'KokuTalk'
 
 export const placeHolder =
 	'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541'

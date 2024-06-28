@@ -1,6 +1,8 @@
+import { appName } from '@/constants'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import React, { useEffect } from 'react'
-import { ActivityIndicator, View } from 'react-native'
+import { Text, View } from 'react-native'
+import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
 const SplashScreen = () => {
@@ -23,10 +25,18 @@ const SplashScreen = () => {
 				theme.components.screen,
 				styles.screen,
 				{
-					backgroundColor: theme.colors.white[500],
+					backgroundColor: theme.colors.primary[500],
 				},
 			]}>
-			<ActivityIndicator size={'large'} color={theme.colors.primary[500]} />
+			<Text
+				style={{
+					fontFamily: 'Bold',
+					letterSpacing: 1,
+					fontSize: moderateScale(36),
+					color: theme.colors.white,
+				}}>
+				{appName}
+			</Text>
 		</View>
 	)
 }

@@ -14,13 +14,13 @@ const AgeSetup = ({
 }) => {
 	const { theme, styles } = useStyles(stylesheet)
 
-	const setAge = useUserStoreSelectors.use.setAge()
-	const age = useUserStoreSelectors.use.age()
+	const updateUser = useUserStoreSelectors.use.updateUser()
+	const { age } = useUserStoreSelectors.use.userData()
 
-	const [isValid, setIsValid] = useState(age.trim().length > 0 ? true : false)
+	const [isValid, setIsValid] = useState(age?.trim().length > 0 ? true : false)
 
 	const handleSelectAge = (age: string) => {
-		setAge(age)
+		updateUser({ age })
 		setIsValid(true)
 	}
 	return (
