@@ -15,7 +15,7 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
 		} else if (!isAuthenticated && didTryAutoLogin) {
 			router.replace('/(auth)/')
 		} else if (isAuthenticated && didTryAutoLogin) {
-			router.replace('/(main)/(tabs)/')
+			router.replace('/(main)/(tabs)/(home)')
 		} else {
 			router.replace('/(auth)/')
 		}

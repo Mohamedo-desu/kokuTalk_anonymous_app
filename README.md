@@ -41,7 +41,7 @@ To install and run the KokuTalk-Anonymous app, follow these steps:
 
 You can download the Android app from this link:
 
-- [Link to the Android build]
+- https://drive.google.com/file/d/1gfbXRILBdBCjsFp9sQjOdVT1Xq3eREvB/view?usp=sharing
 
 If you encounter the following error during installation, please follow these additional steps:
 ![Error Image](LINK_TO_ERROR_IMAGE)

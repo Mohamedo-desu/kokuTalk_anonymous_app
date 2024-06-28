@@ -1,4 +1,3 @@
-import { uploadPushToken } from '@/services/userActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { saveSecurely } from '@/utils'
 import Constants from 'expo-constants'
@@ -52,7 +51,7 @@ const useSetupForPushNotifications = () => {
 				).data
 
 				saveSecurely([{ key: 'pushTokenString', value: pushTokenString }])
-				return uploadPushToken(pushTokenString, user.pushTokens, user.uid)
+				return null
 			} catch (e: unknown) {
 				handleRegistrationError(`${e}`)
 			}
