@@ -49,6 +49,7 @@ const SignUpPage = () => {
 
 	const handleSignUp = async ({ userName, password }: { userName: string; password: string }) => {
 		try {
+			router.navigate('/account_setup')
 		} catch (error) {}
 	}
 
