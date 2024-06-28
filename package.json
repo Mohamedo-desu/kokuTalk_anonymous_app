@@ -12,13 +12,16 @@
     "android": "npx expo run:android",
     "test": "jest --watchAll",
     "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" && prettier -c \"**/*.{js,jsx,ts,tsx,json}\"",
-    "format": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix && prettier \"**/*.{js,jsx,ts,tsx,json}\" --write"
+    "format": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix && prettier \"**/*.{js,jsx,ts,tsx,json}\" --write",
+    "ios": "expo run:ios"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",
     "@react-native-async-storage/async-storage": "1.21.0",
     "@react-navigation/native": "^6.1.7",
     "@sentry/react-native": "~5.20.0",
+    "@supabase/supabase-js": "^2.44.1",
+    "dotenv": "^16.4.5",
     "expo": "~50.0.17",
     "expo-application": "~5.8.4",
     "expo-blur": "~12.9.2",

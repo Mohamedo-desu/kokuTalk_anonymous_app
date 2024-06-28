@@ -4,17 +4,19 @@ import AuthProvider from '@/providers/AuthProvider'
 import CustomThemeProvider from '@/providers/ThemeProvider'
 import '@/unistyle/unistyles'
 import * as Sentry from '@sentry/react-native'
+import Constants from 'expo-constants'
 import { useFonts } from 'expo-font'
 import * as Notifications from 'expo-notifications'
 import { Slot, SplashScreen, router, useNavigationContainerRef } from 'expo-router'
 import { useEffect } from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+
 SplashScreen.preventAutoHideAsync()
 
 const routingInstrumentation = new Sentry.ReactNavigationInstrumentation()
 
 Sentry.init({
-	dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+	dsn: Constants?.expoConfig?.extra?.SENTRY_DSN,
 	tracesSampleRate: 0.1,
 	_experiments: {
 		profilesSampleRate: 0.1,
