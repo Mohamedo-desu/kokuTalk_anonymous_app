@@ -1,10 +1,10 @@
 import SignInPage from '@/components/SignIn'
 import SignUpPage from '@/components/SignUp'
 import { DEVICE_WIDTH } from '@/utils'
-import React, { memo, useCallback, useEffect, useRef } from 'react'
+import React, { memo, useCallback, useRef } from 'react'
 import { FlatList } from 'react-native'
 import Animated from 'react-native-reanimated'
-import { UnistylesRuntime, useStyles } from 'react-native-unistyles'
+import { useStyles } from 'react-native-unistyles'
 
 const PAGES = [
 	{
@@ -24,14 +24,6 @@ const Auth = memo(() => {
 	const renderItem = useCallback(({ item }: { item: (typeof PAGES)[number] }) => {
 		return <item.component ref={flatListRef} />
 	}, [])
-
-	useEffect(() => {
-		UnistylesRuntime.statusBar.setColor(theme.colors.primary[300])
-		UnistylesRuntime.navigationBar.setColor(theme.colors.primary[400])
-		return () => {
-			UnistylesRuntime.navigationBar.setColor(undefined)
-		}
-	}, [theme.colors.primary])
 
 	return (
 		<Animated.FlatList

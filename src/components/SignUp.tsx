@@ -16,18 +16,16 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 	const updateUser = useUserStoreSelectors.use.updateUser()
 
 	const handleSignUp = async ({
+		displayName,
 		userName,
 		password,
-		displayName,
 	}: {
+		displayName: string
 		userName: string
 		password: string
-		displayName: string
 	}) => {
-		try {
-			updateUser({ displayName, userName, password })
-			router.navigate('/account_setup')
-		} catch (error) {}
+		updateUser({ displayName, userName, password })
+		router.navigate('/(auth)/modal')
 	}
 
 	const goToSignIn = () => {

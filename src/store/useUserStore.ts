@@ -7,6 +7,8 @@ export interface UserState {
 		age: string
 		profile: string
 		email: string
+		userName: string
+		password: string
 	}
 }
 

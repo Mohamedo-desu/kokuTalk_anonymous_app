@@ -1,4 +1,3 @@
-import { signUpSupabase } from '@/services/authActions'
 import { create } from 'zustand'
 import { createSelectors } from './createSelectors'
 
@@ -20,9 +19,8 @@ interface AuthActions {
 
 const initialState: AuthState = {
 	currentUser: {} as any,
-
-	didTryAutoLogin: false,
-	isAuthenticated: false,
+	didTryAutoLogin: true,
+	isAuthenticated: true,
 	isLoggingOut: false,
 }
 
@@ -61,12 +59,11 @@ export const signUpStore = async ({ userName, password, body }: any) => {
 	const setCurrentUser = useAuthStoreSelectors.getState().setCurrentUser
 
 	try {
-		// TODO: Create user
-		await signUpSupabase({ userName, password, body })
+		setCurrentUser({ userName, password, body })
+		authenticateUser()
+		setDidTryAutoLogin()
 	} catch (error) {
 		console.error('Failed to sign up:', error)
-	} finally {
-		setDidTryAutoLogin()
 	}
 }
 

@@ -1,4 +1,5 @@
 import { PROFILE_AVATARS } from '@/constants'
+import { signUpStore } from '@/store/authStore'
 import { useUserStoreSelectors } from '@/store/useUserStore'
 import { DEVICE_WIDTH } from '@/utils'
 import { Ionicons } from '@expo/vector-icons'
@@ -13,7 +14,7 @@ const ProfileSetup = forwardRef(
 		const { theme, styles } = useStyles(stylesheet)
 
 		const updateUser = useUserStoreSelectors.use.updateUser()
-		const { profile } = useUserStoreSelectors.use.userData()
+		const { profile, age, gender, userName, password } = useUserStoreSelectors.use.userData()
 
 		const [isValid, setIsValid] = useState(profile?.trim().length > 0 ? true : false)
 
@@ -22,10 +23,10 @@ const ProfileSetup = forwardRef(
 			setIsValid(true)
 		}
 
-		const handleGoNext = async () => {
-			if (ref && 'current' in ref && ref.current) {
-				ref?.current?.scrollToIndex({ index: activeIndex + 1, animated: true })
-			}
+		const handleSignUp = async () => {
+			if (!isValid) return
+
+			signUpStore({ userName, password, body: { gender, age, profile } })
 		}
 		const handleGoBack = async () => {
 			if (ref && 'current' in ref && ref.current) {
@@ -77,7 +78,7 @@ const ProfileSetup = forwardRef(
 					<TouchableOpacity
 						disabled={!isValid}
 						activeOpacity={0.7}
-						onPress={handleGoNext}
+						onPress={handleSignUp}
 						style={[styles.button, { backgroundColor: theme.colors.primary[400] }]}>
 						<Text style={[styles.buttonText, { color: theme.colors.white }]}>NEXT</Text>
 					</TouchableOpacity>

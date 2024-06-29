@@ -20,7 +20,7 @@ const CustomThemeProvider = ({ children }: PropsWithChildren) => {
 	const statusBarStyle = isDarkTheme ? 'light' : 'dark'
 
 	return (
-		<ThemeProvider value={DarkTheme}>
+		<ThemeProvider value={currentTheme}>
 			<>
 				{children}
 				<StatusBar style={statusBarStyle} />

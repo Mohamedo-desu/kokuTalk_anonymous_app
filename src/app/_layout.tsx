@@ -10,6 +10,7 @@ import * as Notifications from 'expo-notifications'
 import { Slot, SplashScreen, router, useNavigationContainerRef } from 'expo-router'
 import { useEffect } from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { UnistylesRuntime, useStyles } from 'react-native-unistyles'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -73,6 +74,8 @@ export default function RootLayout() {
 	useUpdates()
 	useNotificationObserver()
 
+	const { theme } = useStyles()
+
 	const ref = useNavigationContainerRef()
 	const [fontsLoaded, fontError] = useFonts(Fonts)
 
@@ -83,7 +86,12 @@ export default function RootLayout() {
 		if (ref) {
 			routingInstrumentation.registerNavigationContainer(ref)
 		}
-	}, [fontsLoaded, fontError, ref])
+
+		UnistylesRuntime.navigationBar.setColor(theme.colors.primary[500])
+		return () => {
+			UnistylesRuntime.navigationBar.setColor(undefined)
+		}
+	}, [fontsLoaded, fontError, ref, theme.colors.primary])
 
 	if (!fontsLoaded && !fontError) {
 		return null

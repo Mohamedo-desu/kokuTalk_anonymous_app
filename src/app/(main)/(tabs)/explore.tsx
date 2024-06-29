@@ -2,7 +2,7 @@ import { logOut } from '@/store/authStore'
 import React from 'react'
 import { Button, View } from 'react-native'
 
-const Account = () => {
+const Search = () => {
 	const signOut = async () => {
 		logOut()
 	}
@@ -13,4 +13,4 @@ const Account = () => {
 	)
 }
 
-export default Account
+export default Search
