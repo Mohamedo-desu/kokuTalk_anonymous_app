@@ -1,57 +1,44 @@
 import Input from '@/components/Input'
-import { SignUpValidationSchema } from '@/services/validations'
-import { useUserStoreSelectors } from '@/store/useUserStore'
+import Loader from '@/components/Loader'
+import { SignInValidationSchema } from '@/services/validations'
+import { DEVICE_WIDTH, getStoredValues } from '@/utils'
 import { LinearGradient } from 'expo-linear-gradient'
-import { router } from 'expo-router'
 import { Formik } from 'formik'
-import React, { useEffect } from 'react'
-import { Text, TouchableOpacity, View } from 'react-native'
+import React, { ForwardedRef, forwardRef, useEffect, useState } from 'react'
+import { FlatList, Text, TouchableOpacity, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { moderateScale } from 'react-native-size-matters'
-import { UnistylesRuntime, createStyleSheet, useStyles } from 'react-native-unistyles'
+import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
-const SignUpPage = () => {
+const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 	const { theme, styles } = useStyles(stylesheet)
-	const updateUser = useUserStoreSelectors.use.updateUser()
+	const [loading, setLoading] = useState(false)
+
+	const [userName, setUserName] = useState('')
+	const [password, setPassword] = useState('')
 
 	useEffect(() => {
-		// Set the color of the status bar
-		UnistylesRuntime.statusBar.setColor(theme.colors.primary[300])
-		// Set the color of the navigation bar
-		UnistylesRuntime.navigationBar.setColor(theme.colors.primary[400])
-
-		// Reset the color of the navigation bar when the component is unmounted
-		return () => {
-			UnistylesRuntime.navigationBar.setColor(undefined)
-		}
+		const { userName, password } = getStoredValues(['userName', 'password'])
+		setUserName(userName)
+		setPassword(password)
 	}, [])
 
-	const handleSignUp = async ({
-		userName,
-		password,
-		displayName,
-	}: {
-		userName: string
-		password: string
-		displayName: string
-	}) => {
+	const handleSignIn = async ({ userName, password }: { userName: string; password: string }) => {
 		try {
-			updateUser({ displayName, userName, password })
-			router.navigate('/account_setup')
 		} catch (error) {}
 	}
 
-	const goToSignIn = () => {
-		router.back()
+	const goToSignUp = () => {
+		if (ref && 'current' in ref && ref.current) {
+			ref.current.scrollToEnd({ animated: true })
+		}
 	}
-	const handleSkip = () => {}
-
 	return (
 		<LinearGradient
 			colors={[theme.colors.primary[300], theme.colors.primary[500], theme.colors.primary[400]]}
 			start={{ x: 0, y: 0 }}
 			end={{ x: 0, y: 1 }}
-			style={{ flex: 1 }}>
+			style={{ flex: 1, width: DEVICE_WIDTH }}>
 			<KeyboardAwareScrollView
 				keyboardShouldPersistTaps="handled"
 				style={{
@@ -61,41 +48,31 @@ const SignUpPage = () => {
 					flexGrow: 1,
 				}}>
 				<Formik
-					initialValues={{ displayName: '', userName: '', password: '' }}
+					initialValues={{ userName, password }}
 					enableReinitialize
-					validationSchema={SignUpValidationSchema}
-					onSubmit={(values) => handleSignUp(values)}>
+					validationSchema={SignInValidationSchema}
+					onSubmit={(values) => handleSignIn(values)}>
 					{({ handleChange, handleBlur, handleSubmit, values, errors, touched }) => (
 						<View style={styles.formikContainer}>
 							<View style={[styles.form, { backgroundColor: theme.colors.primary[500] }]}>
 								<Input
-									title="Display Name"
-									errors={errors.displayName}
-									touched={touched.displayName}
-									value={values.displayName}
-									handleChange={handleChange('displayName')}
-									handleBlur={handleBlur('displayName')}
-									autoComplete={'name'}
-									maxLength={15}
-								/>
-								<Input
-									title="User Name"
+									title="user name"
 									errors={errors.userName}
 									touched={touched.userName}
 									value={values.userName}
 									handleChange={handleChange('userName')}
 									handleBlur={handleBlur('userName')}
-									autoComplete={'username-new'}
+									autoComplete={'username'}
 									maxLength={15}
 								/>
 								<Input
-									title="Password"
+									title="password"
 									errors={errors.password}
 									touched={touched.password}
 									value={values.password}
 									handleChange={handleChange('password')}
 									handleBlur={handleBlur('password')}
-									autoComplete={'new-password'}
+									autoComplete={'password'}
 									maxLength={35}
 									secureTextEntry={true}
 								/>
@@ -104,23 +81,15 @@ const SignUpPage = () => {
 							<TouchableOpacity
 								onPress={handleSubmit as any}
 								activeOpacity={0.8}
-								style={[styles.signUpButton, { backgroundColor: theme.colors.primary[400] }]}>
-								<Text style={[styles.signUpButtonText, { color: theme.colors.white }]}>
-									Sign Up
-								</Text>
-							</TouchableOpacity>
-							<TouchableOpacity
-								onPress={handleSkip}
-								activeOpacity={0.8}
-								style={[styles.signUpButton, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
-								<Text style={[styles.signUpButtonText, { color: 'rgba(255, 255, 255, 0.8)' }]}>
-									Skip
+								style={[styles.signInButton, { backgroundColor: theme.colors.primary[400] }]}>
+								<Text style={[styles.signInButtonText, { color: theme.colors.white }]}>
+									Sign In
 								</Text>
 							</TouchableOpacity>
 							<View style={{ marginTop: moderateScale(30) }}>
-								<TouchableOpacity activeOpacity={0.7} onPress={goToSignIn}>
-									<Text style={[styles.signInText, { color: theme.colors.primary[300] }]}>
-										Have an account already?{' '}
+								<TouchableOpacity activeOpacity={0.7} onPress={goToSignUp}>
+									<Text style={[styles.signUpText, { color: theme.colors.primary[300] }]}>
+										Don't have an account?{' '}
 										<Text
 											style={{
 												color: theme.colors.primary[400],
@@ -134,11 +103,12 @@ const SignUpPage = () => {
 					)}
 				</Formik>
 			</KeyboardAwareScrollView>
+			<Loader text="Authorizing..." visible={loading} />
 		</LinearGradient>
 	)
-}
+})
 
-export default SignUpPage
+export default SignInPage
 
 const stylesheet = createStyleSheet({
 	error: {
@@ -146,7 +116,7 @@ const stylesheet = createStyleSheet({
 		fontSize: moderateScale(14),
 		marginTop: moderateScale(5),
 	},
-	signUpButton: {
+	signInButton: {
 		marginTop: moderateScale(20),
 		width: '100%',
 		justifyContent: 'center',
@@ -154,7 +124,7 @@ const stylesheet = createStyleSheet({
 		padding: moderateScale(10),
 		borderRadius: moderateScale(5),
 	},
-	signUpButtonText: {
+	signInButtonText: {
 		fontFamily: 'Medium',
 		fontSize: moderateScale(18),
 	},
@@ -171,7 +141,7 @@ const stylesheet = createStyleSheet({
 		alignItems: 'center',
 		paddingHorizontal: moderateScale(15),
 	},
-	signInText: {
+	signUpText: {
 		fontFamily: 'Italic',
 		fontSize: moderateScale(16),
 	},
