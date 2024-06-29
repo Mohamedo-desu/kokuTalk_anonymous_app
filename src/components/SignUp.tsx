@@ -52,7 +52,11 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 					flexGrow: 1,
 				}}>
 				<Formik
-					initialValues={{ displayName: '', userName: '', password: '' }}
+					initialValues={{
+						displayName: 'Display',
+						userName: 'userName',
+						password: 'Xo12345678',
+					}}
 					enableReinitialize
 					validationSchema={SignUpValidationSchema}
 					onSubmit={(values) => handleSignUp(values)}>

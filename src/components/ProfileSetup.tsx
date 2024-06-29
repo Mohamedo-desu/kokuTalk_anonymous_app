@@ -1,82 +1,91 @@
 import { PROFILE_AVATARS } from '@/constants'
 import { useUserStoreSelectors } from '@/store/useUserStore'
+import { DEVICE_WIDTH } from '@/utils'
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
-import { useState } from 'react'
-import { Text, TouchableOpacity, View } from 'react-native'
+import { ForwardedRef, forwardRef, useState } from 'react'
+import { FlatList, Text, TouchableOpacity, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
-const ProfileSetup = ({
-	handleGoNext,
-	handleGoBack,
-}: {
-	handleGoNext: () => void
-	handleGoBack: () => void
-}) => {
-	const { theme, styles } = useStyles(stylesheet)
+const ProfileSetup = forwardRef(
+	({ activeIndex }: { activeIndex: number }, ref: ForwardedRef<FlatList<any> | null>) => {
+		const { theme, styles } = useStyles(stylesheet)
 
-	const updateUser = useUserStoreSelectors.use.updateUser()
-	const { profile } = useUserStoreSelectors.use.userData()
+		const updateUser = useUserStoreSelectors.use.updateUser()
+		const { profile } = useUserStoreSelectors.use.userData()
 
-	const [isValid, setIsValid] = useState(profile?.trim().length > 0 ? true : false)
+		const [isValid, setIsValid] = useState(profile?.trim().length > 0 ? true : false)
 
-	const handleSelectprofile = (profile: string) => {
-		updateUser({ profile })
-		setIsValid(true)
-	}
-	return (
-		<View style={styles.container}>
-			<View style={styles.content}>
-				{PROFILE_AVATARS.map((avatar, index) => (
-					<TouchableOpacity
-						key={avatar}
-						activeOpacity={0.7}
-						onPress={() => handleSelectprofile(avatar)}
-						style={[
-							styles.avatar,
-							{
-								backgroundColor:
-									profile === avatar ? theme.colors.white : theme.colors.primary[400],
-							},
-						]}>
-						<Image
+		const handleSelectprofile = (profile: string) => {
+			updateUser({ profile })
+			setIsValid(true)
+		}
+
+		const handleGoNext = async () => {
+			if (ref && 'current' in ref && ref.current) {
+				ref?.current?.scrollToIndex({ index: activeIndex + 1, animated: true })
+			}
+		}
+		const handleGoBack = async () => {
+			if (ref && 'current' in ref && ref.current) {
+				ref?.current?.scrollToIndex({ index: activeIndex - 1, animated: true })
+			}
+		}
+
+		return (
+			<View style={styles.container}>
+				<View style={styles.content}>
+					{PROFILE_AVATARS.map((avatar, index) => (
+						<TouchableOpacity
 							key={avatar}
-							source={{ uri: avatar }}
-							contentFit="scale-down"
-							transition={100 * index}
-							style={styles.image}
-							alt="avatar"
-						/>
-						{profile === avatar && (
-							<Ionicons
-								name="checkmark-circle"
-								size={moderateScale(20)}
-								color={theme.colors.primary[500]}
-								style={styles.mark}
+							activeOpacity={0.7}
+							onPress={() => handleSelectprofile(avatar)}
+							style={[
+								styles.avatar,
+								{
+									backgroundColor:
+										profile === avatar ? theme.colors.white : theme.colors.primary[400],
+								},
+							]}>
+							<Image
+								key={avatar}
+								source={{ uri: avatar }}
+								contentFit="scale-down"
+								transition={100 * index}
+								style={styles.image}
+								alt="avatar"
 							/>
-						)}
+							{profile === avatar && (
+								<Ionicons
+									name="checkmark-circle"
+									size={moderateScale(20)}
+									color={theme.colors.primary[500]}
+									style={styles.mark}
+								/>
+							)}
+						</TouchableOpacity>
+					))}
+				</View>
+				<View style={styles.footer}>
+					<TouchableOpacity
+						onPress={handleGoBack}
+						activeOpacity={0.7}
+						style={[styles.button, { backgroundColor: theme.colors.primary[400] }]}>
+						<Text style={[styles.buttonText, { color: theme.colors.white }]}>BACK</Text>
 					</TouchableOpacity>
-				))}
+					<TouchableOpacity
+						disabled={!isValid}
+						activeOpacity={0.7}
+						onPress={handleGoNext}
+						style={[styles.button, { backgroundColor: theme.colors.primary[400] }]}>
+						<Text style={[styles.buttonText, { color: theme.colors.white }]}>NEXT</Text>
+					</TouchableOpacity>
+				</View>
 			</View>
-			<View style={styles.footer}>
-				<TouchableOpacity
-					onPress={handleGoBack}
-					activeOpacity={0.7}
-					style={[styles.button, { backgroundColor: theme.colors.primary[400] }]}>
-					<Text style={[styles.buttonText, { color: theme.colors.white }]}>BACK</Text>
-				</TouchableOpacity>
-				<TouchableOpacity
-					disabled={!isValid}
-					activeOpacity={0.7}
-					onPress={handleGoNext}
-					style={[styles.button, { backgroundColor: theme.colors.primary[400] }]}>
-					<Text style={[styles.buttonText, { color: theme.colors.white }]}>NEXT</Text>
-				</TouchableOpacity>
-			</View>
-		</View>
-	)
-}
+		)
+	},
+)
 
 export default ProfileSetup
 
@@ -96,6 +105,7 @@ const stylesheet = createStyleSheet({
 	container: {
 		flex: 1,
 		flexGrow: 1,
+		width: DEVICE_WIDTH,
 		justifyContent: 'center',
 		alignItems: 'center',
 	},
@@ -108,12 +118,13 @@ const stylesheet = createStyleSheet({
 		alignContent: 'center',
 		flexWrap: 'wrap',
 		gap: moderateScale(15),
+		width: '95%',
 	},
 	footer: {
 		flexDirection: 'row',
 		justifyContent: 'space-between',
 		alignItems: 'center',
-		width: '100%',
+		width: '95%',
 	},
 	avatar: {
 		width: moderateScale(100),
