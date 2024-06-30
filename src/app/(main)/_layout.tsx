@@ -1,4 +1,4 @@
-import { DrawerContent, DrawerContentComponentProps } from '@react-navigation/drawer'
+import DrawerContent from '@/components/DrawerContent'
 import { Stack } from 'expo-router'
 import { Drawer } from 'expo-router/drawer'
 
@@ -12,9 +12,7 @@ const MainLayout = (): JSX.Element => {
 		<Drawer
 			screenOptions={{ headerShown: false, drawerType: 'slide' }}
 			backBehavior="history"
-			drawerContent={(props: DrawerContentComponentProps): JSX.Element => (
-				<DrawerContent {...props} />
-			)}>
+			drawerContent={DrawerContent}>
 			<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 		</Drawer>
 	)

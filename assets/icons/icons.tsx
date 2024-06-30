@@ -5,7 +5,10 @@ export const icons: { [key: string]: (props: {isFocused: boolean, color: string}
     '(home)': (props: {isFocused: boolean, color: string}): JSX.Element => {
         return <Ionicons name={props.isFocused ? 'home' : 'home-outline'} size={moderateScale(24)} color={props.color} />
     },
-    explore: (props: {isFocused: boolean, color: string}): JSX.Element => {
+    'explore': (props: {isFocused: boolean, color: string}): JSX.Element => {
         return <Ionicons name={props.isFocused ? 'compass' : 'compass-outline'} size={moderateScale(24)} color={props.color} />
+    },
+    'notifications': (props: {isFocused: boolean, color: string}): JSX.Element => {
+        return <Ionicons name={props.isFocused ? 'notifications' : 'notifications-outline'} size={moderateScale(24)} color={props.color} />
     },
 }

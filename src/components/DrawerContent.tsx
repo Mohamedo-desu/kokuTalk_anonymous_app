@@ -1,13 +1,9 @@
 import { placeHolder } from '@/constants'
 import { Fontisto, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
-import {
-	DrawerContentComponentProps,
-	DrawerContentScrollView,
-	DrawerItemList,
-} from '@react-navigation/drawer'
+import { DrawerContentComponentProps } from '@react-navigation/drawer'
 import { Image } from 'expo-image'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Text, TouchableOpacity, View } from 'react-native'
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
@@ -22,7 +18,7 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 	const insets = useSafeAreaInsets()
 
 	return (
-		<DrawerContentScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} {...props}>
+		<ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} {...props}>
 			<LinearGradient
 				colors={[theme.colors.primary[300], theme.colors.primary[500], theme.colors.primary[400]]}
 				start={{ x: 0.5, y: 1 }}
@@ -79,6 +75,18 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 						Saved Confessions
 					</Text>
 				</TouchableOpacity>
+				<TouchableOpacity activeOpacity={0.8} style={styles.drawerItem}>
+					<View style={{ width: moderateScale(40) }}>
+						<MaterialCommunityIcons
+							name="book-open"
+							style={[styles.drawerItemIcon, { color: theme.colors.primary[400] }]}
+						/>
+					</View>
+
+					<Text style={[styles.drawerItemLabel, { color: theme.colors.primary[400] }]}>
+						Privacy & Policy
+					</Text>
+				</TouchableOpacity>
 				<View style={{ flex: 1, flexGrow: 1 }} />
 				<View
 					style={{
@@ -107,8 +115,7 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 					</TouchableOpacity>
 				</View>
 			</View>
-			<DrawerItemList {...props} />
-		</DrawerContentScrollView>
+		</ScrollView>
 	)
 }
 

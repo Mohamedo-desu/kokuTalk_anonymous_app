@@ -3,10 +3,6 @@ export const appName = 'KokuTalk'
 export const placeHolder =
 	'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541'
 
-export const dateFormat = 'ddd,MMM DD,YY'
-export const timeFormat = 'HH:mm A'
-export const yearFormat = 'yyyy'
-
 export const PROFILE_AVATARS = [
 	'https://robohash.org/7ddb7b5872971ffee23f156d169b9782.png?set=set1',
 	'https://robohash.org/620dc889b2b7c89339137eadac2d991d.png?set=set4',

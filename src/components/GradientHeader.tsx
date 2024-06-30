@@ -1,4 +1,3 @@
-import { appName } from '@/constants'
 import { Ionicons } from '@expo/vector-icons'
 import { useDrawerStatus } from '@react-navigation/drawer'
 import { DrawerActions } from '@react-navigation/native'
@@ -34,7 +33,7 @@ const AddButton = () => {
 	)
 }
 
-const GradientHeader = () => {
+const GradientHeader = ({ title }: { title: string }) => {
 	const { theme } = useStyles()
 	const insets = useSafeAreaInsets()
 	return (
@@ -47,7 +46,7 @@ const GradientHeader = () => {
 					flexDirection: 'row',
 					alignItems: 'center',
 					justifyContent: 'space-between',
-					paddingTop: insets.top,
+					paddingTop: insets.top + moderateScale(5),
 					paddingBottom: moderateScale(10),
 					paddingHorizontal: moderateScale(15),
 				}}>
@@ -58,7 +57,7 @@ const GradientHeader = () => {
 						fontSize: moderateScale(20),
 						color: theme.colors.white,
 					}}>
-					{appName}
+					{title}
 				</Text>
 				<AddButton />
 			</View>

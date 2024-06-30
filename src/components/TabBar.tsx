@@ -69,8 +69,6 @@ const TabBar = ({
 			{routes.map((route) => {
 				if (['_sitemap', '+not-found'].includes(route.name)) return null
 
-				const { options } = descriptors[route.key]
-				const label = options.tabBarLabel || options.title || route.name
 				const isCurrent = isFocused(route.name)
 				const color = isCurrent ? theme.colors.white : 'rgba(255,255,255,.3)'
 
@@ -91,11 +89,14 @@ const TabBar = ({
 
 const stylesheet = createStyleSheet({
 	tabBar: {
+		position: 'absolute',
+		bottom: 0,
+		width: '90%',
+		alignSelf: 'center',
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'space-between',
 		height: moderateScale(55),
-		marginHorizontal: moderateScale(15),
 		borderRadius: moderateScale(40),
 		borderCurve: 'circular',
 	},
