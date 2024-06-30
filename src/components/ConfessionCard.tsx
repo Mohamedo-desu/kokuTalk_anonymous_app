@@ -6,59 +6,57 @@ import { Text, TouchableOpacity, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
-const ConfessionCard = ({ item }: any) => {
+interface ConfessionCardProps {
+	id: number
+	displayName: string
+	gender: string
+	age: number
+	favorite: boolean
+	likes: number
+	comments: number
+	confession: string
+	type: string
+	createdAt: string
+}
+
+/**
+ * Renders a confession card component
+ * @param {ConfessionCardProps} item - The confession card props
+ * @returns {JSX.Element} The confession card component
+ */
+const ConfessionCard = ({ item }: { item: ConfessionCardProps }): JSX.Element => {
+	// Extract the confession card props
 	const { theme, styles } = useStyles(stylesheet)
 	const { id, displayName, gender, age, favorite, likes, comments, confession, type, createdAt } =
 		item
 
 	return (
-		<View
-			style={{
-				backgroundColor: theme.colors.background,
-				paddingHorizontal: moderateScale(15),
-				paddingVertical: moderateScale(10),
-				marginHorizontal: moderateScale(10),
-				marginTop: moderateScale(5),
-				borderRadius: moderateScale(10),
-			}}>
-			{/* Confession Header */}
-			<View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-				{/* Confessed User */}
-				<View style={{ flexDirection: 'row', alignItems: 'center', gap: moderateScale(10) }}>
-					<View
-						style={{
-							width: moderateScale(40),
-							aspectRatio: 1,
-							borderRadius: moderateScale(25),
-							overflow: 'hidden',
-						}}>
+		// Render the confession card component
+		<View style={[styles.card, { backgroundColor: theme.colors.background }]}>
+			<View style={styles.header}>
+				<View style={styles.confessedUser}>
+					<View style={styles.imageCon}>
+						{/* Render the profile image */}
 						<Image
 							source={{ uri: PROFILE_AVATARS[id] }}
-							style={{ width: '100%', height: '100%' }}
+							style={styles.image}
 							contentFit="cover"
 							transition={500}
 						/>
 					</View>
 					<View>
-						<Text
-							style={{
-								fontFamily: 'Medium',
-								fontSize: moderateScale(14),
-								color: theme.colors.typography,
-							}}>
+						{/* Render the display name */}
+						<Text style={[styles.displayName, { color: theme.colors.typography }]}>
 							{displayName}
 						</Text>
-						<Text
-							style={{
-								fontFamily: 'Medium',
-								fontSize: moderateScale(11),
-								color: theme.colors.typography,
-							}}>
-							{age}.{gender}
+						{/* Render the age and gender */}
+						<Text style={[styles.ageGender, { color: theme.colors.typography }]}>
+							{age}.{gender.charAt(0)}
 						</Text>
 					</View>
 				</View>
 				<TouchableOpacity>
+					{/* Render the favorite icon */}
 					<AntDesign
 						name={favorite ? 'heart' : 'hearto'}
 						size={24}
@@ -67,76 +65,32 @@ const ConfessionCard = ({ item }: any) => {
 				</TouchableOpacity>
 			</View>
 
-			{/* Confession Body */}
-			<View style={{ marginVertical: moderateScale(10) }}>
-				<View
-					style={{
-						backgroundColor: theme.colors.primary[500],
-						alignSelf: 'flex-start',
-						paddingHorizontal: moderateScale(10),
-						borderRadius: moderateScale(20),
-						marginBottom: moderateScale(10),
-						opacity: 0.7,
-					}}>
-					<Text
-						style={{
-							fontFamily: 'Italic',
-							fontSize: moderateScale(10),
-							color: theme.colors.white,
-							textAlign: 'justify',
-						}}
-						numberOfLines={5}>
-						#{type}
-					</Text>
+			<View style={styles.body}>
+				<View style={[styles.confessionTypeCon, { backgroundColor: theme.colors.primary[500] }]}>
+					<Text style={[styles.confessionTypeText, { color: theme.colors.white }]}>#{type}</Text>
 				</View>
-				<Text
-					style={{
-						fontFamily: 'Medium',
-						fontSize: moderateScale(13),
-						color: theme.colors.typography,
-						textAlign: 'justify',
-					}}
-					numberOfLines={5}>
+				<Text style={[styles.confessionText, { color: theme.colors.typography }]} numberOfLines={5}>
 					{confession}
 				</Text>
 			</View>
-			{/* Time */}
-			<View style={{ marginBottom: moderateScale(10) }}>
-				<Text
-					style={{
-						fontFamily: 'Medium',
-						fontSize: moderateScale(12),
-						color: theme.colors.gray[400],
-					}}>
+
+			<View style={styles.timeCon}>
+				<Text style={[styles.timeText, { color: theme.colors.gray[400] }]}>
 					{formatRelativeTime(createdAt)}
 				</Text>
 			</View>
-			{/* Confession Footer */}
-			<View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-				<View style={{ flexDirection: 'row', alignItems: 'center', gap: moderateScale(10) }}>
+
+			<View style={styles.footer}>
+				<View style={styles.likeCountCon}>
 					<Feather name="chevrons-up" size={26} color={theme.colors.gray[400]} />
-					<Text
-						style={{
-							fontFamily: 'Medium',
-							fontSize: moderateScale(16),
-							color: theme.colors.gray[400],
-							textAlign: 'justify',
-						}}
-						numberOfLines={5}>
+					<Text style={[styles.likesText, { color: theme.colors.gray[400] }]} numberOfLines={5}>
 						{likes}
 					</Text>
 					<Feather name="chevrons-down" size={26} color={theme.colors.gray[400]} />
 				</View>
-				<View style={{ flexDirection: 'row', alignItems: 'center', gap: moderateScale(20) }}>
+				<View style={styles.commentShareCon}>
 					<Ionicons name="chatbox-ellipses-outline" size={26} color={theme.colors.gray[400]} />
-					<Text
-						style={{
-							fontFamily: 'Medium',
-							fontSize: moderateScale(16),
-							color: theme.colors.gray[400],
-							textAlign: 'justify',
-						}}
-						numberOfLines={5}>
+					<Text style={[styles.comment, { color: theme.colors.gray[400] }]} numberOfLines={5}>
 						{comments}
 					</Text>
 					<Ionicons name="share-social-outline" size={26} color={theme.colors.gray[400]} />
@@ -151,5 +105,65 @@ export default ConfessionCard
 const stylesheet = createStyleSheet({
 	container: {
 		flex: 1,
+	},
+	card: {
+		paddingHorizontal: moderateScale(15),
+		paddingVertical: moderateScale(10),
+		marginHorizontal: moderateScale(10),
+		marginTop: moderateScale(5),
+		borderRadius: moderateScale(10),
+	},
+	header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+	confessedUser: { flexDirection: 'row', alignItems: 'center', gap: moderateScale(10) },
+	imageCon: {
+		width: moderateScale(40),
+		aspectRatio: 1,
+		borderRadius: moderateScale(25),
+		overflow: 'hidden',
+	},
+	image: { width: '100%', height: '100%' },
+	displayName: {
+		fontFamily: 'Medium',
+		fontSize: moderateScale(14),
+	},
+	ageGender: {
+		fontFamily: 'Medium',
+		fontSize: moderateScale(11),
+	},
+	body: { marginVertical: moderateScale(10) },
+	confessionTypeCon: {
+		alignSelf: 'flex-start',
+		paddingHorizontal: moderateScale(10),
+		borderRadius: moderateScale(20),
+		marginBottom: moderateScale(10),
+		opacity: 0.7,
+	},
+	confessionTypeText: {
+		fontFamily: 'Italic',
+		fontSize: moderateScale(10),
+		textAlign: 'justify',
+	},
+	confessionText: {
+		fontFamily: 'Medium',
+		fontSize: moderateScale(13),
+		textAlign: 'justify',
+	},
+	timeCon: { marginBottom: moderateScale(10) },
+	timeText: {
+		fontFamily: 'Medium',
+		fontSize: moderateScale(12),
+	},
+	footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+	likeCountCon: { flexDirection: 'row', alignItems: 'center', gap: moderateScale(10) },
+	likesText: {
+		fontFamily: 'Medium',
+		fontSize: moderateScale(16),
+		textAlign: 'justify',
+	},
+	commentShareCon: { flexDirection: 'row', alignItems: 'center', gap: moderateScale(20) },
+	comment: {
+		fontFamily: 'Medium',
+		fontSize: moderateScale(16),
+		textAlign: 'justify',
 	},
 })

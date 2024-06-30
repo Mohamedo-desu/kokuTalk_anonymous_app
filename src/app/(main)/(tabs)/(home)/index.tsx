@@ -57,7 +57,7 @@ const CONFESSIONS = [
 		confession:
 			'I am secretly afraid of the dark. Even at this age, I need a night light to sleep peacefully.',
 		type: 'fear',
-		createdAt: '2023-06-27T12:00:00Z',
+		createdAt: '2024-06-30T2:00:00Z',
 	},
 	{
 		id: 5,
@@ -127,11 +127,16 @@ const CONFESSIONS = [
 
 const HomePage = () => {
 	const { theme, styles } = useStyles(stylesheet)
-	const insets = useSafeAreaInsets()
+	const safeAreaInsets = useSafeAreaInsets()
 
-	const renderItem = useCallback(({ item }: { item: (typeof CONFESSIONS)[number] }) => {
+	const renderConfessionCard = useCallback(({ item }: { item: (typeof CONFESSIONS)[0] }) => {
+		if (!item) {
+			return null
+		}
+
 		return <ConfessionCard item={item} />
 	}, [])
+
 	return (
 		<LinearGradient
 			colors={[theme.colors.background, theme.colors.gray[100]]}
@@ -140,15 +145,13 @@ const HomePage = () => {
 			style={styles.container}>
 			<FlashList
 				data={CONFESSIONS}
-				renderItem={renderItem}
-				keyExtractor={(item) => item.id.toString()}
+				renderItem={renderConfessionCard}
+				keyExtractor={(item) => item?.id?.toString() || ''}
 				showsVerticalScrollIndicator={false}
 				alwaysBounceHorizontal
-				automaticallyAdjustKeyboardInsets
-				centerContent
-				directionalLockEnabled
+				automaticallyAdjustContentInsets
 				contentContainerStyle={{
-					paddingBottom: insets.bottom + moderateScale(80),
+					paddingBottom: safeAreaInsets.bottom + moderateScale(80),
 					paddingTop: moderateScale(10),
 				}}
 				estimatedItemSize={200}
