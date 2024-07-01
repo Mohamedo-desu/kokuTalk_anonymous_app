@@ -3,6 +3,7 @@ import { useUserStoreSelectors } from '@/store/useUserStore'
 import { Fontisto, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { DrawerContentComponentProps } from '@react-navigation/drawer'
 import { LinearGradient } from 'expo-linear-gradient'
+import { router } from 'expo-router'
 import { useState } from 'react'
 import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -27,102 +28,67 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 				colors={[theme.colors.primary[300], theme.colors.primary[500], theme.colors.primary[400]]}
 				start={{ x: 0.5, y: 1 }}
 				end={{ x: 0.5, y: 0 }}
-				style={{
-					flex: 1,
-
-					paddingBottom: moderateScale(10),
-				}}>
+				style={styles.linearGradient}>
 				<View
-					style={{
-						paddingTop: insets.top,
-						alignSelf: 'center',
-						paddingVertical: moderateScale(20),
-						gap: moderateScale(2),
-						alignItems: 'center',
-						backgroundColor: theme.colors.primary[500],
-						width: '100%',
-					}}>
+					style={[
+						styles.header,
+						{ paddingTop: insets.top, backgroundColor: theme.colors.primary[500] },
+					]}>
 					<TouchableOpacity onPress={() => setAvatarModalVisible(true)}>
-						<Image
-							source={{ uri: profile }}
-							style={{ width: 100, height: 100, borderRadius: moderateScale(50) }}
-							resizeMode="cover"
-						/>
+						<Image source={{ uri: profile }} style={styles.profileImage} resizeMode="cover" />
 					</TouchableOpacity>
-					<Text
-						style={{
-							fontFamily: 'Medium',
-							fontSize: moderateScale(18),
-							color: 'rgba(255,255,255,.4)',
-						}}>
-						{displayName || 'Anonymous'}
-					</Text>
-					<Text
-						style={{
-							fontFamily: 'Medium',
-							fontSize: moderateScale(16),
-							color: 'rgba(255,255,255,.4)',
-						}}>
+					<Text style={styles.displayName}>{displayName || 'Anonymous'}</Text>
+					<Text style={styles.ageGender}>
 						{age}.{gender.charAt(0)}
 					</Text>
 				</View>
-				<View
-					style={{
-						flex: 1,
-						paddingBottom: insets.bottom,
-					}}>
-					<TouchableOpacity activeOpacity={0.8} style={styles.drawerItem}>
-						<View style={{ width: moderateScale(40) }}>
+				<View style={[styles.content, { paddingBottom: insets.bottom }]}>
+					<TouchableOpacity
+						activeOpacity={0.8}
+						style={styles.drawerItem}
+						onPress={() => router.navigate('/(main)/my_confessions')}>
+						<View style={styles.drawerIconContainer}>
 							<MaterialCommunityIcons
 								name="account-voice"
 								style={[styles.drawerItemIcon, { color: theme.colors.white }]}
 							/>
 						</View>
-
 						<Text style={[styles.drawerItemLabel, { color: theme.colors.white }]}>
 							My Confessions
 						</Text>
 					</TouchableOpacity>
-					<TouchableOpacity activeOpacity={0.8} style={styles.drawerItem}>
-						<View style={{ width: moderateScale(40) }}>
+					<TouchableOpacity
+						activeOpacity={0.8}
+						style={styles.drawerItem}
+						onPress={() => router.navigate('/(main)/saved_confessions')}>
+						<View style={styles.drawerIconContainer}>
 							<Fontisto
 								name="favorite"
 								style={[styles.drawerItemIcon, { color: theme.colors.white }]}
 							/>
 						</View>
-
 						<Text style={[styles.drawerItemLabel, { color: theme.colors.white }]}>
 							Saved Confessions
 						</Text>
 					</TouchableOpacity>
 					<TouchableOpacity activeOpacity={0.8} style={styles.drawerItem}>
-						<View style={{ width: moderateScale(40) }}>
+						<View style={styles.drawerIconContainer}>
 							<MaterialCommunityIcons
 								name="book-open"
 								style={[styles.drawerItemIcon, { color: theme.colors.white }]}
 							/>
 						</View>
-
 						<Text style={[styles.drawerItemLabel, { color: theme.colors.white }]}>
 							Privacy & Policy
 						</Text>
 					</TouchableOpacity>
 					<View style={{ flex: 1, flexGrow: 1 }} />
-					<View
-						style={{
-							borderTopWidth: 2,
-							paddingVertical: insets.top,
-							borderTopColor: 'rgba(255,255,255,.1)',
-						}}>
+					<View style={[styles.footer, { paddingVertical: insets.top }]}>
 						<TouchableOpacity
 							activeOpacity={0.8}
-							style={{
-								flexDirection: 'row',
-								paddingHorizontal: moderateScale(15),
-								alignItems: 'center',
-							}}
+							style={styles.logoutButton}
 							onPress={() => logOut()}>
-							<View style={{ width: moderateScale(40) }}>
+							<View style={styles.drawerIconContainer}>
 								<Ionicons
 									name="log-out"
 									style={[
@@ -131,7 +97,6 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 									]}
 								/>
 							</View>
-
 							<Text style={[styles.drawerItemLabel, { color: 'rgba(255,255,255,.2)' }]}>
 								Log out
 							</Text>
@@ -150,19 +115,60 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 export default DrawerContent
 
 const stylesheet = createStyleSheet({
+	linearGradient: {
+		flex: 1,
+		paddingBottom: moderateScale(10),
+	},
+	header: {
+		alignSelf: 'center',
+		paddingVertical: moderateScale(20),
+		gap: moderateScale(2),
+		alignItems: 'center',
+		width: '100%',
+	},
+	profileImage: {
+		width: 100,
+		height: 100,
+		borderRadius: moderateScale(50),
+	},
+	displayName: {
+		fontFamily: 'Medium',
+		fontSize: moderateScale(18),
+		color: 'rgba(255,255,255,.4)',
+	},
+	ageGender: {
+		fontFamily: 'Medium',
+		fontSize: moderateScale(16),
+		color: 'rgba(255,255,255,.4)',
+	},
+	content: {
+		flex: 1,
+	},
+	drawerItem: {
+		flexDirection: 'row',
+		paddingHorizontal: moderateScale(15),
+		paddingVertical: moderateScale(20),
+		alignItems: 'center',
+	},
+	drawerIconContainer: {
+		width: moderateScale(40),
+	},
+	drawerItemIcon: {
+		fontSize: moderateScale(26),
+	},
 	drawerItemLabel: {
 		fontFamily: 'Medium',
 		fontSize: moderateScale(17),
 		textAlign: 'left',
 		alignSelf: 'flex-start',
 	},
-	drawerItemIcon: {
-		fontSize: moderateScale(26),
+	footer: {
+		borderTopWidth: 2,
+		borderTopColor: 'rgba(255,255,255,.1)',
 	},
-	drawerItem: {
+	logoutButton: {
 		flexDirection: 'row',
 		paddingHorizontal: moderateScale(15),
-		paddingVertical: moderateScale(20),
 		alignItems: 'center',
 	},
 })

@@ -33,7 +33,7 @@ const SelectAvatarModal = ({ visible, onClose }: { visible: boolean; onClose: ()
 		<Modal visible={visible} transparent animationType="fade">
 			<BlurView intensity={5} style={styles.blurContainer} experimentalBlurMethod="dimezisBlurView">
 				<LinearGradient
-					colors={[theme.colors.background, theme.colors.gray[100]]}
+					colors={[theme.colors.gray[400], theme.colors.gray[100]]}
 					start={{ x: 0.5, y: 1 }}
 					end={{ x: 0.5, y: 0 }}
 					style={styles.content}>
@@ -46,7 +46,7 @@ const SelectAvatarModal = ({ visible, onClose }: { visible: boolean; onClose: ()
 								styles.avatar,
 								{
 									backgroundColor:
-										profile === avatar ? theme.colors.primary[500] : 'rgba(255,255,255,0.1)',
+										profile === avatar ? theme.colors.primary[500] : 'rgba(255,255,255,0.3)',
 								},
 							]}>
 							<Image

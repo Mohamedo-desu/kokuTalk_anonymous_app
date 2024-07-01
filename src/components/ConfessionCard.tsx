@@ -2,6 +2,7 @@ import { CONFESSIONS_TYPES_STYLES } from '@/constants/confessionTypes'
 import { FEMALE_AVATARS, MALE_AVATARS } from '@/constants/userAvatars'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { AntDesign, Feather, Ionicons } from '@expo/vector-icons'
+import { useRouter } from 'expo-router'
 
 import { useMemo } from 'react'
 import { Image, Text, TouchableOpacity, View } from 'react-native'
@@ -36,6 +37,16 @@ const ConfessionCard = ({ item }: { item: ConfessionCardProps }): JSX.Element =>
 		return gender === 'male' ? MALE_AVATARS : FEMALE_AVATARS
 	}, [gender])
 
+	const router = useRouter()
+	const goToDetails = () => {
+		// TODO: go to the confession details screen
+		router.navigate({
+			pathname: '/(main)/confession_details',
+			params: {
+				id,
+			},
+		})
+	}
 	return (
 		// Render the confession card component
 		<View style={[styles.card, { backgroundColor: theme.colors.gray[100] }]}>
@@ -66,7 +77,7 @@ const ConfessionCard = ({ item }: { item: ConfessionCardProps }): JSX.Element =>
 				</TouchableOpacity>
 			</View>
 
-			<View style={styles.body}>
+			<TouchableOpacity onPress={goToDetails} style={styles.body} activeOpacity={0.7}>
 				<View
 					style={[
 						styles.confessionTypeCon,
@@ -80,7 +91,7 @@ const ConfessionCard = ({ item }: { item: ConfessionCardProps }): JSX.Element =>
 				<Text style={[styles.confessionText, { color: theme.colors.typography }]} numberOfLines={5}>
 					{confession}
 				</Text>
-			</View>
+			</TouchableOpacity>
 
 			<View style={styles.timeCon}>
 				<Text style={[styles.timeText, { color: theme.colors.gray[400] }]}>

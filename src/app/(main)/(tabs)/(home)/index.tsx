@@ -13,7 +13,7 @@ import { createStyleSheet, useStyles } from 'react-native-unistyles'
 const HomePage = () => {
 	const { theme, styles } = useStyles(stylesheet)
 	const safeAreaInsets = useSafeAreaInsets()
-	const [loading, setLoading] = useState(false)
+	const [loading, setLoading] = useState(true)
 
 	const renderConfessionCard = useCallback(({ item }: { item: (typeof CONFESSIONS)[0] }) => {
 		if (!item) {
@@ -35,6 +35,11 @@ const HomePage = () => {
 
 	useEffect(() => {
 		// TODO: fetch confessions from server or local database
+		const timeOut = setTimeout(() => {
+			setLoading(false)
+		}, 2000)
+
+		return () => clearTimeout(timeOut)
 	}, [])
 
 	return (
