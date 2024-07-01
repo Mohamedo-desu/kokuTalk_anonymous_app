@@ -1,11 +1,11 @@
-import { BLUR_HASH, FEMALE_AVATARS, MALE_AVATARS } from '@/constants'
+import { FEMALE_AVATARS, MALE_AVATARS } from '@/constants/userAvatars'
 import { signUpStore } from '@/store/authStore'
 import { useUserStoreSelectors } from '@/store/useUserStore'
 import { DEVICE_WIDTH } from '@/utils'
 import { Ionicons } from '@expo/vector-icons'
-import { Image } from 'expo-image'
+
 import { ForwardedRef, forwardRef, useMemo, useState } from 'react'
-import { FlatList, Text, TouchableOpacity, View } from 'react-native'
+import { FlatList, Image, Text, TouchableOpacity, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
@@ -57,11 +57,9 @@ const ProfileSetup = forwardRef(
 							<Image
 								key={avatar}
 								source={{ uri: avatar }}
-								contentFit="contain"
-								transition={100 * index}
+								resizeMode="contain"
 								style={styles.image}
 								alt="avatar"
-								placeholder={BLUR_HASH}
 							/>
 							{profile === avatar && (
 								<Ionicons
@@ -124,7 +122,6 @@ const stylesheet = createStyleSheet({
 		flexDirection: 'row',
 		alignContent: 'center',
 		flexWrap: 'wrap',
-		gap: moderateScale(15),
 		width: '95%',
 	},
 	footer: {
@@ -139,6 +136,7 @@ const stylesheet = createStyleSheet({
 		borderRadius: moderateScale(5),
 		justifyContent: 'center',
 		alignItems: 'center',
+		margin: moderateScale(5),
 	},
 	mark: { position: 'absolute', top: '5%', right: '5%' },
 	image: { width: moderateScale(80), height: '100%' },

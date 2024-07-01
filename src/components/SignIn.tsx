@@ -1,6 +1,7 @@
 import Input from '@/components/Input'
 import Loader from '@/components/Loader'
-import { MALE_AVATARS } from '@/constants'
+import { MALE_AVATARS } from '@/constants/userAvatars'
+
 import { SignInValidationSchema } from '@/services/validations'
 import { signIn } from '@/store/authStore'
 import { DEVICE_WIDTH, getStoredValues } from '@/utils'
@@ -31,7 +32,7 @@ const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 				email,
 				password,
 				gender: 'male',
-				profile: MALE_AVATARS[5],
+				profile: MALE_AVATARS[4],
 				age: '21',
 				displayName: 'john Doe',
 				useName: '@john',

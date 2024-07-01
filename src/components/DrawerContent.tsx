@@ -1,12 +1,10 @@
-import { BLUR_HASH } from '@/constants'
 import { logOut } from '@/store/authStore'
 import { useUserStoreSelectors } from '@/store/useUserStore'
 import { Fontisto, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { DrawerContentComponentProps } from '@react-navigation/drawer'
-import { Image } from 'expo-image'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useState } from 'react'
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
@@ -48,9 +46,7 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 						<Image
 							source={{ uri: profile }}
 							style={{ width: 100, height: 100, borderRadius: moderateScale(50) }}
-							contentFit="cover"
-							transition={500}
-							placeholder={BLUR_HASH}
+							resizeMode="cover"
 						/>
 					</TouchableOpacity>
 					<Text
@@ -67,7 +63,7 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 							fontSize: moderateScale(16),
 							color: 'rgba(255,255,255,.4)',
 						}}>
-						{age}.{gender}
+						{age}.{gender.charAt(0)}
 					</Text>
 				</View>
 				<View

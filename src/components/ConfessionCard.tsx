@@ -1,9 +1,10 @@
-import { BLUR_HASH, FEMALE_AVATARS, MALE_AVATARS } from '@/constants'
+import { CONFESSIONS_TYPES_STYLES } from '@/constants/confessionTypes'
+import { FEMALE_AVATARS, MALE_AVATARS } from '@/constants/userAvatars'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { AntDesign, Feather, Ionicons } from '@expo/vector-icons'
-import { Image } from 'expo-image'
+
 import { useMemo } from 'react'
-import { Text, TouchableOpacity, View } from 'react-native'
+import { Image, Text, TouchableOpacity, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
@@ -37,18 +38,12 @@ const ConfessionCard = ({ item }: { item: ConfessionCardProps }): JSX.Element =>
 
 	return (
 		// Render the confession card component
-		<View style={[styles.card, { backgroundColor: theme.colors.background }]}>
+		<View style={[styles.card, { backgroundColor: theme.colors.gray[100] }]}>
 			<View style={styles.header}>
 				<View style={styles.confessedUser}>
 					<View style={styles.imageCon}>
 						{/* Render the profile image */}
-						<Image
-							source={{ uri: PROFILE_AVATARS[id] }}
-							style={styles.image}
-							contentFit="cover"
-							placeholder={BLUR_HASH}
-							transition={1000}
-						/>
+						<Image source={{ uri: PROFILE_AVATARS[id] }} style={styles.image} resizeMode="cover" />
 					</View>
 					<View>
 						{/* Render the display name */}
@@ -72,7 +67,14 @@ const ConfessionCard = ({ item }: { item: ConfessionCardProps }): JSX.Element =>
 			</View>
 
 			<View style={styles.body}>
-				<View style={[styles.confessionTypeCon, { backgroundColor: theme.colors.primary[500] }]}>
+				<View
+					style={[
+						styles.confessionTypeCon,
+						{
+							backgroundColor:
+								CONFESSIONS_TYPES_STYLES[type]?.backgroundColor || theme.colors.primary[500],
+						},
+					]}>
 					<Text style={[styles.confessionTypeText, { color: theme.colors.white }]}>#{type}</Text>
 				</View>
 				<Text style={[styles.confessionText, { color: theme.colors.typography }]} numberOfLines={5}>

@@ -1,13 +1,12 @@
-import { BLUR_HASH, FEMALE_AVATARS, MALE_AVATARS } from '@/constants'
+import { FEMALE_AVATARS, MALE_AVATARS } from '@/constants/userAvatars'
 import { useUserStoreSelectors } from '@/store/useUserStore'
 import { Ionicons } from '@expo/vector-icons'
 import { DrawerActions } from '@react-navigation/native'
 import { BlurView } from 'expo-blur'
-import { Image } from 'expo-image'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation } from 'expo-router'
 import React, { useMemo } from 'react'
-import { Modal, TouchableOpacity } from 'react-native'
+import { Image, Modal, TouchableOpacity } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
@@ -31,7 +30,7 @@ const SelectAvatarModal = ({ visible, onClose }: { visible: boolean; onClose: ()
 	}, [gender])
 
 	return (
-		<Modal visible={visible} transparent animationType="slide">
+		<Modal visible={visible} transparent animationType="fade">
 			<BlurView intensity={5} style={styles.blurContainer} experimentalBlurMethod="dimezisBlurView">
 				<LinearGradient
 					colors={[theme.colors.background, theme.colors.gray[100]]}
@@ -53,11 +52,9 @@ const SelectAvatarModal = ({ visible, onClose }: { visible: boolean; onClose: ()
 							<Image
 								key={avatar}
 								source={{ uri: avatar }}
-								contentFit="contain"
-								transition={100 * index}
+								resizeMode="contain"
 								style={styles.image}
 								alt="avatar"
-								placeholder={BLUR_HASH}
 							/>
 							{profile === avatar && (
 								<Ionicons
@@ -81,9 +78,8 @@ const stylesheet = createStyleSheet({
 	content: {
 		width: '95%',
 		padding: moderateScale(10),
-		gap: moderateScale(10),
-		borderRadius: moderateScale(10),
 		justifyContent: 'space-between',
+		borderRadius: moderateScale(10),
 		alignItems: 'center',
 		flexDirection: 'row',
 		alignContent: 'center',
@@ -101,6 +97,8 @@ const stylesheet = createStyleSheet({
 		borderRadius: moderateScale(5),
 		justifyContent: 'center',
 		alignItems: 'center',
+		alignSelf: 'center',
+		margin: moderateScale(5),
 	},
 	mark: { position: 'absolute', top: '2%', right: '2%' },
 	image: { width: moderateScale(80), height: '100%' },
