@@ -18,7 +18,7 @@ interface InputProps {
 	handleChange: (value: string) => void
 	handleBlur: (event: NativeSyntheticEvent<TextInputFocusEventData>) => void
 	autoComplete: TextInputProps['autoComplete']
-	maxLength: number
+	maxLength?: number
 	keyboardType?: TextInputProps['keyboardType']
 	secureTextEntry?: boolean
 }

@@ -10,9 +10,9 @@ import { Drawer } from 'expo-router/drawer'
 const MainLayout = (): JSX.Element => {
 	return (
 		<Drawer
-			screenOptions={{ headerShown: false, drawerType: 'slide' }}
+			screenOptions={{ headerShown: false, drawerType: 'slide', swipeEnabled: true }}
 			backBehavior="history"
-			drawerContent={DrawerContent}>
+			drawerContent={(props) => <DrawerContent {...props} />}>
 			<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 		</Drawer>
 	)

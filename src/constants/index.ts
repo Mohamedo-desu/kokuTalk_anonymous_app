@@ -1,17 +1,29 @@
 export const appName = 'KokuTalk'
 
-export const placeHolder =
+export const BLUR_HASH = 'LDLMh=3Y03MKxzOY=.v}2i+@ufxW'
+
+export const PLACE_HOLDER =
 	'https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png?20150327203541'
 
-export const PROFILE_AVATARS = [
-	'https://robohash.org/7ddb7b5872971ffee23f156d169b9782.png?set=set1',
-	'https://robohash.org/620dc889b2b7c89339137eadac2d991d.png?set=set4',
-	'https://robohash.org/962ab88db8f6839ab329bc27e249fdee.png?set=set1',
-	'https://robohash.org/bd4b31b4569deed093f433901e6011b8.png?set=set4',
-	'https://robohash.org/503664fbe1ca372236938f1b101d58c1.png?set=set3',
-	'https://robohash.org/ea415f874cf6d5dddff94022678f17f0.png?set=set2',
-	'https://robohash.org/ee56e72bca0d0157644c4b8093829c55.png?set=set3',
-	'https://robohash.org/ceaafbf7d0a5f5bcb4a9bec12d1bc77b.png?set=set3',
-	'https://robohash.org/a20a5e796f499769bfa8aea2383aa7ce.png?set=set4',
-	'https://robohash.org/d5d2de0ee4206151d3c7c5f776dffcb3.png?set=set4',
+export const FEMALE_AVATARS = [
+	'https://drive.google.com/uc?export=view&id=1KZsbPEGGUrVvy8-hHum7jUTR10bOh3wK',
+	'https://drive.google.com/uc?export=view&id=1bzG0WgILaMuFbHEbff23TIt0ozvr5-bt',
+	'https://drive.google.com/uc?export=view&id=1HWoJLgTsGO4l2PW13F_Mz1CWaZ8JGx6l',
+	'https://drive.google.com/uc?export=view&id=1xhZaZ5HmHag6xRpuv5mV4HUk-KjGuXgS',
+	'https://drive.google.com/uc?export=view&id=1wQSASs8fIPp8IxVDQBkS0crKeeLtLHyg',
+	'https://drive.google.com/uc?export=view&id=1NpNbOVkdu9ypDMh8j6a4ldpXWfbH6k10',
+	'https://drive.google.com/uc?export=view&id=1gn5bA26fBU70ElZqeZN0o9WzYagh_tlB',
+	'https://drive.google.com/uc?export=view&id=1qE9hUODIsLSC89wzmykt6TLZImOq9UQM',
+	'https://drive.google.com/uc?export=view&id=1O3UV-YbkXEjNQT84-LDnV7MP6pMwpg4b',
+]
+export const MALE_AVATARS = [
+	'https://drive.google.com/uc?export=view&id=19yEgFpBiFDmBp97hd761KvuQlflnOkGV',
+	'https://drive.google.com/uc?export=view&id=1FkXJwPe7CccYoHLs6CWiMrPyLFv9p4Px',
+	'https://drive.google.com/uc?export=view&id=1mHXmiIsBsp9faKxQab-itlBGq2qgGoPL',
+	'https://drive.google.com/uc?export=view&id=19qnVGeuJzu74rTa6hUBhKc1iqwhIkjuB',
+	'https://drive.google.com/uc?export=view&id=1TQJNcS-zgs-RqTvoTaybr0QEdstKah5R',
+	'https://drive.google.com/uc?export=view&id=1Es7ujRYEGwt6ZyA5lbhLmAHDdPI9GH_A',
+	'https://drive.google.com/uc?export=view&id=1jiZ-UGj0C-kAKGC9Xu1Hv_6SYVda4WBG',
+	'https://drive.google.com/uc?export=view&id=1x71YtO88zXYPQ4avlIOPRLsJUfBnN_dh',
+	'https://drive.google.com/uc?export=view&id=17x6OvbO7vFWDYwF9R5i3z0M_LKFU-CYr',
 ]

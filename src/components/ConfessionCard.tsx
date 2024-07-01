@@ -1,7 +1,8 @@
-import { PROFILE_AVATARS } from '@/constants'
+import { BLUR_HASH, FEMALE_AVATARS, MALE_AVATARS } from '@/constants'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { AntDesign, Feather, Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
+import { useMemo } from 'react'
 import { Text, TouchableOpacity, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
@@ -30,6 +31,10 @@ const ConfessionCard = ({ item }: { item: ConfessionCardProps }): JSX.Element =>
 	const { id, displayName, gender, age, favorite, likes, comments, confession, type, createdAt } =
 		item
 
+	const PROFILE_AVATARS = useMemo(() => {
+		return gender === 'male' ? MALE_AVATARS : FEMALE_AVATARS
+	}, [gender])
+
 	return (
 		// Render the confession card component
 		<View style={[styles.card, { backgroundColor: theme.colors.background }]}>
@@ -41,7 +46,8 @@ const ConfessionCard = ({ item }: { item: ConfessionCardProps }): JSX.Element =>
 							source={{ uri: PROFILE_AVATARS[id] }}
 							style={styles.image}
 							contentFit="cover"
-							transition={500}
+							placeholder={BLUR_HASH}
+							transition={1000}
 						/>
 					</View>
 					<View>
