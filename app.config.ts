@@ -1,8 +1,8 @@
-import { appName } from '@/constants/appDetails'
 import 'dotenv/config'
+
 export default {
 	expo: {
-		name: appName,
+		name: 'KokuTalk',
 		slug: 'kokutalk',
 		version: '1.0.0',
 		scheme: 'kokutalk',
