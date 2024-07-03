@@ -1,8 +1,10 @@
-import { PROFILE_AVATARS } from '@/constants'
+import { FEMALE_AVATARS, MALE_AVATARS } from '@/constants/userAvatars'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { AntDesign, Feather, Ionicons } from '@expo/vector-icons'
-import { Image } from 'expo-image'
-import { Text, TouchableOpacity, View } from 'react-native'
+import { useRouter } from 'expo-router'
+
+import { useMemo } from 'react'
+import { Image, Text, TouchableOpacity, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
@@ -30,19 +32,28 @@ const ConfessionCard = ({ item }: { item: ConfessionCardProps }): JSX.Element =>
 	const { id, displayName, gender, age, favorite, likes, comments, confession, type, createdAt } =
 		item
 
+	const PROFILE_AVATARS = useMemo(() => {
+		return gender === 'male' ? MALE_AVATARS : FEMALE_AVATARS
+	}, [gender])
+
+	const router = useRouter()
+	const goToDetails = () => {
+		// TODO: go to the confession details screen
+		router.navigate({
+			pathname: '/(main)/confession_details',
+			params: {
+				id,
+			},
+		})
+	}
 	return (
 		// Render the confession card component
-		<View style={[styles.card, { backgroundColor: theme.colors.background }]}>
+		<View style={[styles.card, { backgroundColor: theme.colors.gray[100] }]}>
 			<View style={styles.header}>
 				<View style={styles.confessedUser}>
 					<View style={styles.imageCon}>
 						{/* Render the profile image */}
-						<Image
-							source={{ uri: PROFILE_AVATARS[id] }}
-							style={styles.image}
-							contentFit="cover"
-							transition={500}
-						/>
+						<Image source={{ uri: PROFILE_AVATARS[id] }} style={styles.image} resizeMode="cover" />
 					</View>
 					<View>
 						{/* Render the display name */}
@@ -65,14 +76,20 @@ const ConfessionCard = ({ item }: { item: ConfessionCardProps }): JSX.Element =>
 				</TouchableOpacity>
 			</View>
 
-			<View style={styles.body}>
-				<View style={[styles.confessionTypeCon, { backgroundColor: theme.colors.primary[500] }]}>
+			<TouchableOpacity onPress={goToDetails} style={styles.body} activeOpacity={0.7}>
+				<View
+					style={[
+						styles.confessionTypeCon,
+						{
+							backgroundColor: theme.colors.primary[500],
+						},
+					]}>
 					<Text style={[styles.confessionTypeText, { color: theme.colors.white }]}>#{type}</Text>
 				</View>
 				<Text style={[styles.confessionText, { color: theme.colors.typography }]} numberOfLines={5}>
 					{confession}
 				</Text>
-			</View>
+			</TouchableOpacity>
 
 			<View style={styles.timeCon}>
 				<Text style={[styles.timeText, { color: theme.colors.gray[400] }]}>
@@ -144,13 +161,12 @@ const stylesheet = createStyleSheet({
 		textAlign: 'justify',
 	},
 	confessionText: {
-		fontFamily: 'Medium',
+		fontFamily: 'Regular',
 		fontSize: moderateScale(13),
-		textAlign: 'justify',
 	},
 	timeCon: { marginBottom: moderateScale(10) },
 	timeText: {
-		fontFamily: 'Medium',
+		fontFamily: 'Regular',
 		fontSize: moderateScale(12),
 	},
 	footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

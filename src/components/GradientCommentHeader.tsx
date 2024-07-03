@@ -1,8 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
-import { useDrawerStatus } from '@react-navigation/drawer'
-import { DrawerActions } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useNavigation, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
 import React from 'react'
 import { Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -10,31 +8,27 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
-const MenuIcon = () => {
-	const { theme } = useStyles()
-	const navigation = useNavigation()
-	const isDrawerOpen = useDrawerStatus() === 'open'
-	return (
-		<TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
-			<Ionicons
-				name={isDrawerOpen ? 'close-outline' : 'menu-outline'}
-				size={moderateScale(25)}
-				color={theme.colors.white}
-			/>
-		</TouchableOpacity>
-	)
-}
-const AddButton = () => {
+const BackIcon = () => {
 	const { theme } = useStyles()
 	const router = useRouter()
+
 	return (
-		<TouchableOpacity onPress={() => router.navigate('add_confession')}>
-			<Ionicons name="add-sharp" size={moderateScale(25)} color={theme.colors.white} />
+		<TouchableOpacity onPress={() => router.back()}>
+			<Ionicons name={'arrow-back-outline'} size={moderateScale(25)} color={theme.colors.white} />
 		</TouchableOpacity>
 	)
 }
 
-const GradientHeader = ({ title }: { title: string }) => {
+const SettingsIcon = () => {
+	const { theme } = useStyles()
+	return (
+		<TouchableOpacity onPress={() => {}}>
+			<Ionicons name="ellipsis-vertical" size={moderateScale(25)} color={theme.colors.white} />
+		</TouchableOpacity>
+	)
+}
+
+const GradientCommentHeader = ({ title }: { title: string }) => {
 	const { theme, styles } = useStyles(stylesheet)
 	const insets = useSafeAreaInsets()
 	return (
@@ -43,15 +37,15 @@ const GradientHeader = ({ title }: { title: string }) => {
 			start={{ x: 0, y: 0 }}
 			end={{ x: 0, y: 1 }}>
 			<View style={[styles.header, { paddingTop: insets.top + moderateScale(5) }]}>
-				<MenuIcon />
+				<BackIcon />
 				<Text style={[styles.title, { color: theme.colors.white }]}>{title}</Text>
-				<AddButton />
+				<SettingsIcon />
 			</View>
 		</LinearGradient>
 	)
 }
 
-export default GradientHeader
+export default GradientCommentHeader
 
 const stylesheet = createStyleSheet({
 	title: {

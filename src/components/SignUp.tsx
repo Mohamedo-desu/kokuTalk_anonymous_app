@@ -19,12 +19,14 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 		displayName,
 		userName,
 		password,
+		email,
 	}: {
 		displayName: string
 		userName: string
 		password: string
+		email: string
 	}) => {
-		updateUser({ displayName, userName, password })
+		updateUser({ displayName, email, userName, password })
 		router.navigate('/(auth)/modal')
 	}
 
@@ -52,6 +54,7 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 				<Formik
 					initialValues={{
 						displayName: 'Display',
+						email: 'john@gmail.com',
 						userName: 'userName',
 						password: 'Xo12345678',
 					}}
@@ -70,6 +73,15 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 									handleBlur={handleBlur('displayName')}
 									autoComplete={'name'}
 									maxLength={15}
+								/>
+								<Input
+									title="Email"
+									errors={errors.email}
+									touched={touched.email}
+									value={values.email}
+									handleChange={handleChange('email')}
+									handleBlur={handleBlur('email')}
+									autoComplete={'email'}
 								/>
 								<Input
 									title="User Name"

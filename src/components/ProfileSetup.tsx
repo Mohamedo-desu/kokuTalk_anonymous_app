@@ -1,11 +1,11 @@
-import { PROFILE_AVATARS } from '@/constants'
+import { FEMALE_AVATARS, MALE_AVATARS } from '@/constants/userAvatars'
 import { signUpStore } from '@/store/authStore'
 import { useUserStoreSelectors } from '@/store/useUserStore'
 import { DEVICE_WIDTH } from '@/utils'
 import { Ionicons } from '@expo/vector-icons'
-import { Image } from 'expo-image'
-import { ForwardedRef, forwardRef, useState } from 'react'
-import { FlatList, Text, TouchableOpacity, View } from 'react-native'
+
+import { ForwardedRef, forwardRef, useMemo, useState } from 'react'
+import { FlatList, Image, Text, TouchableOpacity, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
@@ -14,7 +14,12 @@ const ProfileSetup = forwardRef(
 		const { theme, styles } = useStyles(stylesheet)
 
 		const updateUser = useUserStoreSelectors.use.updateUser()
-		const { profile, age, gender, userName, password } = useUserStoreSelectors.use.userData()
+		const { profile, age, gender, userName, password, email, displayName } =
+			useUserStoreSelectors.use.userData()
+
+		const PROFILE_AVATARS = useMemo(() => {
+			return gender === 'male' ? MALE_AVATARS : FEMALE_AVATARS
+		}, [gender])
 
 		const [isValid, setIsValid] = useState(profile?.trim().length > 0 ? true : false)
 
@@ -26,7 +31,7 @@ const ProfileSetup = forwardRef(
 		const handleSignUp = async () => {
 			if (!isValid) return
 
-			signUpStore({ userName, password, body: { gender, age, profile } })
+			signUpStore({ displayName, email, userName, password, gender, age, profile })
 		}
 		const handleGoBack = async () => {
 			if (ref && 'current' in ref && ref.current) {
@@ -52,8 +57,7 @@ const ProfileSetup = forwardRef(
 							<Image
 								key={avatar}
 								source={{ uri: avatar }}
-								contentFit="scale-down"
-								transition={100 * index}
+								resizeMode="contain"
 								style={styles.image}
 								alt="avatar"
 							/>
@@ -118,7 +122,6 @@ const stylesheet = createStyleSheet({
 		flexDirection: 'row',
 		alignContent: 'center',
 		flexWrap: 'wrap',
-		gap: moderateScale(15),
 		width: '95%',
 	},
 	footer: {
@@ -133,6 +136,7 @@ const stylesheet = createStyleSheet({
 		borderRadius: moderateScale(5),
 		justifyContent: 'center',
 		alignItems: 'center',
+		margin: moderateScale(5),
 	},
 	mark: { position: 'absolute', top: '5%', right: '5%' },
 	image: { width: moderateScale(80), height: '100%' },

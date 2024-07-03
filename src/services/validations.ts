@@ -2,6 +2,13 @@ import * as Yup from 'yup'
 
 export const SignUpValidationSchema = Yup.object().shape({
 	displayName: Yup.string().min(3).max(15).required().label('display name'),
+	email: Yup.string()
+		.email()
+		.required()
+		.label('email')
+		.test('email', 'Invalid email address', (value) => {
+			return /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value)
+		}),
 	userName: Yup.string()
 		.test('no-white-space', 'user name cannot contain white spaces', (value) => {
 			return !/\s/.test(value as string)
@@ -24,6 +31,6 @@ export const SignUpValidationSchema = Yup.object().shape({
 		.label('password'),
 })
 export const SignInValidationSchema = Yup.object().shape({
-	userName: Yup.string().min(3).max(15).required().label('user name'),
+	email: Yup.string().email().required().label('email'),
 	password: Yup.string().min(8).max(35).required().label('password'),
 })

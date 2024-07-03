@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { createSelectors } from './createSelectors'
+import { useUserStoreSelectors } from './useUserStore'
 
 export interface AuthState {
 	currentUser: any
@@ -19,8 +20,8 @@ interface AuthActions {
 
 const initialState: AuthState = {
 	currentUser: {} as any,
-	didTryAutoLogin: true,
-	isAuthenticated: true,
+	didTryAutoLogin: false,
+	isAuthenticated: false,
 	isLoggingOut: false,
 }
 
@@ -39,27 +40,27 @@ const useAuthStore = create<AuthState & AuthActions>((set) => ({
 
 export const useAuthStoreSelectors = createSelectors(useAuthStore)
 
-export const signIn = async ({ email, password }: { email: string; password: string }) => {
+export const signIn = async (body: any) => {
 	const setDidTryAutoLogin = useAuthStoreSelectors.getState().setDidTryAutoLogin
 	const authenticateUser = useAuthStoreSelectors.getState().authenticateUser
-	const setCurrentUser = useAuthStoreSelectors.getState().setCurrentUser
-	const setRTokenTimerIntervalId = useAuthStoreSelectors.getState().setRTokenTimerIntervalId
+	const updateUser = useUserStoreSelectors.getState().updateUser
 
 	try {
+		updateUser(body)
+		authenticateUser()
+		setDidTryAutoLogin()
 	} catch (error) {
 		console.error('Failed to sign in:', error)
-	} finally {
-		setDidTryAutoLogin()
 	}
 }
 
-export const signUpStore = async ({ userName, password, body }: any) => {
+export const signUpStore = async (body: any) => {
 	const setDidTryAutoLogin = useAuthStoreSelectors.getState().setDidTryAutoLogin
 	const authenticateUser = useAuthStoreSelectors.getState().authenticateUser
-	const setCurrentUser = useAuthStoreSelectors.getState().setCurrentUser
+	const updateUser = useUserStoreSelectors.getState().updateUser
 
 	try {
-		setCurrentUser({ userName, password, body })
+		updateUser(body)
 		authenticateUser()
 		setDidTryAutoLogin()
 	} catch (error) {
@@ -68,10 +69,10 @@ export const signUpStore = async ({ userName, password, body }: any) => {
 }
 
 export const logOut = async () => {
-	const setIsLoggingOut = useAuthStoreSelectors.getState().setIsLoggingOut
-	const logOutAction = useAuthStoreSelectors.getState().logOut
+	const logOut = useAuthStoreSelectors.getState().logOut
 
 	try {
+		logOut()
 	} catch (error) {
 		console.error('Failed to log out:', error)
 	}

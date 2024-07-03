@@ -1,7 +1,10 @@
 import Input from '@/components/Input'
 import Loader from '@/components/Loader'
+import { MALE_AVATARS } from '@/constants/userAvatars'
 import { SignInValidationSchema } from '@/services/validations'
-import { DEVICE_WIDTH, getStoredValues } from '@/utils'
+import { signIn } from '@/store/authStore'
+import { DEVICE_WIDTH } from '@/utils'
+import { getStoredValues } from '@/utils/storageUtils'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Formik } from 'formik'
 import React, { ForwardedRef, forwardRef, useEffect, useState } from 'react'
@@ -14,17 +17,26 @@ const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 	const { theme, styles } = useStyles(stylesheet)
 	const [loading, setLoading] = useState(false)
 
-	const [userName, setUserName] = useState('')
+	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
 
 	useEffect(() => {
 		const { userName, password } = getStoredValues(['userName', 'password'])
-		setUserName(userName)
-		setPassword(password)
+		setEmail('john@gmail.com')
+		setPassword('Ug12345678')
 	}, [])
 
-	const handleSignIn = async ({ userName, password }: { userName: string; password: string }) => {
+	const handleSignIn = async ({ email, password }: { email: string; password: string }) => {
 		try {
+			signIn({
+				email,
+				password,
+				gender: 'male',
+				profile: MALE_AVATARS[4],
+				age: '21',
+				displayName: 'john Doe',
+				useName: '@john',
+			})
 		} catch (error) {}
 	}
 
@@ -48,7 +60,7 @@ const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 					flexGrow: 1,
 				}}>
 				<Formik
-					initialValues={{ userName, password }}
+					initialValues={{ email, password }}
 					enableReinitialize
 					validationSchema={SignInValidationSchema}
 					onSubmit={(values) => handleSignIn(values)}>
@@ -56,14 +68,13 @@ const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 						<View style={styles.formikContainer}>
 							<View style={[styles.form, { backgroundColor: theme.colors.primary[500] }]}>
 								<Input
-									title="user name"
-									errors={errors.userName}
-									touched={touched.userName}
-									value={values.userName}
-									handleChange={handleChange('userName')}
-									handleBlur={handleBlur('userName')}
-									autoComplete={'username'}
-									maxLength={15}
+									title="Email"
+									errors={errors.email}
+									touched={touched.email}
+									value={values.email}
+									handleChange={handleChange('email')}
+									handleBlur={handleBlur('email')}
+									autoComplete={'email'}
 								/>
 								<Input
 									title="password"

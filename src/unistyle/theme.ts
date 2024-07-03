@@ -30,7 +30,7 @@ const margins = {
 }
 export const lightTheme = {
 	colors: {
-		typography: '#000000',
+		typography: 'black',
 		background: '#ffffff',
 		gray: {
 			500: '#9E9E9E',
@@ -55,7 +55,7 @@ export const lightTheme = {
 
 export const darkTheme = {
 	colors: {
-		typography: '#ffffff',
+		typography: 'white',
 		background: '#141414',
 		gray: {
 			500: '#B0B0B0',

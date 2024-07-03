@@ -1,4 +1,5 @@
 import DrawerContent from '@/components/DrawerContent'
+import GradientCommentHeader from '@/components/GradientCommentHeader'
 import { Stack } from 'expo-router'
 import { Drawer } from 'expo-router/drawer'
 
@@ -10,10 +11,44 @@ import { Drawer } from 'expo-router/drawer'
 const MainLayout = (): JSX.Element => {
 	return (
 		<Drawer
-			screenOptions={{ headerShown: false, drawerType: 'slide' }}
+			screenOptions={{ headerShown: false, drawerType: 'slide', swipeEnabled: true }}
 			backBehavior="history"
-			drawerContent={DrawerContent}>
+			drawerContent={(props) => <DrawerContent {...props} />}>
 			<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+			<Stack.Screen
+				name="confession_details"
+				options={{
+					headerShown: true,
+					header: () => <GradientCommentHeader title="Comments" />,
+					animation: 'slide_from_right',
+					animationTypeForReplace: 'pop',
+					presentation: 'modal',
+				}}
+			/>
+			<Stack.Screen
+				name="my_confessions"
+				options={{
+					headerShown: true,
+					header: () => <GradientCommentHeader title={'My Confessions'} />,
+				}}
+			/>
+			<Stack.Screen
+				name="saved_confessions"
+				options={{
+					headerShown: true,
+					header: () => <GradientCommentHeader title={'Saved Confessions'} />,
+				}}
+			/>
+			<Stack.Screen
+				name="add_confession"
+				options={{
+					headerShown: true,
+					header: () => <GradientCommentHeader title={'Add Confession'} />,
+					presentation: 'modal',
+					animation: 'slide_from_bottom',
+					animationTypeForReplace: 'push',
+				}}
+			/>
 		</Drawer>
 	)
 }

@@ -16,7 +16,8 @@ const AgeSetup = forwardRef(
 		const [isValid, setIsValid] = useState(age?.trim().length > 0 ? true : false)
 
 		const handleSelectAge = (age: string) => {
-			updateUser({ age })
+			updateUser({ age: Math.round(parseInt(age)).toString() })
+
 			setIsValid(true)
 		}
 
@@ -37,8 +38,8 @@ const AgeSetup = forwardRef(
 					<RulerPicker
 						min={18}
 						max={81}
-						step={0.5}
-						fractionDigits={1}
+						step={1}
+						fractionDigits={0}
 						initialValue={parseFloat(age) || 18}
 						gapBetweenSteps={moderateScale(35)}
 						indicatorColor={theme.colors.white}
@@ -50,7 +51,7 @@ const AgeSetup = forwardRef(
 						valueTextStyle={{ fontSize: moderateScale(40), color: theme.colors.white }}
 						unitTextStyle={{ fontSize: moderateScale(20), color: theme.colors.white }}
 						stepWidth={moderateScale(3)}
-						onValueChangeEnd={(number) => handleSelectAge(number.toString())}
+						onValueChangeEnd={(number) => handleSelectAge(number)}
 						unit="years old"
 					/>
 				</View>

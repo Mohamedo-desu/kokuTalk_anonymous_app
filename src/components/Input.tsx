@@ -1,4 +1,4 @@
-import React, { memo } from 'react'
+import React from 'react'
 import {
 	NativeSyntheticEvent,
 	Text,
@@ -16,9 +16,9 @@ interface InputProps {
 	touched?: boolean
 	value: string
 	handleChange: (value: string) => void
-	handleBlur: (event: NativeSyntheticEvent<TextInputFocusEventData>) => void
+	handleBlur?: (event: NativeSyntheticEvent<TextInputFocusEventData>) => void
 	autoComplete: TextInputProps['autoComplete']
-	maxLength: number
+	maxLength?: number
 	keyboardType?: TextInputProps['keyboardType']
 	secureTextEntry?: boolean
 }
@@ -59,7 +59,7 @@ const Input = ({
 	)
 }
 
-export default memo(Input)
+export default Input
 
 const stylesheet = createStyleSheet({
 	label: {

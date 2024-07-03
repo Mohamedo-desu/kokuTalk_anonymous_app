@@ -2,7 +2,7 @@ import 'dotenv/config'
 
 export default {
 	expo: {
-		name: 'KokuTalk-Anonymous',
+		name: 'KokuTalk',
 		slug: 'kokutalk',
 		version: '1.0.0',
 		scheme: 'kokutalk',
@@ -13,6 +13,7 @@ export default {
 		},
 		plugins: [
 			'expo-router',
+			'expo-secure-store',
 			[
 				'expo-updates',
 				{

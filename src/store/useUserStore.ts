@@ -8,6 +8,7 @@ export interface UserState {
 		profile: string
 		email: string
 		userName: string
+		displayName: string
 		password: string
 	}
 }

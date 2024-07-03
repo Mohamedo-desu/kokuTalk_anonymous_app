@@ -1,4 +1,4 @@
-import { appName } from '@/constants'
+import { appName } from '@/constants/appDetails'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import React, { useEffect } from 'react'
 import { Text, View } from 'react-native'
