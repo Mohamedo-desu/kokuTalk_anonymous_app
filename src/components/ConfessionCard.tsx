@@ -1,4 +1,3 @@
-import { CONFESSIONS_TYPES_STYLES } from '@/constants/confessionTypes'
 import { FEMALE_AVATARS, MALE_AVATARS } from '@/constants/userAvatars'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { AntDesign, Feather, Ionicons } from '@expo/vector-icons'
@@ -82,8 +81,7 @@ const ConfessionCard = ({ item }: { item: ConfessionCardProps }): JSX.Element =>
 					style={[
 						styles.confessionTypeCon,
 						{
-							backgroundColor:
-								CONFESSIONS_TYPES_STYLES[type]?.backgroundColor || theme.colors.primary[500],
+							backgroundColor: theme.colors.primary[500],
 						},
 					]}>
 					<Text style={[styles.confessionTypeText, { color: theme.colors.white }]}>#{type}</Text>
@@ -163,13 +161,12 @@ const stylesheet = createStyleSheet({
 		textAlign: 'justify',
 	},
 	confessionText: {
-		fontFamily: 'Medium',
+		fontFamily: 'Regular',
 		fontSize: moderateScale(13),
-		textAlign: 'justify',
 	},
 	timeCon: { marginBottom: moderateScale(10) },
 	timeText: {
-		fontFamily: 'Medium',
+		fontFamily: 'Regular',
 		fontSize: moderateScale(12),
 	},
 	footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

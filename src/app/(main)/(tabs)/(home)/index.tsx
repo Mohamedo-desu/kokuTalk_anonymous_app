@@ -1,6 +1,7 @@
 import ConfessionCard from '@/components/ConfessionCard'
 import Skeleton from '@/components/Skeleton'
 import { CONFESSIONS } from '@/constants/confessionTypes'
+import { CONFESSIONSPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
 import { FlashList } from '@shopify/flash-list'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -14,6 +15,7 @@ const HomePage = () => {
 	const { theme, styles } = useStyles(stylesheet)
 	const safeAreaInsets = useSafeAreaInsets()
 	const [loading, setLoading] = useState(true)
+	const [confessions, setConfessions] = useState<CONFESSIONSPROPS[]>([])
 
 	const renderConfessionCard = useCallback(({ item }: { item: (typeof CONFESSIONS)[0] }) => {
 		if (!item) {
@@ -31,11 +33,12 @@ const HomePage = () => {
 				</Text>
 			</View>
 		)
-	}, [])
+	}, [theme.colors.gray[400]])
 
 	useEffect(() => {
 		// TODO: fetch confessions from server or local database
 		const timeOut = setTimeout(() => {
+			setConfessions(CONFESSIONS)
 			setLoading(false)
 		}, 2000)
 
@@ -66,19 +69,19 @@ const HomePage = () => {
 							/>
 						))}
 				</ScrollView>
-			) : CONFESSIONS.length > 0 ? (
+			) : confessions.length > 0 ? (
 				<FlashList
-					data={CONFESSIONS}
+					data={confessions}
 					renderItem={renderConfessionCard}
 					keyExtractor={(item) => item?.id?.toString() || ''}
 					contentContainerStyle={{
 						paddingBottom: safeAreaInsets.bottom + moderateScale(80),
 						paddingTop: moderateScale(10),
 					}}
-					showsVerticalScrollIndicator={false}
 					alwaysBounceHorizontal
 					automaticallyAdjustContentInsets
 					estimatedItemSize={200}
+					indicatorStyle={theme.colors.typography}
 				/>
 			) : (
 				<ListEmptyComponent />
