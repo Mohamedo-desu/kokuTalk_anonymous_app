@@ -15,8 +15,8 @@ const AgeSetup = forwardRef(
 
 		const [isValid, setIsValid] = useState(age?.trim().length > 0 ? true : false)
 
-		const handleSelectAge = (age: number) => {
-			updateUser({ age: Math.round(age).toString() })
+		const handleSelectAge = (age: string) => {
+			updateUser({ age: Math.round(parseInt(age)).toString() })
 
 			setIsValid(true)
 		}

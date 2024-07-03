@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useDrawerStatus } from '@react-navigation/drawer'
 import { DrawerActions } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useNavigation } from 'expo-router'
+import { useNavigation, useRouter } from 'expo-router'
 import React from 'react'
 import { Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -26,8 +26,9 @@ const MenuIcon = () => {
 }
 const AddButton = () => {
 	const { theme } = useStyles()
+	const router = useRouter()
 	return (
-		<TouchableOpacity onPress={() => {}}>
+		<TouchableOpacity onPress={() => router.navigate('add_confession')}>
 			<Ionicons name="add-sharp" size={moderateScale(25)} color={theme.colors.white} />
 		</TouchableOpacity>
 	)

@@ -39,6 +39,16 @@ const MainLayout = (): JSX.Element => {
 					header: () => <GradientCommentHeader title={'Saved Confessions'} />,
 				}}
 			/>
+			<Stack.Screen
+				name="add_confession"
+				options={{
+					headerShown: true,
+					header: () => <GradientCommentHeader title={'Add Confession'} />,
+					presentation: 'modal',
+					animation: 'slide_from_bottom',
+					animationTypeForReplace: 'push',
+				}}
+			/>
 		</Drawer>
 	)
 }

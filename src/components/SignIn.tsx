@@ -1,10 +1,10 @@
 import Input from '@/components/Input'
 import Loader from '@/components/Loader'
 import { MALE_AVATARS } from '@/constants/userAvatars'
-
 import { SignInValidationSchema } from '@/services/validations'
 import { signIn } from '@/store/authStore'
-import { DEVICE_WIDTH, getStoredValues } from '@/utils'
+import { DEVICE_WIDTH } from '@/utils'
+import { getStoredValues } from '@/utils/storageUtils'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Formik } from 'formik'
 import React, { ForwardedRef, forwardRef, useEffect, useState } from 'react'
