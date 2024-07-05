@@ -13,9 +13,7 @@ export const SignUpValidationSchema = Yup.object().shape({
 		.test('no-white-space', 'user name cannot contain white spaces', (value) => {
 			return !/\s/.test(value as string)
 		}) // Test if value contains white spaces
-		.test('no-special-chars', 'user name cannot contain special characters', (value) => {
-			return /^[a-zA-Z0-9]+$/.test(value as string)
-		}) // Test if value contains special characters
+		.matches(/^@[^-]/, 'user name must start with "@" symbol')
 		.min(3)
 		.max(15)
 		.required()

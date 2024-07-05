@@ -12,7 +12,8 @@ export interface CONFESSIONSPROPS {
 	gender: string
 	age: string
 	favorite: boolean
-	likes: string
+	dislikes: string[]
+	likes: string[]
 	comments: string
 	confession: string
 	type: string

@@ -2,16 +2,18 @@
   "name": "kokutalk",
   "version": "1.0.0",
   "main": "expo-router/entry",
-  "author": {"email": "omkahub@gmail.com", "name": "Mohamedo Desu"},
+  "author": {
+    "email": "omkahub@gmail.com",
+    "name": "Mohamedo Desu"
+  },
   "description": "KokuTalk is a confession app where users can share their secrets and confessions anonymously. The app utilizes the following technologies and libraries: React Native, Expo, Supabase",
-
   "scripts": {
     "start": "expo start",
     "build:android": "npx eas-cli build -p android --profile preview",
     "offline": "expo start --offline",
     "publish:expo": "eas update --branch preview && npx sentry-expo-upload-sourcemaps dist",
     "publish:sentry": "npx sentry-expo-upload-sourcemaps dist",
-    "upgrade": "npx expo upgrade",
+    "upgrade": "npm install expo@latest && npx expo install --fix",
     "android": "npx expo run:android",
     "test": "jest --watchAll",
     "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" && prettier -c \"**/*.{js,jsx,ts,tsx,json}\"",
@@ -20,24 +22,27 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",
+    "@react-native-async-storage/async-storage": "^1.23.1",
     "@react-navigation/drawer": "^6.6.15",
     "@react-navigation/native": "^6.1.7",
     "@sentry/react-native": "~5.20.0",
     "@shopify/flash-list": "1.6.3",
+    "@supabase/supabase-js": "^2.44.2",
     "dayjs": "^1.11.11",
     "dotenv": "^16.4.5",
     "expo": "~50.0.17",
     "expo-blur": "~12.9.2",
-    "expo-constants": "~15.4.5",
+    "expo-build-properties": "~0.11.1",
+    "expo-constants": "~15.4.6",
     "expo-image-picker": "~14.7.1",
     "expo-insights": "~0.6.1",
     "expo-linear-gradient": "~12.7.2",
     "expo-linking": "~6.2.2",
-    "expo-notifications": "~0.27.7",
+    "expo-notifications": "~0.27.8",
     "expo-router": "~3.4.10",
     "expo-secure-store": "~12.8.1",
-    "expo-system-ui": "~2.9.3",
-    "expo-updates": "~0.24.12",
+    "expo-system-ui": "~2.9.4",
+    "expo-updates": "~0.24.13",
     "formik": "^2.4.6",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -50,6 +55,7 @@
     "react-native-screens": "~3.29.0",
     "react-native-size-matters": "^0.4.2",
     "react-native-unistyles": "^2.1.1",
+    "react-native-url-polyfill": "^2.0.0",
     "yup": "^1.4.0",
     "zustand": "^4.5.4"
   },
@@ -64,7 +70,7 @@
     "eslint-plugin-react": "^7.34.1",
     "eslint-plugin-react-hooks": "^4.6.0",
     "prettier": "^3.2.5",
-    "typescript": "^5.4.5"
+    "typescript": "~5.3.3"
   },
   "eslintConfig": {
     "extends": "universe/native"

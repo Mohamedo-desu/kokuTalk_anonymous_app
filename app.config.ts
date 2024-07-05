@@ -15,6 +15,19 @@ export default {
 			'expo-router',
 			'expo-secure-store',
 			[
+				'expo-build-properties',
+				{
+					android: {
+						compileSdkVersion: 34,
+						targetSdkVersion: 34,
+						buildToolsVersion: '34.0.0',
+					},
+					ios: {
+						deploymentTarget: '14.0',
+					},
+				},
+			],
+			[
 				'expo-updates',
 				{
 					username: 'mohamedo-desu',
@@ -61,6 +74,9 @@ export default {
 			},
 			package: 'com.mohamedodesu.kokutalk',
 			googleServicesFile: process.env.GOOGLE_SERVICES_JSON,
+			compileSdkVersion: 34,
+			targetSdkVersion: 34,
+			buildToolsVersion: '34.0.0',
 		},
 		updates: {
 			url: 'https://u.expo.dev/911e2d2e-e548-4ba5-94ac-a87712b2bcc9',

@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient'
 import React, { useCallback, useState } from 'react'
 import { Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
@@ -38,7 +39,10 @@ const AddConfession = () => {
 	}, [])
 
 	return (
-		<View
+		<LinearGradient
+			colors={[theme.colors.background, theme.colors.background]}
+			start={{ x: 0, y: 0 }}
+			end={{ x: 0, y: 0 }}
 			style={[
 				styles.screen,
 				{
@@ -67,13 +71,14 @@ const AddConfession = () => {
 						<TextInput
 							value={confessionTypeText}
 							onChangeText={setConfessionTypeText}
-							placeholder="Confession type ..."
+							placeholder="Confession type . . ."
 							maxLength={13}
 							cursorColor={theme.colors.primary[500]}
 							numberOfLines={1}
 							keyboardType="default"
 							autoComplete="off"
-							style={styles.confessionInput}
+							style={[styles.confessionInput, { color: theme.colors.typography }]}
+							placeholderTextColor={theme.colors.gray[400]}
 						/>
 						<TouchableOpacity
 							activeOpacity={0.7}
@@ -117,7 +122,8 @@ const AddConfession = () => {
 					textBreakStrategy="highQuality"
 					textAlign="left"
 					keyboardType="default"
-					style={styles.confessionContentInput}
+					style={[styles.confessionContentInput, { color: theme.colors.typography }]}
+					placeholderTextColor={theme.colors.gray[400]}
 					autoCorrect
 					autoCapitalize="sentences"
 					spellCheck
@@ -132,12 +138,18 @@ const AddConfession = () => {
 					styles.confessButton,
 					{
 						backgroundColor:
-							confessionContent.length === 0 ? theme.colors.gray[400] : theme.colors.primary[500],
+							confessionContent.length === 0 ? theme.colors.gray[100] : theme.colors.primary[500],
 					},
 				]}>
-				<Text style={[styles.confessButtonText, { color: theme.colors.white }]}>Confess</Text>
+				<Text
+					style={[
+						styles.confessButtonText,
+						{ color: confessionContent.length === 0 ? theme.colors.gray[300] : theme.colors.white },
+					]}>
+					Confess
+				</Text>
 			</TouchableOpacity>
-		</View>
+		</LinearGradient>
 	)
 }
 

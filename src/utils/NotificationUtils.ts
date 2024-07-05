@@ -1,4 +1,4 @@
-import { NOTIFICATION } from '@/types'
+import { NOTIFICATIONPROPS } from '@/types'
 import dayjs from 'dayjs'
 
 /**
@@ -7,16 +7,16 @@ import dayjs from 'dayjs'
  * @returns An array of sections, each containing a title of type string and data array of notifications, each with a date property of type string.
  */
 export const groupNotifications = (
-	notifications: Array<NOTIFICATION>,
+	notifications: Array<NOTIFICATIONPROPS>,
 ): Array<{
 	title: string
-	data: Array<NOTIFICATION>
+	data: Array<NOTIFICATIONPROPS>
 }> => {
 	// Sort notifications by date in ascending order
 	notifications.sort((a, b) => dayjs(b.date).diff(dayjs(a.date)))
 
-	const groupedNotifications: Record<string, Array<NOTIFICATION>> = notifications.reduce(
-		(acc: Record<string, Array<NOTIFICATION>>, notification: NOTIFICATION) => {
+	const groupedNotifications: Record<string, Array<NOTIFICATIONPROPS>> = notifications.reduce(
+		(acc: Record<string, Array<NOTIFICATIONPROPS>>, notification: NOTIFICATIONPROPS) => {
 			const notificationDate = dayjs(notification.date)
 			const groupKey = getGroupKey(notificationDate)
 

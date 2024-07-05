@@ -1,12 +1,10 @@
 import * as SecureStore from 'expo-secure-store'
 
-export const saveSecurely = (keyValuePairs: any[]) => {
+export const saveSecurely = async (keyValuePairs: any[]) => {
 	try {
 		for (const pair of keyValuePairs) {
 			if (pair.key && pair.value !== undefined) {
-				console.log(pair.key, pair.value)
-
-				SecureStore.setItemAsync(pair.key, pair.value)
+				await SecureStore.setItemAsync(pair.key, pair.value)
 			}
 		}
 	} catch (error) {
@@ -14,12 +12,12 @@ export const saveSecurely = (keyValuePairs: any[]) => {
 	}
 }
 
-export const getStoredValues = (keys: string[]) => {
+export const getStoredValues = async (keys: string[]) => {
 	const values: any = {}
 
 	try {
 		for (const key of keys) {
-			values[key] = SecureStore.getItemAsync(key)
+			values[key] = await SecureStore.getItemAsync(key)
 		}
 	} catch (error) {
 		console.error('Error retrieving stored values:', error)
@@ -28,10 +26,10 @@ export const getStoredValues = (keys: string[]) => {
 	return values
 }
 
-export const deleteStoredValues = (keys: string[]) => {
+export const deleteStoredValues = async (keys: string[]) => {
 	try {
 		for (const key of keys) {
-			SecureStore.deleteItemAsync(key)
+			await SecureStore.deleteItemAsync(key)
 		}
 	} catch (error) {
 		console.error('Error deleting stored values:', error)

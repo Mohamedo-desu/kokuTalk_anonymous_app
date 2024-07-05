@@ -3,18 +3,19 @@ import { createSelectors } from './createSelectors'
 
 export interface UserState {
 	userData: {
+		id: string
+		displayName: string
+		userName: string
+		email: string
 		gender: string
 		age: string
-		profile: string
-		email: string
-		userName: string
-		displayName: string
-		password: string
+		photoURL: string
 	}
 }
 
 interface AuthActions {
-	updateUser: (user: any) => void
+	updateUser: (user: Partial<UserState['userData']>) => void
+	setUserData: (user: UserState['userData']) => void
 }
 
 const initialState: UserState = {
@@ -23,6 +24,7 @@ const initialState: UserState = {
 
 const useUserStore = create<UserState & AuthActions>((set) => ({
 	...initialState,
+	setUserData: (userData) => set({ userData }),
 	updateUser: (user: any) => set((state) => ({ userData: { ...state.userData, ...user } })),
 }))
 

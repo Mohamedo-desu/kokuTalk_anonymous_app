@@ -1,6 +1,7 @@
 import ConfessionCard from '@/components/ConfessionCard'
 import Skeleton from '@/components/Skeleton'
-import { CONFESSIONS } from '@/constants/confessionTypes'
+import { CONFESSIONS } from '@/dummyData/confessions'
+
 import { CONFESSIONSPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
 import { FlashList } from '@shopify/flash-list'

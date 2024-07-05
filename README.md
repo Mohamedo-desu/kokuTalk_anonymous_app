@@ -1,10 +1,10 @@
-# KokuTalk-Anonymous 💻
+# KokuTalk 💻
 
 [![GitHub stars](https://img.shields.io/github/stars/Mohamedo-desu/KokuTalk-Anonymous.svg?style=social)](https://github.com/Mohamedo-desu/KokuTalk-Anonymous) [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/YOURUSERNAME)
 
 ## Description
 
-KokuTalk-Anonymous is a confession app where users can share their secrets and confessions anonymously. The app utilizes the following technologies and libraries:
+KokuTalk is a confession app where users can share their secrets and confessions anonymously. The app utilizes the following technologies and libraries:
 
 - React Native
 - Expo

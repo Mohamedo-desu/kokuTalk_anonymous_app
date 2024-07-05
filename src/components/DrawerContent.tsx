@@ -1,5 +1,6 @@
-import { logOut } from '@/store/authStore'
+import { useAuthStoreSelectors } from '@/store/authStore'
 import { useUserStoreSelectors } from '@/store/useUserStore'
+import { supabase } from '@/utils/supabase'
 import { Fontisto, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { DrawerContentComponentProps } from '@react-navigation/drawer'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -9,6 +10,7 @@ import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
+import Loader from './Loader'
 import SelectAvatarModal from './SelectAvatarModal'
 
 /**
@@ -21,7 +23,27 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 	const insets = useSafeAreaInsets()
 	const [avatarModalVisible, setAvatarModalVisible] = useState(false)
 
-	const { profile, displayName, age, gender } = useUserStoreSelectors.use.userData()
+	const { photoURL, displayName, age, gender } = useUserStoreSelectors.use.userData()
+	const [loading, setLoading] = useState(false)
+
+	const logOut = useAuthStoreSelectors.use.logOut()
+
+	const handleLogOut = async () => {
+		try {
+			setLoading(true)
+			let { error } = await supabase.auth.signOut()
+
+			if (error) {
+				throw new Error(error.message)
+			}
+			setAvatarModalVisible(false)
+			logOut()
+			setLoading(false)
+		} catch (error) {
+			console.log(error)
+			setLoading(false)
+		}
+	}
 	return (
 		<ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} {...props}>
 			<LinearGradient
@@ -35,7 +57,7 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 						{ paddingTop: insets.top, backgroundColor: theme.colors.primary[500] },
 					]}>
 					<TouchableOpacity onPress={() => setAvatarModalVisible(true)}>
-						<Image source={{ uri: profile }} style={styles.profileImage} resizeMode="cover" />
+						<Image source={{ uri: photoURL }} style={styles.profileImage} resizeMode="cover" />
 					</TouchableOpacity>
 					<Text style={styles.displayName}>{displayName || 'Anonymous'}</Text>
 					<Text style={styles.ageGender}>
@@ -87,7 +109,7 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 						<TouchableOpacity
 							activeOpacity={0.8}
 							style={styles.logoutButton}
-							onPress={() => logOut()}>
+							onPress={handleLogOut}>
 							<View style={styles.drawerIconContainer}>
 								<Ionicons
 									name="log-out"
@@ -108,6 +130,7 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 				visible={avatarModalVisible}
 				onClose={() => setAvatarModalVisible(false)}
 			/>
+			<Loader visible={loading} text="Logging out..." />
 		</ScrollView>
 	)
 }

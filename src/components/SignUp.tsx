@@ -1,18 +1,24 @@
 import Input from '@/components/Input'
 import { SignUpValidationSchema } from '@/services/validations'
+import { useAuthStoreSelectors } from '@/store/authStore'
 import { useUserStoreSelectors } from '@/store/useUserStore'
 import { DEVICE_WIDTH } from '@/utils'
+import { supabase } from '@/utils/supabase'
 import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
 import { Formik } from 'formik'
-import React, { ForwardedRef, forwardRef } from 'react'
+import React, { ForwardedRef, forwardRef, useState } from 'react'
 import { FlatList, Text, TouchableOpacity, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
+import Loader from './Loader'
 
 const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 	const { theme, styles } = useStyles(stylesheet)
+	const [loading, setLoading] = useState(false)
+
+	const setAuthUser = useAuthStoreSelectors.use.setAuthUser()
 	const updateUser = useUserStoreSelectors.use.updateUser()
 
 	const handleSignUp = async ({
@@ -26,8 +32,43 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 		password: string
 		email: string
 	}) => {
-		updateUser({ displayName, email, userName, password })
-		router.navigate('/(auth)/modal')
+		try {
+			setLoading(true)
+			const { data, error } = await supabase.auth.signUp({
+				email,
+				password,
+				options: {
+					data: {
+						displayName,
+						userName,
+						email,
+					},
+				},
+			})
+			if (data) {
+				setAuthUser({
+					access_token: data.session?.access_token,
+					refresh_token: data.session?.refresh_token,
+				})
+				updateUser({ id: data.user?.id, displayName, userName, email })
+
+				const { error } = await supabase
+					.from('users')
+					.insert([{ id: data.user?.id, displayName, userName, email }])
+				if (error) {
+					throw new Error(error.message)
+				}
+			}
+			if (error) {
+				throw new Error(error.message)
+			}
+
+			setLoading(false)
+			router.navigate('/(auth)/modal')
+		} catch (error) {
+			console.log(error)
+			setLoading(false)
+		}
 	}
 
 	const goToSignIn = () => {
@@ -53,10 +94,10 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 				}}>
 				<Formik
 					initialValues={{
-						displayName: 'Display',
-						email: 'john@gmail.com',
-						userName: 'userName',
-						password: 'Xo12345678',
+						displayName: '',
+						email: '',
+						userName: '',
+						password: '',
 					}}
 					enableReinitialize
 					validationSchema={SignUpValidationSchema}
@@ -139,6 +180,7 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 					)}
 				</Formik>
 			</KeyboardAwareScrollView>
+			<Loader visible={loading} text="Signing Up..." />
 		</LinearGradient>
 	)
 })

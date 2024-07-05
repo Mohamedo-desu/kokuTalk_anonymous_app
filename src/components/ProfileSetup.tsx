@@ -1,37 +1,62 @@
 import { FEMALE_AVATARS, MALE_AVATARS } from '@/constants/userAvatars'
-import { signUpStore } from '@/store/authStore'
+
 import { useUserStoreSelectors } from '@/store/useUserStore'
 import { DEVICE_WIDTH } from '@/utils'
+import { supabase } from '@/utils/supabase'
 import { Ionicons } from '@expo/vector-icons'
 
+import { useAuthStoreSelectors } from '@/store/authStore'
 import { ForwardedRef, forwardRef, useMemo, useState } from 'react'
 import { FlatList, Image, Text, TouchableOpacity, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
+import Loader from './Loader'
 
 const ProfileSetup = forwardRef(
 	({ activeIndex }: { activeIndex: number }, ref: ForwardedRef<FlatList<any> | null>) => {
 		const { theme, styles } = useStyles(stylesheet)
+		const [loading, setLoading] = useState(false)
 
 		const updateUser = useUserStoreSelectors.use.updateUser()
-		const { profile, age, gender, userName, password, email, displayName } =
-			useUserStoreSelectors.use.userData()
+		const setIsAuthenticated = useAuthStoreSelectors.use.setIsAuthenticated()
+		const { id, photoURL, age, gender } = useUserStoreSelectors.use.userData()
 
 		const PROFILE_AVATARS = useMemo(() => {
 			return gender === 'male' ? MALE_AVATARS : FEMALE_AVATARS
 		}, [gender])
 
-		const [isValid, setIsValid] = useState(profile?.trim().length > 0 ? true : false)
+		const [isValid, setIsValid] = useState(photoURL?.trim().length > 0 ? true : false)
 
-		const handleSelectprofile = (profile: string) => {
-			updateUser({ profile })
+		const handleSelectprofile = (photoURL: string) => {
+			updateUser({ photoURL })
 			setIsValid(true)
 		}
 
-		const handleSignUp = async () => {
+		const handleAddUser = async () => {
 			if (!isValid) return
 
-			signUpStore({ displayName, email, userName, password, gender, age, profile })
+			try {
+				setLoading(true)
+				const { error } = await supabase
+					.from('users')
+					.update({ gender, age, photoURL })
+					.eq('id', id)
+				if (error) {
+					throw new Error(error.message)
+				}
+
+				const { error: updateError } = await supabase.auth.updateUser({
+					data: { gender, age, photoURL },
+				})
+				if (updateError) {
+					throw new Error(updateError.message)
+				}
+				setLoading(false)
+				setIsAuthenticated(true)
+			} catch (error) {
+				console.log(error)
+				setLoading(false)
+			}
 		}
 		const handleGoBack = async () => {
 			if (ref && 'current' in ref && ref.current) {
@@ -51,7 +76,7 @@ const ProfileSetup = forwardRef(
 								styles.avatar,
 								{
 									backgroundColor:
-										profile === avatar ? theme.colors.white : theme.colors.primary[400],
+										photoURL === avatar ? theme.colors.white : theme.colors.primary[400],
 								},
 							]}>
 							<Image
@@ -61,7 +86,7 @@ const ProfileSetup = forwardRef(
 								style={styles.image}
 								alt="avatar"
 							/>
-							{profile === avatar && (
+							{photoURL === avatar && (
 								<Ionicons
 									name="checkmark-circle"
 									size={moderateScale(20)}
@@ -82,11 +107,12 @@ const ProfileSetup = forwardRef(
 					<TouchableOpacity
 						disabled={!isValid}
 						activeOpacity={0.7}
-						onPress={handleSignUp}
+						onPress={handleAddUser}
 						style={[styles.button, { backgroundColor: theme.colors.primary[400] }]}>
 						<Text style={[styles.buttonText, { color: theme.colors.white }]}>NEXT</Text>
 					</TouchableOpacity>
 				</View>
+				<Loader visible={loading} text="Creating account..." />
 			</View>
 		)
 	},

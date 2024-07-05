@@ -1,10 +1,11 @@
 import Input from '@/components/Input'
 import Loader from '@/components/Loader'
-import { MALE_AVATARS } from '@/constants/userAvatars'
 import { SignInValidationSchema } from '@/services/validations'
-import { signIn } from '@/store/authStore'
+import { useAuthStoreSelectors } from '@/store/authStore'
+import { useUserStoreSelectors } from '@/store/useUserStore'
 import { DEVICE_WIDTH } from '@/utils'
-import { getStoredValues } from '@/utils/storageUtils'
+import { getStoredValues, saveSecurely } from '@/utils/storageUtils'
+import { supabase } from '@/utils/supabase'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Formik } from 'formik'
 import React, { ForwardedRef, forwardRef, useEffect, useState } from 'react'
@@ -20,24 +21,48 @@ const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
 
-	useEffect(() => {
-		const { userName, password } = getStoredValues(['userName', 'password'])
-		setEmail('john@gmail.com')
-		setPassword('Ug12345678')
-	}, [])
+	const setAuthUser = useAuthStoreSelectors.use.setAuthUser()
+	const setUserData = useUserStoreSelectors.use.setUserData()
+	const setIsAuthenticated = useAuthStoreSelectors.use.setIsAuthenticated()
 
 	const handleSignIn = async ({ email, password }: { email: string; password: string }) => {
 		try {
-			signIn({
+			setLoading(true)
+			let { data, error } = await supabase.auth.signInWithPassword({
 				email,
 				password,
-				gender: 'male',
-				profile: MALE_AVATARS[4],
-				age: '21',
-				displayName: 'john Doe',
-				useName: '@john',
 			})
-		} catch (error) {}
+			if (error) {
+				throw new Error(error.message)
+			}
+			saveSecurely([
+				{ key: 'email', value: email },
+				{ key: 'password', value: password },
+			])
+
+			if (data) {
+				setAuthUser({
+					access_token: data.session?.access_token,
+					refresh_token: data.session?.refresh_token,
+				})
+
+				let { data: user, error } = await supabase
+					.from('users')
+					.select('*')
+					.eq('id', data.user?.id)
+					.single()
+
+				if (error) throw new Error(error.message)
+				if (user) {
+					setUserData(user)
+					setIsAuthenticated(true)
+				}
+			}
+			setLoading(false)
+		} catch (error) {
+			console.log(error)
+			setLoading(false)
+		}
 	}
 
 	const goToSignUp = () => {
@@ -45,6 +70,17 @@ const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 			ref.current.scrollToEnd({ animated: true })
 		}
 	}
+
+	useEffect(() => {
+		const fetchStoredValues = async () => {
+			const { email, password } = await getStoredValues(['email', 'password'])
+
+			setEmail(email || '')
+			setPassword(password || '')
+		}
+		fetchStoredValues()
+	}, [])
+
 	return (
 		<LinearGradient
 			colors={[theme.colors.primary[300], theme.colors.primary[500], theme.colors.primary[400]]}
