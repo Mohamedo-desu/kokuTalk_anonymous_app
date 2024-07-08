@@ -1,11 +1,8 @@
 import { FEMALE_AVATARS, MALE_AVATARS } from '@/constants/userAvatars'
-
-import { useUserStoreSelectors } from '@/store/useUserStore'
+import { useAuthStoreSelectors } from '@/store/authStore'
 import { DEVICE_WIDTH } from '@/utils'
 import { supabase } from '@/utils/supabase'
 import { Ionicons } from '@expo/vector-icons'
-
-import { useAuthStoreSelectors } from '@/store/authStore'
 import { ForwardedRef, forwardRef, useMemo, useState } from 'react'
 import { FlatList, Image, Text, TouchableOpacity, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
@@ -17,9 +14,10 @@ const ProfileSetup = forwardRef(
 		const { theme, styles } = useStyles(stylesheet)
 		const [loading, setLoading] = useState(false)
 
-		const updateUser = useUserStoreSelectors.use.updateUser()
-		const setIsAuthenticated = useAuthStoreSelectors.use.setIsAuthenticated()
-		const { id, photoURL, age, gender } = useUserStoreSelectors.use.userData()
+		const updateUser = useAuthStoreSelectors.use.updateUser()
+
+		const { photoURL, age, gender, displayName, userName, password, email } =
+			useAuthStoreSelectors.use.currentUser()
 
 		const PROFILE_AVATARS = useMemo(() => {
 			return gender === 'male' ? MALE_AVATARS : FEMALE_AVATARS
@@ -32,32 +30,45 @@ const ProfileSetup = forwardRef(
 			setIsValid(true)
 		}
 
-		const handleAddUser = async () => {
-			if (!isValid) return
-
+		const handleSignUp = async () => {
 			try {
 				setLoading(true)
-				const { error } = await supabase
-					.from('users')
-					.update({ gender, age, photoURL })
-					.eq('id', id)
+				const { data, error } = await supabase.auth.signUp({
+					email,
+					password,
+					options: {
+						data: {
+							displayName,
+							userName,
+							email,
+							gender,
+							age,
+							photoURL,
+						},
+					},
+				})
+
 				if (error) {
 					throw new Error(error.message)
 				}
+				if (data.user) {
+					updateUser({ id: data.user.id })
 
-				const { error: updateError } = await supabase.auth.updateUser({
-					data: { gender, age, photoURL },
-				})
-				if (updateError) {
-					throw new Error(updateError.message)
+					const { error } = await supabase
+						.from('users')
+						.insert([{ id: data.user.id, displayName, userName, email, gender, age, photoURL }])
+
+					if (error) {
+						throw new Error(error.message)
+					}
 				}
 				setLoading(false)
-				setIsAuthenticated(true)
 			} catch (error) {
 				console.log(error)
 				setLoading(false)
 			}
 		}
+
 		const handleGoBack = async () => {
 			if (ref && 'current' in ref && ref.current) {
 				ref?.current?.scrollToIndex({ index: activeIndex - 1, animated: true })
@@ -107,7 +118,7 @@ const ProfileSetup = forwardRef(
 					<TouchableOpacity
 						disabled={!isValid}
 						activeOpacity={0.7}
-						onPress={handleAddUser}
+						onPress={handleSignUp}
 						style={[styles.button, { backgroundColor: theme.colors.primary[400] }]}>
 						<Text style={[styles.buttonText, { color: theme.colors.white }]}>NEXT</Text>
 					</TouchableOpacity>

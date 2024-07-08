@@ -1,4 +1,5 @@
 import { FEMALE_AVATARS, MALE_AVATARS } from '@/constants/userAvatars'
+import useIsAnonymous from '@/hooks/useIsAnonymous'
 import { CONFESSIONSPROPS } from '@/types'
 import { shortenNumber } from '@/utils/generalUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
@@ -23,6 +24,8 @@ const userId = '45'
 const ConfessionCard = memo(({ item }: { item: CONFESSIONSPROPS }): JSX.Element => {
 	const { theme, styles } = useStyles(stylesheet)
 	const { id, displayName, gender, age, confession, type, createdAt } = item
+
+	const isAnonymous = useIsAnonymous()
 
 	const [likes, setLikes] = useState(item.likes.length)
 	const [dislikes, setdisLikes] = useState(item.dislikes.length)

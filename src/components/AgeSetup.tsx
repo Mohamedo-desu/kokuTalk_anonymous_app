@@ -1,4 +1,4 @@
-import { useUserStoreSelectors } from '@/store/useUserStore'
+import { useAuthStoreSelectors } from '@/store/authStore'
 import { DEVICE_WIDTH } from '@/utils'
 import { ForwardedRef, forwardRef, useState } from 'react'
 import { FlatList, Text, TouchableOpacity, View } from 'react-native'
@@ -10,8 +10,8 @@ const AgeSetup = forwardRef(
 	({ activeIndex }: { activeIndex: number }, ref: ForwardedRef<FlatList<any> | null>) => {
 		const { theme, styles } = useStyles(stylesheet)
 
-		const updateUser = useUserStoreSelectors.use.updateUser()
-		const { age } = useUserStoreSelectors.use.userData()
+		const updateUser = useAuthStoreSelectors.use.updateUser()
+		const { age } = useAuthStoreSelectors.use.currentUser()
 
 		const [isValid, setIsValid] = useState(age?.trim().length > 0 ? true : false)
 

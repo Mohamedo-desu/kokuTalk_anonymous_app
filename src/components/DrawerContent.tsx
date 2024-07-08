@@ -1,5 +1,7 @@
+import { PLACE_HOLDER } from '@/constants/placeHolders'
+import useIsAnonymous from '@/hooks/useIsAnonymous'
 import { useAuthStoreSelectors } from '@/store/authStore'
-import { useUserStoreSelectors } from '@/store/useUserStore'
+import { deleteStoredValues } from '@/utils/storageUtils'
 import { supabase } from '@/utils/supabase'
 import { Fontisto, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { DrawerContentComponentProps } from '@react-navigation/drawer'
@@ -21,9 +23,11 @@ import SelectAvatarModal from './SelectAvatarModal'
 const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 	const { theme, styles } = useStyles(stylesheet)
 	const insets = useSafeAreaInsets()
+	const isAnonymous = useIsAnonymous()
+
 	const [avatarModalVisible, setAvatarModalVisible] = useState(false)
 
-	const { photoURL, displayName, age, gender } = useUserStoreSelectors.use.userData()
+	const { photoURL, displayName, age, gender } = useAuthStoreSelectors.use.currentUser()
 	const [loading, setLoading] = useState(false)
 
 	const logOut = useAuthStoreSelectors.use.logOut()
@@ -31,12 +35,13 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 	const handleLogOut = async () => {
 		try {
 			setLoading(true)
-			let { error } = await supabase.auth.signOut()
-
-			if (error) {
-				throw new Error(error.message)
+			if (!isAnonymous) {
+				let { error } = await supabase.auth.signOut()
+				if (error) {
+					throw new Error(error.message)
+				}
 			}
-			setAvatarModalVisible(false)
+			await deleteStoredValues(['isAnonymous'])
 			logOut()
 			setLoading(false)
 		} catch (error) {
@@ -56,51 +61,80 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 						styles.header,
 						{ paddingTop: insets.top, backgroundColor: theme.colors.primary[500] },
 					]}>
-					<TouchableOpacity onPress={() => setAvatarModalVisible(true)}>
-						<Image source={{ uri: photoURL }} style={styles.profileImage} resizeMode="cover" />
+					<TouchableOpacity disabled={isAnonymous} onPress={() => setAvatarModalVisible(true)}>
+						<Image
+							source={{ uri: photoURL || PLACE_HOLDER }}
+							style={styles.profileImage}
+							resizeMode="cover"
+						/>
 					</TouchableOpacity>
 					<Text style={styles.displayName}>{displayName || 'Anonymous'}</Text>
-					<Text style={styles.ageGender}>
-						{age}.{gender.charAt(0)}
-					</Text>
+					{age && gender && (
+						<Text style={styles.ageGender}>
+							{age}.{gender.charAt(0)}
+						</Text>
+					)}
 				</View>
 				<View style={[styles.content, { paddingBottom: insets.bottom }]}>
 					<TouchableOpacity
+						disabled={isAnonymous}
 						activeOpacity={0.8}
 						style={styles.drawerItem}
 						onPress={() => router.navigate('/(main)/my_confessions')}>
 						<View style={styles.drawerIconContainer}>
 							<MaterialCommunityIcons
 								name="account-voice"
-								style={[styles.drawerItemIcon, { color: theme.colors.white }]}
+								style={[
+									styles.drawerItemIcon,
+									{ color: isAnonymous ? theme.colors.gray[500] : theme.colors.white },
+								]}
 							/>
 						</View>
-						<Text style={[styles.drawerItemLabel, { color: theme.colors.white }]}>
+						<Text
+							style={[
+								styles.drawerItemLabel,
+								{ color: isAnonymous ? theme.colors.gray[500] : theme.colors.white },
+							]}>
 							My Confessions
 						</Text>
 					</TouchableOpacity>
 					<TouchableOpacity
+						disabled={isAnonymous}
 						activeOpacity={0.8}
 						style={styles.drawerItem}
 						onPress={() => router.navigate('/(main)/saved_confessions')}>
 						<View style={styles.drawerIconContainer}>
 							<Fontisto
 								name="favorite"
-								style={[styles.drawerItemIcon, { color: theme.colors.white }]}
+								style={[
+									styles.drawerItemIcon,
+									{ color: isAnonymous ? theme.colors.gray[500] : theme.colors.white },
+								]}
 							/>
 						</View>
-						<Text style={[styles.drawerItemLabel, { color: theme.colors.white }]}>
+						<Text
+							style={[
+								styles.drawerItemLabel,
+								{ color: isAnonymous ? theme.colors.gray[500] : theme.colors.white },
+							]}>
 							Saved Confessions
 						</Text>
 					</TouchableOpacity>
-					<TouchableOpacity activeOpacity={0.8} style={styles.drawerItem}>
+					<TouchableOpacity disabled={isAnonymous} activeOpacity={0.8} style={styles.drawerItem}>
 						<View style={styles.drawerIconContainer}>
 							<MaterialCommunityIcons
 								name="book-open"
-								style={[styles.drawerItemIcon, { color: theme.colors.white }]}
+								style={[
+									styles.drawerItemIcon,
+									{ color: isAnonymous ? theme.colors.gray[500] : theme.colors.white },
+								]}
 							/>
 						</View>
-						<Text style={[styles.drawerItemLabel, { color: theme.colors.white }]}>
+						<Text
+							style={[
+								styles.drawerItemLabel,
+								{ color: isAnonymous ? theme.colors.gray[500] : theme.colors.white },
+							]}>
 							Privacy & Policy
 						</Text>
 					</TouchableOpacity>

@@ -1,6 +1,6 @@
 import { appName } from '@/constants/appDetails'
 import { useAuthStoreSelectors } from '@/store/authStore'
-import { useUserStoreSelectors } from '@/store/useUserStore'
+import { getStoredValues } from '@/utils/storageUtils'
 import { supabase } from '@/utils/supabase'
 import React, { useEffect } from 'react'
 import { Text, View } from 'react-native'
@@ -11,12 +11,15 @@ const SplashScreen = () => {
 	const { styles, theme } = useStyles(stylesheet)
 	const setDidTryAutoLogin = useAuthStoreSelectors.use.setDidTryAutoLogin()
 
-	const updateUser = useUserStoreSelectors.use.updateUser()
-	const setIsAuthenticated = useAuthStoreSelectors.use.setIsAuthenticated()
+	const updateUser = useAuthStoreSelectors.use.updateUser()
+	const setAuthenticated = useAuthStoreSelectors.use.setAuthenticated()
+	const setAnonymous = useAuthStoreSelectors.use.setAnonymous()
 
 	useEffect(() => {
 		const tryLogin = async () => {
 			try {
+				const { isAnonymous } = await getStoredValues(['isAnonymous'])
+
 				supabase.auth.onAuthStateChange((_event, session) => {
 					if (session) {
 						try {
@@ -29,17 +32,20 @@ const SplashScreen = () => {
 								photoURL: session.user.user_metadata.photoURL,
 								age: session.user.user_metadata.age,
 							})
-							setIsAuthenticated(true)
+							setAuthenticated()
 							setDidTryAutoLogin()
 						} catch (error) {
 							setDidTryAutoLogin()
 						}
+					} else if (isAnonymous) {
+						setAnonymous()
 					} else {
 						setDidTryAutoLogin()
 					}
 				})
 			} catch (error) {
 				console.log(error)
+				setDidTryAutoLogin()
 			}
 		}
 		tryLogin()

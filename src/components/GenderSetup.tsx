@@ -1,4 +1,4 @@
-import { useUserStoreSelectors } from '@/store/useUserStore'
+import { useAuthStoreSelectors } from '@/store/authStore'
 import { DEVICE_WIDTH } from '@/utils'
 import { SimpleLineIcons } from '@expo/vector-icons'
 import { ForwardedRef, forwardRef, useState } from 'react'
@@ -10,8 +10,8 @@ const GenderSetup = forwardRef(
 	({ activeIndex }: { activeIndex: number }, ref: ForwardedRef<FlatList<any> | null>) => {
 		const { theme, styles } = useStyles(stylesheet)
 
-		const updateUser = useUserStoreSelectors.use.updateUser()
-		const { gender } = useUserStoreSelectors.use.userData()
+		const updateUser = useAuthStoreSelectors.use.updateUser()
+		const { gender } = useAuthStoreSelectors.use.currentUser()
 
 		const [isValid, setIsValid] = useState(gender?.trim().length > 0 ? true : false)
 

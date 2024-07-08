@@ -1,9 +1,8 @@
 import Input from '@/components/Input'
 import { SignUpValidationSchema } from '@/services/validations'
 import { useAuthStoreSelectors } from '@/store/authStore'
-import { useUserStoreSelectors } from '@/store/useUserStore'
 import { DEVICE_WIDTH } from '@/utils'
-import { supabase } from '@/utils/supabase'
+import { saveSecurely } from '@/utils/storageUtils'
 import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
 import { Formik } from 'formik'
@@ -17,58 +16,24 @@ import Loader from './Loader'
 const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 	const { theme, styles } = useStyles(stylesheet)
 	const [loading, setLoading] = useState(false)
+	const [loadingText, setLoadingText] = useState('')
 
-	const setAuthUser = useAuthStoreSelectors.use.setAuthUser()
-	const updateUser = useUserStoreSelectors.use.updateUser()
+	const updateUser = useAuthStoreSelectors.use.updateUser()
+	const setAnonymous = useAuthStoreSelectors.use.setAnonymous()
 
 	const handleSignUp = async ({
 		displayName,
 		userName,
-		password,
 		email,
+		password,
 	}: {
 		displayName: string
 		userName: string
-		password: string
 		email: string
+		password: string
 	}) => {
-		try {
-			setLoading(true)
-			const { data, error } = await supabase.auth.signUp({
-				email,
-				password,
-				options: {
-					data: {
-						displayName,
-						userName,
-						email,
-					},
-				},
-			})
-			if (data) {
-				setAuthUser({
-					access_token: data.session?.access_token,
-					refresh_token: data.session?.refresh_token,
-				})
-				updateUser({ id: data.user?.id, displayName, userName, email })
-
-				const { error } = await supabase
-					.from('users')
-					.insert([{ id: data.user?.id, displayName, userName, email }])
-				if (error) {
-					throw new Error(error.message)
-				}
-			}
-			if (error) {
-				throw new Error(error.message)
-			}
-
-			setLoading(false)
-			router.navigate('/(auth)/modal')
-		} catch (error) {
-			console.log(error)
-			setLoading(false)
-		}
+		updateUser({ displayName, userName, email, password })
+		router.navigate('/(auth)/modal')
 	}
 
 	const goToSignIn = () => {
@@ -76,7 +41,17 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 			ref.current.scrollToIndex({ index: 0, animated: true })
 		}
 	}
-	const handleSkip = () => {}
+	const handleSkip = async () => {
+		setLoadingText('Skipping...')
+		setLoading(true)
+		await saveSecurely([{ key: 'isAnonymous', value: 'true' }])
+		const timout = setTimeout(() => {
+			setLoadingText('')
+			setLoading(false)
+			setAnonymous()
+			clearTimeout(timout)
+		}, 1000)
+	}
 
 	return (
 		<LinearGradient
@@ -180,7 +155,7 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 					)}
 				</Formik>
 			</KeyboardAwareScrollView>
-			<Loader visible={loading} text="Signing Up..." />
+			<Loader visible={loading} text={loadingText} />
 		</LinearGradient>
 	)
 })
@@ -220,6 +195,6 @@ const stylesheet = createStyleSheet({
 	},
 	signInText: {
 		fontFamily: 'Italic',
-		fontSize: moderateScale(16),
+		fontSize: moderateScale(14),
 	},
 })

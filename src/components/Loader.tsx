@@ -5,7 +5,7 @@ import { BlurView } from 'expo-blur'
 import { moderateScale, moderateVerticalScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
-const Loader = ({ visible, text }: { visible: boolean; text: string }) => {
+const Loader = ({ visible, text }: { visible: boolean; text?: string }) => {
 	const { theme, styles } = useStyles(stylesheet)
 	return (
 		<Modal visible={visible} transparent animationType="fade">
@@ -15,8 +15,8 @@ const Loader = ({ visible, text }: { visible: boolean; text: string }) => {
 					{text && (
 						<Text
 							style={{
-								fontFamily: 'Medium',
-								fontSize: moderateScale(17),
+								fontFamily: 'Regular',
+								fontSize: moderateScale(14),
 								color: theme.colors.white,
 							}}>
 							{text}

@@ -5,18 +5,25 @@ export interface AuthState {
 	didTryAutoLogin: boolean
 	isAuthenticated: boolean
 	isAnonymous: boolean
-	authUser: {
-		access_token: string | undefined
-		refresh_token: string | undefined
-	}
 	isLoggingOut: boolean
+	currentUser: {
+		id: string
+		displayName: string
+		userName: string
+		email: string
+		password?: string
+		gender: string
+		age: string
+		photoURL: string
+	}
 }
 
 interface AuthActions {
-	setAuthUser: (authUser: AuthState['authUser']) => void
+	updateUser: (user: Partial<AuthState['currentUser']>) => void
+	setcurrentUser: (user: AuthState['currentUser']) => void
 	setDidTryAutoLogin: () => void
-	setIsAuthenticated: (isAuthenticated: AuthState['isAuthenticated']) => void
-	setIsAnonymous: (isAnonymous: AuthState['isAnonymous']) => void
+	setAuthenticated: () => void
+	setAnonymous: () => void
 	setIsLoggingOut: () => void
 	logOut: () => void
 }
@@ -24,21 +31,19 @@ interface AuthActions {
 const initialState: AuthState = {
 	didTryAutoLogin: false,
 	isAnonymous: false,
-	authUser: {
-		access_token: undefined,
-		refresh_token: undefined,
-	},
 	isAuthenticated: false,
 	isLoggingOut: false,
+	currentUser: {} as AuthState['currentUser'],
 }
 
 const useAuthStore = create<AuthState & AuthActions>((set) => ({
 	...initialState,
-	setAuthUser: (authUser) => set(() => ({ authUser })),
-	setIsAuthenticated: (isAuthenticated) => set(() => ({ isAuthenticated })),
-	setIsAnonymous: (isAnonymous) => set(() => ({ isAnonymous })),
+	setAuthenticated: () => set({ isAnonymous: false, isAuthenticated: true }),
+	setAnonymous: () => set({ isAnonymous: true, isAuthenticated: false }),
 	setDidTryAutoLogin: () => set(() => ({ didTryAutoLogin: true })),
 	setIsLoggingOut: () => set(() => ({ isLoggingOut: true })),
+	setcurrentUser: (currentUser) => set({ currentUser }),
+	updateUser: (user: any) => set((state) => ({ currentUser: { ...state.currentUser, ...user } })),
 	logOut: () => set(() => initialState),
 }))
 

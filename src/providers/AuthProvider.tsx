@@ -1,25 +1,39 @@
-import { router, useSegments } from 'expo-router'
-import { PropsWithChildren, useEffect } from 'react'
-
 import { useAuthStoreSelectors } from '@/store/authStore'
+import { router, useSegments } from 'expo-router'
+import { PropsWithChildren, useEffect, useState } from 'react'
 
 const AuthProvider = ({ children }: PropsWithChildren) => {
+	const segments = useSegments()
+	const [rootSegment, setRootSegment] = useState<string | undefined>(segments[0])
+
+	// Selectors
 	const isAuthenticated = useAuthStoreSelectors.use.isAuthenticated()
 	const didTryAutoLogin = useAuthStoreSelectors.use.didTryAutoLogin()
-
-	const rootSegments = useSegments()[0]
+	const isAnonymous = useAuthStoreSelectors.use.isAnonymous()
 
 	useEffect(() => {
-		if (!isAuthenticated && !didTryAutoLogin) {
-			router.replace('/')
-		} else if (!isAuthenticated && didTryAutoLogin) {
-			router.replace('/(auth)/')
-		} else if (isAuthenticated && didTryAutoLogin) {
-			router.replace('/(main)/(tabs)/(home)')
-		} else {
-			router.replace('/(auth)/')
+		if (segments[0] !== rootSegment && segments[0]) {
+			setRootSegment(segments[0])
 		}
-	}, [isAuthenticated, rootSegments, didTryAutoLogin])
+	}, [segments, rootSegment])
+
+	useEffect(() => {
+		const getRoute = () => {
+			if (isAnonymous) {
+				return '/(main)/(tabs)/(home)'
+			} else if (!isAuthenticated && !didTryAutoLogin) {
+				return '/'
+			} else if (!isAuthenticated && didTryAutoLogin) {
+				return '/(auth)/'
+			} else if (isAuthenticated && didTryAutoLogin) {
+				return '/(main)/(tabs)/(home)'
+			} else {
+				return '/(auth)/'
+			}
+		}
+
+		router.replace(getRoute())
+	}, [isAuthenticated, didTryAutoLogin, isAnonymous, rootSegment])
 
 	return <>{children}</>
 }

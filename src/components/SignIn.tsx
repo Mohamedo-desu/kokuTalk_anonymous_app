@@ -1,8 +1,6 @@
 import Input from '@/components/Input'
 import Loader from '@/components/Loader'
 import { SignInValidationSchema } from '@/services/validations'
-import { useAuthStoreSelectors } from '@/store/authStore'
-import { useUserStoreSelectors } from '@/store/useUserStore'
 import { DEVICE_WIDTH } from '@/utils'
 import { getStoredValues, saveSecurely } from '@/utils/storageUtils'
 import { supabase } from '@/utils/supabase'
@@ -21,43 +19,23 @@ const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
 
-	const setAuthUser = useAuthStoreSelectors.use.setAuthUser()
-	const setUserData = useUserStoreSelectors.use.setUserData()
-	const setIsAuthenticated = useAuthStoreSelectors.use.setIsAuthenticated()
-
 	const handleSignIn = async ({ email, password }: { email: string; password: string }) => {
 		try {
 			setLoading(true)
-			let { data, error } = await supabase.auth.signInWithPassword({
+
+			saveSecurely([
+				{ key: 'email', value: email },
+				{ key: 'password', value: password },
+			])
+
+			let { error } = await supabase.auth.signInWithPassword({
 				email,
 				password,
 			})
 			if (error) {
 				throw new Error(error.message)
 			}
-			saveSecurely([
-				{ key: 'email', value: email },
-				{ key: 'password', value: password },
-			])
 
-			if (data) {
-				setAuthUser({
-					access_token: data.session?.access_token,
-					refresh_token: data.session?.refresh_token,
-				})
-
-				let { data: user, error } = await supabase
-					.from('users')
-					.select('*')
-					.eq('id', data.user?.id)
-					.single()
-
-				if (error) throw new Error(error.message)
-				if (user) {
-					setUserData(user)
-					setIsAuthenticated(true)
-				}
-			}
 			setLoading(false)
 		} catch (error) {
 			console.log(error)
@@ -150,7 +128,7 @@ const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 					)}
 				</Formik>
 			</KeyboardAwareScrollView>
-			<Loader text="Authorizing..." visible={loading} />
+			<Loader text="Signing in..." visible={loading} />
 		</LinearGradient>
 	)
 })
@@ -190,6 +168,6 @@ const stylesheet = createStyleSheet({
 	},
 	signUpText: {
 		fontFamily: 'Italic',
-		fontSize: moderateScale(16),
+		fontSize: moderateScale(14),
 	},
 })

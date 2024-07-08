@@ -1,5 +1,5 @@
 import { FEMALE_AVATARS, MALE_AVATARS } from '@/constants/userAvatars'
-import { useUserStoreSelectors } from '@/store/useUserStore'
+import { useAuthStoreSelectors } from '@/store/authStore'
 import { Ionicons } from '@expo/vector-icons'
 import { DrawerActions } from '@react-navigation/native'
 import { BlurView } from 'expo-blur'
@@ -13,12 +13,12 @@ import { createStyleSheet, useStyles } from 'react-native-unistyles'
 const SelectAvatarModal = ({ visible, onClose }: { visible: boolean; onClose: () => void }) => {
 	const { theme, styles } = useStyles(stylesheet)
 	const navigation = useNavigation()
-	const { profile, gender } = useUserStoreSelectors.use.userData()
-	const updateUser = useUserStoreSelectors.use.updateUser()
+	const { photoURL, gender } = useAuthStoreSelectors.use.currentUser()
+	const updateUser = useAuthStoreSelectors.use.updateUser()
 
 	const handleSelectprofile = React.useCallback(
-		(profile: string) => {
-			updateUser({ profile })
+		(photoURL: string) => {
+			updateUser({ photoURL })
 			navigation.dispatch(DrawerActions.closeDrawer())
 			onClose()
 		},
@@ -33,7 +33,7 @@ const SelectAvatarModal = ({ visible, onClose }: { visible: boolean; onClose: ()
 		<Modal visible={visible} transparent animationType="fade">
 			<BlurView intensity={5} style={styles.blurContainer} experimentalBlurMethod="dimezisBlurView">
 				<LinearGradient
-					colors={[theme.colors.gray[400], theme.colors.gray[100]]}
+					colors={[theme.colors.background, theme.colors.background]}
 					start={{ x: 0.5, y: 1 }}
 					end={{ x: 0.5, y: 0 }}
 					style={styles.content}>
@@ -46,7 +46,7 @@ const SelectAvatarModal = ({ visible, onClose }: { visible: boolean; onClose: ()
 								styles.avatar,
 								{
 									backgroundColor:
-										profile === avatar ? theme.colors.primary[500] : 'rgba(255,255,255,0.3)',
+										photoURL === avatar ? theme.colors.primary[500] : 'rgba(255,255,255,0.2)',
 								},
 							]}>
 							<Image
@@ -56,7 +56,7 @@ const SelectAvatarModal = ({ visible, onClose }: { visible: boolean; onClose: ()
 								style={styles.image}
 								alt="avatar"
 							/>
-							{profile === avatar && (
+							{photoURL === avatar && (
 								<Ionicons
 									name="checkmark-circle"
 									size={moderateScale(20)}

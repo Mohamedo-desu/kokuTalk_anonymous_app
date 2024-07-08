@@ -15,19 +15,6 @@ export default {
 			'expo-router',
 			'expo-secure-store',
 			[
-				'expo-build-properties',
-				{
-					android: {
-						compileSdkVersion: 34,
-						targetSdkVersion: 34,
-						buildToolsVersion: '34.0.0',
-					},
-					ios: {
-						deploymentTarget: '14.0',
-					},
-				},
-			],
-			[
 				'expo-updates',
 				{
 					username: 'mohamedo-desu',
