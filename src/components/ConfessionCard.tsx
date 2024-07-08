@@ -1,4 +1,3 @@
-import { FEMALE_AVATARS, MALE_AVATARS } from '@/constants/userAvatars'
 import useIsAnonymous from '@/hooks/useIsAnonymous'
 import { CONFESSIONSPROPS } from '@/types'
 import { shortenNumber } from '@/utils/generalUtils'
@@ -6,7 +5,7 @@ import { formatRelativeTime } from '@/utils/timeUtils'
 import { AntDesign, Feather, Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 
-import { memo, useCallback, useMemo, useState } from 'react'
+import { memo, useCallback, useState } from 'react'
 import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
@@ -23,24 +22,21 @@ const userId = '45'
 
 const ConfessionCard = memo(({ item }: { item: CONFESSIONSPROPS }): JSX.Element => {
 	const { theme, styles } = useStyles(stylesheet)
-	const { id, displayName, gender, age, confession, type, createdAt } = item
+	const { id, confessionText, confessionTypes, created_at } = item
+	const confessedUser = item.user
+	const { displayName, gender, age, photoURL } = confessedUser
 
 	const isAnonymous = useIsAnonymous()
 
 	const [likes, setLikes] = useState(item.likes.length)
 	const [dislikes, setdisLikes] = useState(item.dislikes.length)
 	const [likeCount, setlikeCount] = useState(item.likes.length - item.dislikes.length)
-	const [comments, setcomments] = useState(parseInt(item.comments))
+	const [comments, setcomments] = useState(item.comments.length)
 	const [newComment, setNewComment] = useState('')
 	const [commenting, setCommenting] = useState(false)
-	const [favorite, setFavorite] = useState(item.favorite)
+	const [favorite, setFavorite] = useState(true)
 	const [likeStatus, setlikeStatus] = useState(
 		item.likes.includes(userId) ? 'liked' : item.dislikes.includes(userId) ? 'disliked' : 'none',
-	)
-
-	const PROFILE_AVATARS = useMemo(
-		() => (gender === 'male' ? MALE_AVATARS : FEMALE_AVATARS),
-		[gender],
 	)
 
 	const navigateToDetails = useCallback(() => {
@@ -68,7 +64,7 @@ const ConfessionCard = memo(({ item }: { item: CONFESSIONSPROPS }): JSX.Element 
 	const renderTimeDisplay = () => (
 		<View style={styles.timeCon}>
 			<Text style={[styles.timeText, { color: theme.colors.gray[400] }]}>
-				{formatRelativeTime(createdAt)}
+				{formatRelativeTime(created_at)}
 			</Text>
 		</View>
 	)
@@ -100,11 +96,15 @@ const ConfessionCard = memo(({ item }: { item: CONFESSIONSPROPS }): JSX.Element 
 	)
 	const renderBodyDisplay = () => (
 		<TouchableOpacity onPress={navigateToDetails} style={styles.body} activeOpacity={0.7}>
-			<View style={[styles.confessionTypeCon, { backgroundColor: theme.colors.primary[500] }]}>
-				<Text style={[styles.confessionTypeText, { color: theme.colors.white }]}>#{type}</Text>
-			</View>
+			{confessionTypes?.map((type) => (
+				<View
+					key={type}
+					style={[styles.confessionTypeCon, { backgroundColor: theme.colors.primary[500] }]}>
+					<Text style={[styles.confessionTypeText, { color: theme.colors.white }]}>#{type}</Text>
+				</View>
+			))}
 			<Text style={[styles.confessionText, { color: theme.colors.typography }]} numberOfLines={5}>
-				{confession}
+				{confessionText}
 			</Text>
 		</TouchableOpacity>
 	)
@@ -112,7 +112,7 @@ const ConfessionCard = memo(({ item }: { item: CONFESSIONSPROPS }): JSX.Element 
 		<View style={styles.header}>
 			<View style={styles.confessedUser}>
 				<View style={styles.imageCon}>
-					<Image source={{ uri: PROFILE_AVATARS[id] }} style={styles.image} resizeMode="cover" />
+					<Image source={{ uri: photoURL }} style={styles.image} resizeMode="cover" />
 				</View>
 				<View>
 					<Text style={[styles.displayName, { color: theme.colors.typography }]}>

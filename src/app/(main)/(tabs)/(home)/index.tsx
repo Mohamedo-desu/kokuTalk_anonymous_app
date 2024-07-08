@@ -1,9 +1,8 @@
 import ConfessionCard from '@/components/ConfessionCard'
 import Skeleton from '@/components/Skeleton'
-import { CONFESSIONS } from '@/dummyData/confessions'
-
 import { CONFESSIONSPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
+import { supabase } from '@/utils/supabase'
 import { FlashList } from '@shopify/flash-list'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useCallback, useEffect, useState } from 'react'
@@ -12,13 +11,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
+const PAGE_SIZE = 50
+
 const HomePage = () => {
 	const { theme, styles } = useStyles(stylesheet)
 	const safeAreaInsets = useSafeAreaInsets()
 	const [loading, setLoading] = useState(true)
 	const [confessions, setConfessions] = useState<CONFESSIONSPROPS[]>([])
+	const [page, setPage] = useState(0)
 
-	const renderConfessionCard = useCallback(({ item }: { item: (typeof CONFESSIONS)[0] }) => {
+	const renderConfessionCard = useCallback(({ item }: { item: CONFESSIONSPROPS }) => {
 		if (!item) {
 			return null
 		}
@@ -29,22 +31,49 @@ const HomePage = () => {
 	const ListEmptyComponent = useCallback(() => {
 		return (
 			<View style={styles.emptyContainer}>
-				<Text style={[styles.emptyText, { color: theme.colors.gray[400] }]}>
+				<Text style={[styles.emptyText, { color: theme.colors.gray[200] }]}>
 					No confessions available. Please check back later!
 				</Text>
 			</View>
 		)
 	}, [theme.colors.gray[400]])
 
-	useEffect(() => {
-		// TODO: fetch confessions from server or local database
-		const timeOut = setTimeout(() => {
-			setConfessions(CONFESSIONS)
-			setLoading(false)
-		}, 2000)
+	const fetchConfessions = useCallback(async (page: number) => {
+		try {
+			let { data: newConfessions, error } = await supabase
+				.from('confessions')
+				.select(
+					`*,
+                	user:users (
+                    id,
+                    displayName,
+                    userName,
+					gender,
+					age,
+					photoURL
+                	)`,
+				)
+				.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
 
-		return () => clearTimeout(timeOut)
+			if (error) {
+				throw new Error(error.message)
+			}
+
+			if (newConfessions) {
+				setConfessions((prevConfessions) => [...prevConfessions, ...newConfessions])
+			}
+		} catch (error) {
+			console.log(error)
+		}
 	}, [])
+
+	useEffect(() => {
+		fetchConfessions(page)
+	}, [page])
+
+	const loadMoreConfessions = () => {
+		setPage((prevPage) => prevPage + 1)
+	}
 
 	return (
 		<LinearGradient
@@ -52,7 +81,7 @@ const HomePage = () => {
 			start={{ x: 0, y: 0 }}
 			end={{ x: 0, y: 0 }}
 			style={styles.container}>
-			{loading ? (
+			{loading && confessions.length === 0 ? (
 				<ScrollView
 					style={{ flex: 1 }}
 					contentContainerStyle={[
@@ -74,7 +103,7 @@ const HomePage = () => {
 				<FlashList
 					data={confessions}
 					renderItem={renderConfessionCard}
-					keyExtractor={(item) => item?.id?.toString() || ''}
+					keyExtractor={(item) => item?.id.toString()}
 					contentContainerStyle={{
 						paddingBottom: safeAreaInsets.bottom + moderateScale(80),
 						paddingTop: moderateScale(10),
@@ -83,6 +112,8 @@ const HomePage = () => {
 					automaticallyAdjustContentInsets
 					estimatedItemSize={200}
 					indicatorStyle={theme.colors.typography}
+					onEndReached={loadMoreConfessions}
+					onEndReachedThreshold={0.5}
 				/>
 			) : (
 				<ListEmptyComponent />
@@ -115,8 +146,8 @@ const stylesheet = createStyleSheet({
 		padding: moderateScale(20),
 	},
 	emptyText: {
-		fontSize: moderateScale(18),
-		color: 'gray',
+		fontFamily: 'Italic',
+		fontSize: moderateScale(14),
 		textAlign: 'center',
 	},
 })

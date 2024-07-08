@@ -8,14 +8,17 @@ export interface NOTIFICATIONPROPS {
 
 export interface CONFESSIONSPROPS {
 	id: string
-	displayName: string
-	gender: string
-	age: string
-	favorite: boolean
 	dislikes: string[]
 	likes: string[]
-	comments: string
-	confession: string
-	type: string
-	createdAt: string
+	comments: string[]
+	confessionText: string
+	confessionTypes: string[]
+	created_at: string
+	user: {
+		displayName: string
+		gender: string
+		age: string
+		userName: string
+		photoURL: string
+	}
 }
