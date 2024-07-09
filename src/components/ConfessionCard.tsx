@@ -4,11 +4,11 @@ import { shortenNumber } from '@/utils/generalUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { AntDesign, Feather, Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-
 import { memo, useCallback, useState } from 'react'
 import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
+import GuestModal from './GuestModal'
 
 /**
  * Renders a confession card component
@@ -18,26 +18,18 @@ import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
 const COMMENT_LENGTH = 500
 
-const userId = '45'
-
 const ConfessionCard = memo(({ item }: { item: CONFESSIONSPROPS }): JSX.Element => {
 	const { theme, styles } = useStyles(stylesheet)
-	const { id, confessionText, confessionTypes, created_at } = item
-	const confessedUser = item.user
-	const { displayName, gender, age, photoURL } = confessedUser
+	const { id, confession_text, confession_types, created_at } = item
+	const { display_name, gender, age, photo_url } = item.user
 
 	const isAnonymous = useIsAnonymous()
+	const [guestModalVisible, setGuestModalVisible] = useState(false)
 
-	const [likes, setLikes] = useState(item.likes.length)
-	const [dislikes, setdisLikes] = useState(item.dislikes.length)
 	const [likeCount, setlikeCount] = useState(item.likes.length - item.dislikes.length)
 	const [comments, setcomments] = useState(item.comments.length)
 	const [newComment, setNewComment] = useState('')
 	const [commenting, setCommenting] = useState(false)
-	const [favorite, setFavorite] = useState(true)
-	const [likeStatus, setlikeStatus] = useState(
-		item.likes.includes(userId) ? 'liked' : item.dislikes.includes(userId) ? 'disliked' : 'none',
-	)
 
 	const navigateToDetails = useCallback(() => {
 		router.navigate({
@@ -47,19 +39,39 @@ const ConfessionCard = memo(({ item }: { item: CONFESSIONSPROPS }): JSX.Element 
 	}, [id])
 
 	const handleLikeConfession = useCallback(() => {
-		setLikes((prev) => prev + 1)
+		if (isAnonymous) {
+			setGuestModalVisible(true)
+			return
+		}
+		setlikeCount((prev) => prev + 1)
 	}, [])
 	const handleDislikeConfession = useCallback(() => {
-		setLikes((prev) => prev - 1)
+		if (isAnonymous) {
+			setGuestModalVisible(true)
+			return
+		}
+		setlikeCount((prev) => prev - 1)
 	}, [])
 	const handleAddComment = useCallback(() => {
+		if (isAnonymous) {
+			setGuestModalVisible(true)
+			return
+		}
 		setCommenting((prev) => !prev)
 	}, [])
 	const handleFavorite = useCallback(() => {
-		setFavorite((prev) => !prev)
+		if (isAnonymous) {
+			setGuestModalVisible(true)
+			return
+		}
 	}, [])
 
-	const handleShareConfession = useCallback(() => {}, [])
+	const handleShareConfession = useCallback(() => {
+		if (isAnonymous) {
+			setGuestModalVisible(true)
+			return
+		}
+	}, [])
 
 	const renderTimeDisplay = () => (
 		<View style={styles.timeCon}>
@@ -75,7 +87,7 @@ const ConfessionCard = memo(({ item }: { item: CONFESSIONSPROPS }): JSX.Element 
 					<Feather name="chevrons-up" size={26} color={theme.colors.gray[400]} />
 				</TouchableOpacity>
 				<Text style={[styles.likesText, { color: theme.colors.gray[400] }]} numberOfLines={5}>
-					{shortenNumber(likes)}
+					{shortenNumber(likeCount)}
 				</Text>
 				<TouchableOpacity onPress={handleDislikeConfession}>
 					<Feather name="chevrons-down" size={26} color={theme.colors.gray[400]} />
@@ -96,15 +108,26 @@ const ConfessionCard = memo(({ item }: { item: CONFESSIONSPROPS }): JSX.Element 
 	)
 	const renderBodyDisplay = () => (
 		<TouchableOpacity onPress={navigateToDetails} style={styles.body} activeOpacity={0.7}>
-			{confessionTypes?.map((type) => (
-				<View
-					key={type}
-					style={[styles.confessionTypeCon, { backgroundColor: theme.colors.primary[500] }]}>
-					<Text style={[styles.confessionTypeText, { color: theme.colors.white }]}>#{type}</Text>
-				</View>
-			))}
+			<TouchableOpacity
+				activeOpacity={1}
+				onPress={() => undefined}
+				style={{
+					flexDirection: 'row',
+					alignItems: 'center',
+					flexWrap: 'wrap',
+					gap: moderateScale(10),
+				}}>
+				{confession_types?.map((type) => (
+					<TouchableOpacity
+						activeOpacity={0.8}
+						key={type}
+						style={[styles.confessionTypeCon, { backgroundColor: theme.colors.primary[500] }]}>
+						<Text style={[styles.confessionTypeText, { color: theme.colors.white }]}>#{type}</Text>
+					</TouchableOpacity>
+				))}
+			</TouchableOpacity>
 			<Text style={[styles.confessionText, { color: theme.colors.typography }]} numberOfLines={5}>
-				{confessionText}
+				{confession_text}
 			</Text>
 		</TouchableOpacity>
 	)
@@ -112,11 +135,11 @@ const ConfessionCard = memo(({ item }: { item: CONFESSIONSPROPS }): JSX.Element 
 		<View style={styles.header}>
 			<View style={styles.confessedUser}>
 				<View style={styles.imageCon}>
-					<Image source={{ uri: photoURL }} style={styles.image} resizeMode="cover" />
+					<Image source={{ uri: photo_url }} style={styles.image} resizeMode="cover" />
 				</View>
 				<View>
 					<Text style={[styles.displayName, { color: theme.colors.typography }]}>
-						{displayName}
+						{display_name}
 					</Text>
 					<Text style={[styles.ageGender, { color: theme.colors.typography }]}>
 						{age}.{gender.charAt(0)}
@@ -124,11 +147,7 @@ const ConfessionCard = memo(({ item }: { item: CONFESSIONSPROPS }): JSX.Element 
 				</View>
 			</View>
 			<TouchableOpacity activeOpacity={0.8} onPress={handleFavorite}>
-				<AntDesign
-					name={favorite ? 'heart' : 'hearto'}
-					size={24}
-					color={favorite ? theme.colors.primary[500] : theme.colors.gray[400]}
-				/>
+				<AntDesign name={'hearto'} size={24} color={theme.colors.gray[400]} />
 			</TouchableOpacity>
 		</View>
 	)
@@ -186,6 +205,7 @@ const ConfessionCard = memo(({ item }: { item: CONFESSIONSPROPS }): JSX.Element 
 					</TouchableOpacity>
 				</View>
 			)}
+			<GuestModal visible={guestModalVisible} onPress={() => setGuestModalVisible(false)} />
 		</>
 	)
 })
@@ -235,7 +255,7 @@ const stylesheet = createStyleSheet({
 	},
 	confessionText: {
 		fontFamily: 'Regular',
-		fontSize: moderateScale(15),
+		fontSize: moderateScale(14),
 	},
 	timeCon: { marginBottom: moderateScale(10) },
 	timeText: {

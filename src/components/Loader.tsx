@@ -32,10 +32,10 @@ export default Loader
 
 const stylesheet = createStyleSheet({
 	modalContent: {
-		width: '50%',
+		width: '40%',
 		justifyContent: 'space-evenly',
 		alignItems: 'center',
-		height: moderateVerticalScale(120),
+		height: moderateVerticalScale(100),
 		borderRadius: moderateScale(10),
 	},
 

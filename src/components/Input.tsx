@@ -63,20 +63,19 @@ export default Input
 
 const stylesheet = createStyleSheet({
 	label: {
-		opacity: 0.3,
-		fontFamily: 'Medium',
-		fontSize: moderateScale(16),
+		opacity: 0.2,
+		fontFamily: 'Regular',
+		fontSize: moderateScale(15),
 	},
 	input: {
-		backgroundColor: 'rgba(255,255,255,.1)',
+		backgroundColor: 'rgba(255,255,255,.05)',
 		padding: moderateScale(10),
 		borderRadius: moderateScale(5),
-		fontSize: moderateScale(18),
+		fontSize: moderateScale(16),
 	},
 	error: {
-		fontFamily: 'Italic',
-		fontSize: moderateScale(14),
-		marginTop: moderateScale(5),
-		opacity: 0.7,
+		fontFamily: 'Regular',
+		fontSize: moderateScale(11),
+		marginTop: moderateScale(1),
 	},
 })

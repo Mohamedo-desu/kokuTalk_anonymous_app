@@ -136,11 +136,6 @@ const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 export default SignInPage
 
 const stylesheet = createStyleSheet({
-	error: {
-		fontFamily: 'Italic',
-		fontSize: moderateScale(14),
-		marginTop: moderateScale(5),
-	},
 	signInButton: {
 		marginTop: moderateScale(20),
 		width: '100%',
@@ -167,7 +162,7 @@ const stylesheet = createStyleSheet({
 		paddingHorizontal: moderateScale(15),
 	},
 	signUpText: {
-		fontFamily: 'Italic',
-		fontSize: moderateScale(14),
+		fontFamily: 'Regular',
+		fontSize: moderateScale(13),
 	},
 })

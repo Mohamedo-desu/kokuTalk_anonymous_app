@@ -1,11 +1,9 @@
-import Constants from 'expo-constants'
 import * as Updates from 'expo-updates'
 import { useEffect } from 'react'
 import { Alert } from 'react-native'
 
 export default function useUpdates() {
 	const { isUpdateAvailable } = Updates.useUpdates()
-	const appVersion = Constants.expoConfig?.version
 
 	useEffect(() => {
 		if (isUpdateAvailable) {

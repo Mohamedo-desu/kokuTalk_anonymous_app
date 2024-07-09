@@ -25,11 +25,11 @@ const SplashScreen = () => {
 						try {
 							updateUser({
 								id: session.user.id,
-								displayName: session.user.user_metadata.displayName,
-								userName: session.user.user_metadata.userName,
+								display_name: session.user.user_metadata.display_name,
+								user_name: session.user.user_metadata.user_name,
 								email: session.user.email,
 								gender: session.user.user_metadata.gender,
-								photoURL: session.user.user_metadata.photoURL,
+								photo_url: session.user.user_metadata.photo_url,
 								age: session.user.user_metadata.age,
 							})
 							setAuthenticated()

@@ -11,14 +11,25 @@ export interface CONFESSIONSPROPS {
 	dislikes: string[]
 	likes: string[]
 	comments: string[]
-	confessionText: string
-	confessionTypes: string[]
+	confession_text: string
+	confession_types: string[]
 	created_at: string
 	user: {
-		displayName: string
+		display_name: string
+		user_name: string
+		photo_url: string
 		gender: string
 		age: string
-		userName: string
-		photoURL: string
 	}
+}
+
+export interface ADDCONFESSIONPROPS {
+	confession_text: string
+	confession_types: string[]
+	confessed_by: string
+	likes: string[]
+	dislikes: string[]
+	comments: string[]
+	shares: string[]
+	views: string[]
 }

@@ -1,5 +1,4 @@
 import { Fonts } from '@/constants/Fonts'
-import useUpdates from '@/hooks/useUpdates'
 import AuthProvider from '@/providers/AuthProvider'
 import CustomThemeProvider from '@/providers/ThemeProvider'
 import '@/unistyle/unistyles'
@@ -71,7 +70,6 @@ function useNotificationObserver() {
 }
 
 export default function RootLayout() {
-	useUpdates()
 	useNotificationObserver()
 
 	const { theme } = useStyles()

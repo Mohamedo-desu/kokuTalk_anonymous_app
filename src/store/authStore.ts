@@ -8,13 +8,13 @@ export interface AuthState {
 	isLoggingOut: boolean
 	currentUser: {
 		id: string
-		displayName: string
-		userName: string
+		display_name: string
+		user_name: string
 		email: string
-		password?: string
+		password: string
 		gender: string
 		age: string
-		photoURL: string
+		photo_url: string
 	}
 }
 

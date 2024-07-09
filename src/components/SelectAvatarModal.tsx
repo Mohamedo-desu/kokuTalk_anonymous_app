@@ -13,12 +13,12 @@ import { createStyleSheet, useStyles } from 'react-native-unistyles'
 const SelectAvatarModal = ({ visible, onClose }: { visible: boolean; onClose: () => void }) => {
 	const { theme, styles } = useStyles(stylesheet)
 	const navigation = useNavigation()
-	const { photoURL, gender } = useAuthStoreSelectors.use.currentUser()
+	const { photo_url, gender } = useAuthStoreSelectors.use.currentUser()
 	const updateUser = useAuthStoreSelectors.use.updateUser()
 
 	const handleSelectprofile = React.useCallback(
-		(photoURL: string) => {
-			updateUser({ photoURL })
+		(photo_url: string) => {
+			updateUser({ photo_url })
 			navigation.dispatch(DrawerActions.closeDrawer())
 			onClose()
 		},
@@ -46,7 +46,7 @@ const SelectAvatarModal = ({ visible, onClose }: { visible: boolean; onClose: ()
 								styles.avatar,
 								{
 									backgroundColor:
-										photoURL === avatar ? theme.colors.primary[500] : 'rgba(255,255,255,0.2)',
+										photo_url === avatar ? theme.colors.primary[500] : 'rgba(255,255,255,0.2)',
 								},
 							]}>
 							<Image
@@ -56,7 +56,7 @@ const SelectAvatarModal = ({ visible, onClose }: { visible: boolean; onClose: ()
 								style={styles.image}
 								alt="avatar"
 							/>
-							{photoURL === avatar && (
+							{photo_url === avatar && (
 								<Ionicons
 									name="checkmark-circle"
 									size={moderateScale(20)}

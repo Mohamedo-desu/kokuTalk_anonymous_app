@@ -1,24 +1,29 @@
 import ConfessionCard from '@/components/ConfessionCard'
 import Skeleton from '@/components/Skeleton'
+import { fetchConfessions } from '@/services/confessionActions'
+import { useAuthStoreSelectors } from '@/store/authStore'
 import { CONFESSIONSPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
-import { supabase } from '@/utils/supabase'
 import { FlashList } from '@shopify/flash-list'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useCallback, useEffect, useState } from 'react'
-import { ScrollView, Text, View } from 'react-native'
+import { ActivityIndicator, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
-const PAGE_SIZE = 50
+const PAGE_SIZE = 20
 
 const HomePage = () => {
 	const { theme, styles } = useStyles(stylesheet)
 	const safeAreaInsets = useSafeAreaInsets()
 	const [loading, setLoading] = useState(true)
+	const [fetchingMore, setFetchingMore] = useState(false)
+	const [refreshing, setRefreshing] = useState(false)
+
 	const [confessions, setConfessions] = useState<CONFESSIONSPROPS[]>([])
-	const [page, setPage] = useState(0)
+
+	const userId = useAuthStoreSelectors.use.currentUser().id
 
 	const renderConfessionCard = useCallback(({ item }: { item: CONFESSIONSPROPS }) => {
 		if (!item) {
@@ -38,43 +43,69 @@ const HomePage = () => {
 		)
 	}, [theme.colors.gray[400]])
 
-	const fetchConfessions = useCallback(async (page: number) => {
-		try {
-			let { data: newConfessions, error } = await supabase
-				.from('confessions')
-				.select(
-					`*,
-                	user:users (
-                    id,
-                    displayName,
-                    userName,
-					gender,
-					age,
-					photoURL
-                	)`,
-				)
-				.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
+	useEffect(() => {
+		;(async () => {
+			try {
+				const newConfessions = await fetchConfessions({ userId, limit: PAGE_SIZE })
+				if (newConfessions) {
+					setConfessions((prev) => {
+						const combinedConfessions = [...prev, ...newConfessions]
+						const uniqueConfessions = Array.from(
+							new Set(combinedConfessions.map((confession) => confession.id)),
+						).map((id) => combinedConfessions.find((confession) => confession.id === id))
 
-			if (error) {
-				throw new Error(error.message)
+						return uniqueConfessions
+					})
+				}
+				setLoading(false)
+			} catch (error) {
+				console.log(error)
+				setLoading(false)
 			}
-
-			if (newConfessions) {
-				setConfessions((prevConfessions) => [...prevConfessions, ...newConfessions])
-			}
-		} catch (error) {
-			console.log(error)
-		}
+		})()
 	}, [])
 
-	useEffect(() => {
-		fetchConfessions(page)
-	}, [page])
+	const loadMoreConfessions = useCallback(
+		async ({ prepend }: { prepend: boolean }) => {
+			try {
+				if (prepend) {
+					if (refreshing) return
+					setRefreshing(true)
+				} else {
+					if (fetchingMore) return
+					setFetchingMore(true)
+				}
 
-	const loadMoreConfessions = () => {
-		setPage((prevPage) => prevPage + 1)
-	}
+				const newConfessions = await fetchConfessions({ userId, limit: PAGE_SIZE })
+				if (newConfessions.length > 0) {
+					setConfessions((prev) => {
+						const combinedConfessions = prepend
+							? [...newConfessions, ...prev]
+							: [...prev, ...newConfessions]
+						const uniqueConfessions = Array.from(
+							new Set(combinedConfessions.map((confession) => confession.id)),
+						).map((id) => combinedConfessions.find((confession) => confession.id === id))
 
+						return uniqueConfessions
+					})
+				}
+				if (prepend) {
+					setRefreshing(false)
+				} else {
+					setFetchingMore(false)
+				}
+			} catch (error) {
+				console.log(error)
+
+				if (prepend) {
+					setRefreshing(false)
+				} else {
+					setFetchingMore(false)
+				}
+			}
+		},
+		[userId, confessions],
+	)
 	return (
 		<LinearGradient
 			colors={[theme.colors.background, theme.colors.background]}
@@ -99,10 +130,18 @@ const HomePage = () => {
 							/>
 						))}
 				</ScrollView>
-			) : confessions.length > 0 ? (
+			) : (
 				<FlashList
 					data={confessions}
 					renderItem={renderConfessionCard}
+					refreshControl={
+						<RefreshControl
+							onRefresh={() => loadMoreConfessions({ prepend: true })}
+							refreshing={refreshing}
+							colors={[theme.colors.primary[500], theme.colors.primary[400]]}
+							style={{ backgroundColor: theme.colors.gray[300] }}
+						/>
+					}
 					keyExtractor={(item) => item?.id.toString()}
 					contentContainerStyle={{
 						paddingBottom: safeAreaInsets.bottom + moderateScale(80),
@@ -112,11 +151,16 @@ const HomePage = () => {
 					automaticallyAdjustContentInsets
 					estimatedItemSize={200}
 					indicatorStyle={theme.colors.typography}
-					onEndReached={loadMoreConfessions}
-					onEndReachedThreshold={0.5}
+					onScrollEndDrag={() => loadMoreConfessions({ prepend: false })}
+					ListFooterComponent={() =>
+						fetchingMore && (
+							<View style={{ padding: safeAreaInsets.bottom }}>
+								<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
+							</View>
+						)
+					}
+					ListEmptyComponent={ListEmptyComponent}
 				/>
-			) : (
-				<ListEmptyComponent />
 			)}
 		</LinearGradient>
 	)

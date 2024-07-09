@@ -16,17 +16,17 @@ const ProfileSetup = forwardRef(
 
 		const updateUser = useAuthStoreSelectors.use.updateUser()
 
-		const { photoURL, age, gender, displayName, userName, password, email } =
+		const { photo_url, age, gender, display_name, user_name, password, email } =
 			useAuthStoreSelectors.use.currentUser()
 
 		const PROFILE_AVATARS = useMemo(() => {
 			return gender === 'male' ? MALE_AVATARS : FEMALE_AVATARS
 		}, [gender])
 
-		const [isValid, setIsValid] = useState(photoURL?.trim().length > 0 ? true : false)
+		const [isValid, setIsValid] = useState(photo_url?.trim().length > 0 ? true : false)
 
-		const handleSelectprofile = (photoURL: string) => {
-			updateUser({ photoURL })
+		const handleSelectprofile = (photo_url: string) => {
+			updateUser({ photo_url })
 			setIsValid(true)
 		}
 
@@ -38,12 +38,12 @@ const ProfileSetup = forwardRef(
 					password,
 					options: {
 						data: {
-							displayName,
-							userName,
+							display_name,
+							user_name,
 							email,
 							gender,
 							age,
-							photoURL,
+							photo_url,
 						},
 					},
 				})
@@ -56,7 +56,7 @@ const ProfileSetup = forwardRef(
 
 					const { error } = await supabase
 						.from('users')
-						.insert([{ id: data.user.id, displayName, userName, email, gender, age, photoURL }])
+						.insert([{ id: data.user.id, display_name, user_name, email, gender, age, photo_url }])
 
 					if (error) {
 						throw new Error(error.message)
@@ -87,7 +87,7 @@ const ProfileSetup = forwardRef(
 								styles.avatar,
 								{
 									backgroundColor:
-										photoURL === avatar ? theme.colors.white : theme.colors.primary[400],
+										photo_url === avatar ? theme.colors.white : theme.colors.primary[400],
 								},
 							]}>
 							<Image
@@ -97,7 +97,7 @@ const ProfileSetup = forwardRef(
 								style={styles.image}
 								alt="avatar"
 							/>
-							{photoURL === avatar && (
+							{photo_url === avatar && (
 								<Ionicons
 									name="checkmark-circle"
 									size={moderateScale(20)}

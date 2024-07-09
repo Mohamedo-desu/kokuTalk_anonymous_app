@@ -22,17 +22,17 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 	const setAnonymous = useAuthStoreSelectors.use.setAnonymous()
 
 	const handleSignUp = async ({
-		displayName,
-		userName,
+		display_name,
+		user_name,
 		email,
 		password,
 	}: {
-		displayName: string
-		userName: string
+		display_name: string
+		user_name: string
 		email: string
 		password: string
 	}) => {
-		updateUser({ displayName, userName, email, password })
+		updateUser({ display_name, user_name, email, password })
 		router.navigate('/(auth)/modal')
 	}
 
@@ -69,9 +69,9 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 				}}>
 				<Formik
 					initialValues={{
-						displayName: '',
+						display_name: '',
 						email: '',
-						userName: '',
+						user_name: '',
 						password: '',
 					}}
 					enableReinitialize
@@ -82,11 +82,11 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 							<View style={[styles.form, { backgroundColor: theme.colors.primary[500] }]}>
 								<Input
 									title="Display Name"
-									errors={errors.displayName}
-									touched={touched.displayName}
-									value={values.displayName}
-									handleChange={handleChange('displayName')}
-									handleBlur={handleBlur('displayName')}
+									errors={errors.display_name}
+									touched={touched.display_name}
+									value={values.display_name}
+									handleChange={handleChange('display_name')}
+									handleBlur={handleBlur('display_name')}
 									autoComplete={'name'}
 									maxLength={15}
 								/>
@@ -101,11 +101,11 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 								/>
 								<Input
 									title="User Name"
-									errors={errors.userName}
-									touched={touched.userName}
-									value={values.userName}
-									handleChange={handleChange('userName')}
-									handleBlur={handleBlur('userName')}
+									errors={errors.user_name}
+									touched={touched.user_name}
+									value={values.user_name}
+									handleChange={handleChange('user_name')}
+									handleBlur={handleBlur('user_name')}
 									autoComplete={'username-new'}
 									maxLength={15}
 								/>
@@ -163,11 +163,6 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 export default SignUpPage
 
 const stylesheet = createStyleSheet({
-	error: {
-		fontFamily: 'Italic',
-		fontSize: moderateScale(14),
-		marginTop: moderateScale(5),
-	},
 	signUpButton: {
 		marginTop: moderateScale(20),
 		width: '100%',
@@ -194,7 +189,7 @@ const stylesheet = createStyleSheet({
 		paddingHorizontal: moderateScale(15),
 	},
 	signInText: {
-		fontFamily: 'Italic',
-		fontSize: moderateScale(14),
+		fontFamily: 'Regular',
+		fontSize: moderateScale(13),
 	},
 })

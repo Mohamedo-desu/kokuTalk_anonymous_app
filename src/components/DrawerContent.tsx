@@ -27,7 +27,7 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 
 	const [avatarModalVisible, setAvatarModalVisible] = useState(false)
 
-	const { photoURL, displayName, age, gender } = useAuthStoreSelectors.use.currentUser()
+	const { photo_url, display_name, age, gender } = useAuthStoreSelectors.use.currentUser()
 	const [loading, setLoading] = useState(false)
 
 	const logOut = useAuthStoreSelectors.use.logOut()
@@ -63,12 +63,12 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 					]}>
 					<TouchableOpacity disabled={isAnonymous} onPress={() => setAvatarModalVisible(true)}>
 						<Image
-							source={{ uri: photoURL || PLACE_HOLDER }}
+							source={{ uri: photo_url || PLACE_HOLDER }}
 							style={styles.profileImage}
 							resizeMode="cover"
 						/>
 					</TouchableOpacity>
-					<Text style={styles.displayName}>{displayName || 'Anonymous'}</Text>
+					<Text style={styles.display_name}>{display_name || 'Anonymous'}</Text>
 					{age && gender && (
 						<Text style={styles.ageGender}>
 							{age}.{gender.charAt(0)}
@@ -188,7 +188,7 @@ const stylesheet = createStyleSheet({
 		height: 100,
 		borderRadius: moderateScale(50),
 	},
-	displayName: {
+	display_name: {
 		fontFamily: 'Medium',
 		fontSize: moderateScale(18),
 		color: 'rgba(255,255,255,.4)',
