@@ -4,6 +4,7 @@ import { fetchConfessions } from '@/services/confessionActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { CONFESSIONSPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
+import { getStoredValues, saveSecurely } from '@/utils/storageUtils'
 import { FlashList } from '@shopify/flash-list'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useCallback, useEffect, useState } from 'react'
@@ -108,6 +109,37 @@ const HomePage = () => {
 	)
 	const keyExtractor = useCallback((item: CONFESSIONSPROPS, i: number) => `${i}-${item.id}`, [])
 
+	const onViewableItemsChanged = async ({ viewableItems }: { viewableItems: any[] }) => {
+		const unseenItems = viewableItems
+			.filter((item) => !item.item.views?.includes(userId))
+			.map((item) => item.item.id)
+
+		if (unseenItems.length === 0) {
+			return
+		}
+
+		try {
+			let { unseenConfessions } = await getStoredValues(['unseenConfessions'])
+
+			if (!unseenConfessions) {
+				unseenConfessions = []
+			} else {
+				unseenConfessions = JSON.parse(unseenConfessions)
+			}
+
+			const updatedUnseenConfessions = Array.from(new Set([...unseenItems, ...unseenConfessions]))
+
+			await saveSecurely([
+				{
+					key: 'unseenConfessions',
+					value: JSON.stringify(updatedUnseenConfessions),
+				},
+			])
+		} catch (error) {
+			console.error('Error fetching/storing unseen confessions:', error)
+		}
+	}
+
 	return (
 		<LinearGradient
 			colors={[theme.colors.background, theme.colors.background]}
@@ -154,6 +186,8 @@ const HomePage = () => {
 					automaticallyAdjustContentInsets
 					estimatedItemSize={200}
 					indicatorStyle={theme.colors.typography}
+					onEndReached={() => loadMoreConfessions({ prepend: false })}
+					onEndReachedThreshold={0.1}
 					onScrollEndDrag={() => loadMoreConfessions({ prepend: false })}
 					ListFooterComponent={() =>
 						fetchingMore && (
@@ -163,6 +197,12 @@ const HomePage = () => {
 						)
 					}
 					ListEmptyComponent={ListEmptyComponent}
+					viewabilityConfig={{
+						itemVisiblePercentThreshold: 100,
+						minimumViewTime: 5000,
+						waitForInteraction: true,
+					}}
+					onViewableItemsChanged={onViewableItemsChanged}
 				/>
 			)}
 		</LinearGradient>

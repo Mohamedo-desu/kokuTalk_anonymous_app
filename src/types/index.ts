@@ -14,6 +14,8 @@ export interface CONFESSIONSPROPS {
 	confession_text: string
 	confession_types: string[]
 	created_at: string
+	shares: string[]
+	views: string[]
 	user: {
 		display_name: string
 		user_name: string
