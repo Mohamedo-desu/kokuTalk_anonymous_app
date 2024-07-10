@@ -106,6 +106,8 @@ const HomePage = () => {
 		},
 		[userId, confessions],
 	)
+	const keyExtractor = useCallback((item: CONFESSIONSPROPS, i: number) => `${i}-${item.id}`, [])
+
 	return (
 		<LinearGradient
 			colors={[theme.colors.background, theme.colors.background]}
@@ -138,11 +140,12 @@ const HomePage = () => {
 						<RefreshControl
 							onRefresh={() => loadMoreConfessions({ prepend: true })}
 							refreshing={refreshing}
+							tintColor={theme.colors.primary[500]}
 							colors={[theme.colors.primary[500], theme.colors.primary[400]]}
 							style={{ backgroundColor: theme.colors.gray[300] }}
 						/>
 					}
-					keyExtractor={(item) => item?.id.toString()}
+					keyExtractor={keyExtractor}
 					contentContainerStyle={{
 						paddingBottom: safeAreaInsets.bottom + moderateScale(80),
 						paddingTop: moderateScale(10),

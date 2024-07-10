@@ -154,7 +154,7 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 								/>
 							</View>
 							<Text style={[styles.drawerItemLabel, { color: 'rgba(255,255,255,.2)' }]}>
-								Log out
+								{isAnonymous ? 'Login' : 'Logout'}
 							</Text>
 						</TouchableOpacity>
 					</View>
