@@ -1,11 +1,13 @@
 import { FEMALE_AVATARS, MALE_AVATARS } from '@/constants/userAvatars'
+import { signUpFirebase } from '@/services/authActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
+import { User } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
-import { supabase } from '@/utils/supabase'
 import { Ionicons } from '@expo/vector-icons'
 import { ForwardedRef, forwardRef, useMemo, useState } from 'react'
 import { FlatList, Image, Text, TouchableOpacity, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
+import { Toast } from 'react-native-toast-notifications'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 import Loader from './Loader'
 
@@ -33,39 +35,28 @@ const ProfileSetup = forwardRef(
 		const handleSignUp = async () => {
 			try {
 				setLoading(true)
-				const { data, error } = await supabase.auth.signUp({
+				const body: User = {
+					id: '',
+					age,
 					email,
-					password,
-					options: {
-						data: {
-							display_name,
-							user_name,
-							email,
-							gender,
-							age,
-							photo_url,
-						},
-					},
-				})
-
-				if (error) {
-					throw new Error(error.message)
+					gender,
+					photo_url,
+					user_name,
+					display_name,
+					replies: [],
+					comments: [],
+					confessions: [],
+					favorites: [],
 				}
-				if (data.user) {
-					updateUser({ id: data.user.id })
 
-					const { error } = await supabase
-						.from('users')
-						.insert([{ id: data.user.id, display_name, user_name, email, gender, age, photo_url }])
-
-					if (error) {
-						throw new Error(error.message)
-					}
-				}
+				const user = await signUpFirebase({ email, password, body })
+				updateUser(user)
 				setLoading(false)
 			} catch (error) {
-				console.log(error)
 				setLoading(false)
+				Toast.show(`${error}`, {
+					type: 'danger',
+				})
 			}
 		}
 

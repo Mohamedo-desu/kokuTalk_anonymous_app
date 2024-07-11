@@ -18,7 +18,7 @@ type SkeletonProps = {
 	style?: StyleProp<ViewStyle>
 }
 
-const Skeleton: React.FC<SkeletonProps> = React.memo(({ width, height, style }) => {
+const Skeleton: React.FC<SkeletonProps> = ({ width, height, style }) => {
 	const { theme, styles } = useStyles(stylesheet)
 	const translateX = useRef(new Animated.Value(-width)).current
 
@@ -58,7 +58,7 @@ const Skeleton: React.FC<SkeletonProps> = React.memo(({ width, height, style }) 
 			</Animated.View>
 		</View>
 	)
-})
+}
 
 export default Skeleton
 

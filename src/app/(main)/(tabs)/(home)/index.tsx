@@ -1,5 +1,6 @@
 import ConfessionCard from '@/components/ConfessionCard'
 import Skeleton from '@/components/Skeleton'
+import useNetworkState from '@/hooks/useNetworkState'
 import { fetchConfessions } from '@/services/confessionActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { CONFESSIONSPROPS } from '@/types'
@@ -11,9 +12,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { moderateScale } from 'react-native-size-matters'
+import { Toast } from 'react-native-toast-notifications'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 50
 
 const HomePage = () => {
 	const { theme, styles } = useStyles(stylesheet)
@@ -25,6 +27,7 @@ const HomePage = () => {
 	const [confessions, setConfessions] = useState<CONFESSIONSPROPS[]>([])
 
 	const userId = useAuthStoreSelectors.use.currentUser().id
+	const isNetwork = useNetworkState()
 
 	const renderConfessionCard = useCallback(({ item }: { item: CONFESSIONSPROPS }) => {
 		if (!item) {
@@ -38,75 +41,86 @@ const HomePage = () => {
 		return (
 			<View style={styles.emptyContainer}>
 				<Text style={[styles.emptyText, { color: theme.colors.gray[200] }]}>
-					No confessions available. Please check back later!
+					{isNetwork
+						? 'No confessions available. Please check back later!'
+						: 'Please check your internet!'}
 				</Text>
 			</View>
 		)
 	}, [theme.colors.gray[400]])
 
 	useEffect(() => {
-		;(async () => {
+		(async () => {
 			try {
-				const newConfessions = await fetchConfessions({ userId, limit: PAGE_SIZE })
+				const newConfessions = await fetchConfessions({ userId, fetchLimit: PAGE_SIZE })
+
 				if (newConfessions) {
 					setConfessions((prev) => {
 						const combinedConfessions = [...prev, ...newConfessions]
-						const uniqueConfessions = Array.from(
+						const uniqueConfessionIds = Array.from(
 							new Set(combinedConfessions.map((confession) => confession.id)),
-						).map((id) => combinedConfessions.find((confession) => confession.id === id))
+						).filter((id) => id !== undefined)
+						const uniqueConfessions = uniqueConfessionIds
+							.map((id) => combinedConfessions.find((confession) => confession.id === id))
+							.filter((confession) => confession !== undefined)
 
 						return uniqueConfessions
 					})
 				}
 				setLoading(false)
 			} catch (error) {
-				console.log(error)
 				setLoading(false)
+				Toast.show(`${error}`, {
+					type: 'danger',
+				})
 			}
 		})()
 	}, [])
 
-	const loadMoreConfessions = useCallback(
-		async ({ prepend }: { prepend: boolean }) => {
-			try {
-				if (prepend) {
-					if (refreshing) return
-					setRefreshing(true)
-				} else {
-					if (fetchingMore) return
-					setFetchingMore(true)
-				}
-
-				const newConfessions = await fetchConfessions({ userId, limit: PAGE_SIZE })
-				if (newConfessions.length > 0) {
-					setConfessions((prev) => {
-						const combinedConfessions = prepend
-							? [...newConfessions, ...prev]
-							: [...prev, ...newConfessions]
-						const uniqueConfessions = Array.from(
-							new Set(combinedConfessions.map((confession) => confession.id)),
-						).map((id) => combinedConfessions.find((confession) => confession.id === id))
-
-						return uniqueConfessions
-					})
-				}
-				if (prepend) {
-					setRefreshing(false)
-				} else {
-					setFetchingMore(false)
-				}
-			} catch (error) {
-				console.log(error)
-
-				if (prepend) {
-					setRefreshing(false)
-				} else {
-					setFetchingMore(false)
-				}
+	const loadMoreConfessions = async ({ prepend }: { prepend: boolean }) => {
+		try {
+			if (prepend) {
+				if (refreshing) return
+				setRefreshing(true)
+			} else {
+				if (fetchingMore) return
+				setFetchingMore(true)
 			}
-		},
-		[userId, confessions],
-	)
+
+			const newConfessions = await fetchConfessions({ userId, fetchLimit: PAGE_SIZE })
+			if (newConfessions.length > 0) {
+				setConfessions((prev) => {
+					const combinedConfessions = prepend
+						? [...newConfessions, ...prev]
+						: [...prev, ...newConfessions]
+
+					const uniqueConfessionIds = Array.from(
+						new Set(combinedConfessions.map((confession) => confession.id)),
+					).filter((id) => id !== undefined)
+					const uniqueConfessions = uniqueConfessionIds
+						.map((id) => combinedConfessions.find((confession) => confession.id === id))
+						.filter((confession) => confession !== undefined)
+
+					return uniqueConfessions
+				})
+			}
+			if (prepend) {
+				setRefreshing(false)
+			} else {
+				setFetchingMore(false)
+			}
+		} catch (error) {
+			if (prepend) {
+				setRefreshing(false)
+			} else {
+				setFetchingMore(false)
+			}
+			Toast.show(`${error}`, {
+				type: 'danger',
+			})
+		}
+	}
+
 	const keyExtractor = useCallback((item: CONFESSIONSPROPS, i: number) => `${i}-${item.id}`, [])
 
 	const onViewableItemsChanged = async ({ viewableItems }: { viewableItems: any[] }) => {
@@ -136,7 +150,9 @@ const HomePage = () => {
 				},
 			])
 		} catch (error) {
-			console.error('Error fetching/storing unseen confessions:', error)
+			Toast.show(`${error}`, {
+				type: 'danger',
+			})
 		}
 	}
 
@@ -186,8 +202,6 @@ const HomePage = () => {
 					automaticallyAdjustContentInsets
 					estimatedItemSize={200}
 					indicatorStyle={theme.colors.typography}
-					onEndReached={() => loadMoreConfessions({ prepend: false })}
-					onEndReachedThreshold={0.1}
 					onScrollEndDrag={() => loadMoreConfessions({ prepend: false })}
 					ListFooterComponent={() =>
 						fetchingMore && (

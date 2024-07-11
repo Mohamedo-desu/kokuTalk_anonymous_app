@@ -1,22 +1,52 @@
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { ADDCOMMENTPROPS, ADDCONFESSIONPROPS, CONFESSIONSPROPS } from '@/types'
+import { db } from '@/utils/firebase'
 import { deleteStoredValues, getStoredValues } from '@/utils/storageUtils'
-import { supabase } from '@/utils/supabase'
+import {
+	addDoc,
+	arrayRemove,
+	arrayUnion,
+	collection,
+	doc,
+	getDoc,
+	getDocs,
+	limit,
+	query,
+	writeBatch,
+} from 'firebase/firestore'
 
-export const fetchConfessions = async ({ userId, limit }: { userId: string; limit: number }) => {
+export const fetchConfessions = async ({
+	userId,
+	fetchLimit,
+}: {
+	userId: string
+	fetchLimit: number
+}) => {
 	try {
-		let query = supabase.from('random_confessions_view').select('*, user:users(*)').limit(limit)
+		const confessionsRef = collection(db, 'confessions')
 
-		const { data: confessions, error } = await query
+		const q = query(confessionsRef, limit(fetchLimit))
+		const snapshot = await getDocs(q)
 
-		if (error) {
-			console.error('Error fetching random confessions:', error)
+		if (snapshot.empty) {
+			console.log('No matching documents.')
 			return []
 		}
 
-		if (!confessions || confessions.length <= 0) {
-			return []
-		}
+		const confessions = await Promise.all(
+			snapshot.docs.map(async (confessDoc) => {
+				const confession = { id: confessDoc.id, ...confessDoc.data() } as CONFESSIONSPROPS
+
+				if (confession.confessed_by) {
+					const userDoc = await getDoc(doc(db, 'users', confession.confessed_by))
+					if (userDoc.exists()) {
+						confession.user = { id: userDoc.id, ...userDoc.data() } as CONFESSIONSPROPS['user']
+					}
+				}
+
+				return confession
+			}),
+		)
 
 		if (!userId) {
 			return confessions
@@ -33,23 +63,32 @@ export const fetchConfessions = async ({ userId, limit }: { userId: string; limi
 			}
 		})
 
-		const sortedConfessions = unseenConfessions.concat(seenConfessions).slice(0, limit)
+		const sortedConfessions = unseenConfessions.concat(seenConfessions).slice(0, fetchLimit)
 
 		return sortedConfessions
 	} catch (error: any) {
-		console.error('Unexpected error:', error)
-		throw new Error(error.message || 'An error occurred')
+		throw new Error(error?.message || 'An error occurred')
 	}
 }
 
 export const addConfession = async (confessionBody: ADDCONFESSIONPROPS) => {
 	try {
-		const { error } = await supabase.from('confessions').insert([confessionBody])
-		if (error) {
-			throw new Error(error.message)
+		const batch = writeBatch(db)
+
+		const confessionsRef = collection(db, 'confessions')
+		const docRef = await addDoc(confessionsRef, confessionBody)
+		const confessionId = docRef.id
+
+		if (confessionBody.confessed_by) {
+			const userDocRef = doc(db, 'users', confessionBody.confessed_by)
+			batch.update(userDocRef, { confessions: arrayUnion(confessionId) })
 		}
+
+		await batch.commit()
+
+		return confessionId
 	} catch (error: any) {
-		throw new Error(error)
+		throw new Error(error.message || 'Failed to add confession')
 	}
 }
 
@@ -59,118 +98,173 @@ export const updateUnseenConfessions = async () => {
 
 		let { unseenConfessions } = await getStoredValues(['unseenConfessions'])
 
-		if (!unseenConfessions) {
+		if (!unseenConfessions || unseenConfessions.length === 0 || !userId) {
 			return
 		}
 
 		unseenConfessions = JSON.parse(unseenConfessions)
 
-		const { data: confessionsToUpdate, error } = await supabase
-			.from('confessions')
-			.select('*')
-			.in('id', unseenConfessions)
+		const batch = writeBatch(db)
 
-		if (error) {
-			throw new Error(error.message)
-		}
-
-		const updates = confessionsToUpdate.map((confession) => {
-			const { views } = confession
-			const updatedViews = Array.isArray(views) ? views : []
-
-			if (!updatedViews.includes(userId)) {
-				updatedViews.push(userId)
-			}
-
-			return {
-				...confession,
-				views: updatedViews,
-			}
+		unseenConfessions.forEach((confessionId: string) => {
+			const confessionRef = doc(db, 'confessions', confessionId)
+			batch.update(confessionRef, { views: arrayUnion(userId) })
 		})
 
-		const { error: updateError } = await supabase
-			.from('confessions')
-			.upsert(updates, { onConflict: 'id' })
-
-		if (updateError) {
-			throw new Error(updateError.message)
-		}
+		await batch.commit()
 
 		await deleteStoredValues(['unseenConfessions'])
-	} catch (error) {
-		console.error('Error updating unseen confessions:', error)
+	} catch (error: any) {
+		throw new Error(error.message || 'An error occurred while updating unseen confessions')
 	}
 }
 export const updateLikesAndDislikes = async () => {
 	try {
 		const userId = useAuthStoreSelectors.getState().currentUser.id
 
-		let { postsTodisLike, postsToLike } = await getStoredValues(['postsTodisLike', 'postsToLike'])
+		const [{ postsToLike }, { postsTodisLike }, { postsToUnlike }, { postsToUndislike }] =
+			await Promise.all([
+				getStoredValues(['postsToLike']),
+				getStoredValues(['postsTodisLike']),
+				getStoredValues(['postsToUnlike']),
+				getStoredValues(['postsToUndislike']),
+			])
 
-		postsTodisLike = JSON.parse(postsTodisLike) || []
-		postsToLike = JSON.parse(postsToLike) || []
+		const toLike = postsToLike ? JSON.parse(postsToLike) : []
+		const toDislike = postsTodisLike ? JSON.parse(postsTodisLike) : []
+		const toUnlike = postsToUnlike ? JSON.parse(postsToUnlike) : []
+		const toUndislike = postsToUndislike ? JSON.parse(postsToUndislike) : []
 
-		if (postsToLike.length === 0 && postsTodisLike.length === 0) {
+		if (
+			(toLike.length === 0 &&
+				toDislike.length === 0 &&
+				toUnlike.length === 0 &&
+				toUndislike.length === 0) ||
+			!userId
+		) {
 			return
 		}
 
-		const postIdsToUpdate = [...new Set([...postsToLike, ...postsTodisLike])]
+		const confessionsRef = collection(db, 'confessions')
 
-		const { data: confessionsToUpdate, error } = await supabase
-			.from('confessions')
-			.select('*')
-			.in('id', postIdsToUpdate)
+		await deleteStoredValues(['postsToLike', 'postsTodisLike', 'postsToUnlike', 'postsToUndislike'])
 
-		if (error) {
-			throw new Error(error.message)
+		const batch = writeBatch(db)
+
+		const updatePosts = (posts: string[], dislikes: boolean, remove: boolean) => {
+			posts.forEach((postId: string) => {
+				const confessionRef = doc(confessionsRef, postId)
+				batch.update(confessionRef, {
+					[dislikes ? 'dislikes' : 'likes']: remove ? arrayRemove(userId) : arrayUnion(userId),
+					[dislikes ? 'likes' : 'dislikes']: arrayRemove(userId),
+				})
+			})
 		}
 
-		const updates = confessionsToUpdate.map((confession) => {
-			const { id, likes, dislikes } = confession
-			let updatedLikes = Array.isArray(likes) ? likes : []
-			let updatedDislikes = Array.isArray(dislikes) ? dislikes : []
+		updatePosts(toLike, false, false)
+		updatePosts(toDislike, true, false)
+		updatePosts(toUnlike, false, true)
+		updatePosts(toUndislike, true, true)
 
-			if (postsToLike.includes(id)) {
-				if (!updatedLikes.includes(userId)) {
-					updatedLikes.push(userId)
-				}
-				updatedDislikes = updatedDislikes.filter((dislike) => dislike !== userId)
-			}
-
-			if (postsTodisLike.includes(id)) {
-				if (!updatedDislikes.includes(userId)) {
-					updatedDislikes.push(userId)
-				}
-				updatedLikes = updatedLikes.filter((like) => like !== userId)
-			}
-
-			return {
-				...confession,
-				likes: updatedLikes,
-				dislikes: updatedDislikes,
-			}
-		})
-
-		const { error: updateError } = await supabase
-			.from('confessions')
-			.upsert(updates, { onConflict: 'id' })
-
-		if (updateError) {
-			throw new Error(updateError.message)
-		}
-		await deleteStoredValues(['postsToLike', 'postsTodisLike'])
-	} catch (error) {
-		console.error('Error updating likes and dislikes confessions:', error)
+		await batch.commit()
+	} catch (error: any) {
+		throw new Error(
+			error.message || 'An error occurred while updating likes and dislikes confessions',
+		)
 	}
 }
 
-export const addComment = async (CommentBody: ADDCOMMENTPROPS) => {
+export const uploadComment = async (commentBody: ADDCOMMENTPROPS) => {
 	try {
-		const { error } = await supabase.from('comments').insert([CommentBody])
-		if (error) {
-			throw new Error(error.message)
+		const batch = writeBatch(db)
+
+		const commentRef = await addDoc(collection(db, 'comments'), commentBody)
+
+		const commentId = commentRef.id
+
+		if (commentBody.confession_id) {
+			const confessionDocRef = doc(db, 'confessions', commentBody.confession_id)
+			batch.update(confessionDocRef, { comments: arrayUnion(commentId) })
 		}
+		if (commentBody.commented_by) {
+			const userDocRef = doc(db, 'users', commentBody.commented_by)
+			batch.update(userDocRef, { comments: arrayUnion(commentId) })
+		}
+
+		await batch.commit()
+
+		return commentId
 	} catch (error: any) {
-		throw new Error(error)
+		throw new Error(error.message || 'Failed to add comment')
+	}
+}
+
+export const updateSharedConfessions = async () => {
+	try {
+		const userId = useAuthStoreSelectors.getState().currentUser.id
+
+		let { postsToShare } = await getStoredValues(['postsToShare'])
+
+		if (!postsToShare || postsToShare.length === 0 || !userId) {
+			return
+		}
+
+		postsToShare = JSON.parse(postsToShare)
+
+		const batch = writeBatch(db)
+
+		postsToShare.forEach((confessionId: string) => {
+			const confessionRef = doc(db, 'confessions', confessionId)
+			batch.update(confessionRef, { shares: arrayUnion(userId) })
+		})
+
+		await batch.commit()
+
+		await deleteStoredValues(['postsToShare'])
+	} catch (error: any) {
+		throw new Error(error.message || 'An error occurred while updating unseen confessions')
+	}
+}
+
+export const updateFavoritedConfessions = async () => {
+	try {
+		const userId = useAuthStoreSelectors.getState().currentUser.id
+
+		let { postsToUnFavorite, postsToFavorite } = await getStoredValues([
+			'postsToUnFavorite',
+			'postsToFavorite',
+		])
+
+		if (
+			(!postsToUnFavorite && !postsToFavorite) ||
+			(postsToFavorite.length === 0 && postsToUnFavorite.length === 0) ||
+			!userId
+		) {
+			return
+		}
+
+		postsToUnFavorite = JSON.parse(postsToUnFavorite)
+		postsToFavorite = JSON.parse(postsToFavorite)
+
+		await deleteStoredValues(['postsToUnFavorite', 'postsToFavorite'])
+
+		const batch = writeBatch(db)
+
+		const userDocRef = doc(db, 'users', userId)
+
+		postsToFavorite.forEach((confessionId: string) => {
+			const confessionRef = doc(db, 'confessions', confessionId)
+			batch.update(confessionRef, { favorites: arrayUnion(userId) })
+			batch.update(userDocRef, { favorites: arrayUnion(confessionId) })
+		})
+		postsToUnFavorite.forEach((confessionId: string) => {
+			const confessionRef = doc(db, 'confessions', confessionId)
+			batch.update(confessionRef, { favorites: arrayRemove(userId) })
+			batch.update(userDocRef, { favorites: arrayRemove(confessionId) })
+		})
+
+		await batch.commit()
+	} catch (error: any) {
+		throw new Error(error.message || 'An error occurred while updating favorited confessions')
 	}
 }

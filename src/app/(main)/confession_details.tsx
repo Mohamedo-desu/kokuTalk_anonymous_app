@@ -5,7 +5,7 @@ import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
 const ConfessionDetails = () => {
-	const { id }: { id: string } = useLocalSearchParams()
+	const { id }: Partial<{ id: string }> = useLocalSearchParams()
 	const { theme, styles } = useStyles(stylesheet)
 
 	useEffect(() => {

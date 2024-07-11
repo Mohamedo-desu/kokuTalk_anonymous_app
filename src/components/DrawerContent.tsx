@@ -1,8 +1,8 @@
 import { PLACE_HOLDER } from '@/constants/placeHolders'
 import useIsAnonymous from '@/hooks/useIsAnonymous'
 import { useAuthStoreSelectors } from '@/store/authStore'
+import { auth } from '@/utils/firebase'
 import { deleteStoredValues } from '@/utils/storageUtils'
-import { supabase } from '@/utils/supabase'
 import { Fontisto, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons'
 import { DrawerContentComponentProps } from '@react-navigation/drawer'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -11,6 +11,7 @@ import { useState } from 'react'
 import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { moderateScale } from 'react-native-size-matters'
+import { Toast } from 'react-native-toast-notifications'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 import Loader from './Loader'
 import SelectAvatarModal from './SelectAvatarModal'
@@ -36,17 +37,16 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 		try {
 			setLoading(true)
 			if (!isAnonymous) {
-				let { error } = await supabase.auth.signOut()
-				if (error) {
-					throw new Error(error.message)
-				}
+				await auth.signOut()
 			}
 			await deleteStoredValues(['isAnonymous'])
 			logOut()
 			setLoading(false)
 		} catch (error) {
-			console.log(error)
 			setLoading(false)
+			Toast.show(`${error}`, {
+				type: 'danger',
+			})
 		}
 	}
 	return (

@@ -1,16 +1,23 @@
 import useIsAnonymous from '@/hooks/useIsAnonymous'
-import { addComment } from '@/services/confessionActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { CONFESSIONSPROPS } from '@/types'
+import {
+	addComment,
+	disLikeConfession,
+	favoriteConfession,
+	likeConfession,
+	shareConfession,
+} from '@/utils/confessionUtils'
 import { shortenNumber } from '@/utils/generalUtils'
-import { getStoredValues, saveSecurely } from '@/utils/storageUtils'
+import { getStoredValues } from '@/utils/storageUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { AntDesign, Feather, Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { useCallback, useState } from 'react'
-import { ActivityIndicator, Image, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { useCallback, useEffect, useState } from 'react'
+import { Image, Text, TouchableOpacity, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
+import CommentCard from './CommentCard'
 import GuestModal from './GuestModal'
 
 /**
@@ -19,149 +26,83 @@ import GuestModal from './GuestModal'
  * @returns {JSX.Element} The confession card component
  */
 
-const COMMENT_LENGTH = 500
-
 const ConfessionCard = ({ item }: { item: CONFESSIONSPROPS }): JSX.Element => {
+	const isAnonymous = useIsAnonymous()
+
 	const { theme, styles } = useStyles(stylesheet)
 	const { id, confession_text, confession_types, created_at } = item
 	const { display_name, gender, age, photo_url } = item.user
 
-	const userId = useAuthStoreSelectors.use.currentUser().id
+	const userId = useAuthStoreSelectors.getState().currentUser.id
 
-	const isAnonymous = useIsAnonymous()
 	const [guestModalVisible, setGuestModalVisible] = useState(false)
 
 	const [likes, setLikes] = useState(item.likes)
 	const [dislikes, setdisLikes] = useState(item.dislikes)
+	const [isFavorite, setIsFavorite] = useState(item.favorites.includes(userId))
 
-	const [comments, setcomments] = useState(item.comments.length)
+	const [comments, setComments] = useState(item.comments.length)
 	const [newComment, setNewComment] = useState('')
 	const [commenting, setCommenting] = useState(false)
 	const [loading, setLoading] = useState(false)
 
+	// CONFESSION FUNCTIONS
 	const navigateToDetails = useCallback(() => {
 		router.navigate({
 			pathname: '/(main)/confession_details',
 			params: { id },
 		})
 	}, [id])
-
 	const handleLikeConfession = useCallback(async () => {
 		if (isAnonymous) {
-			setGuestModalVisible(true)
-			return
+			return setGuestModalVisible(true)
 		}
-		try {
-			const updatedLikes = likes.includes(userId)
-				? likes.filter((like) => like !== userId)
-				: [...likes, userId]
-			const updatedDislikes = dislikes.includes(userId)
-				? dislikes.filter((dislike) => dislike !== userId)
-				: dislikes
-
-			const storedValues = await getStoredValues(['postsTodisLike', 'postsToLike'])
-
-			let postsTodisLike = JSON.parse(storedValues.postsTodisLike || '[]')
-			let postsToLike = JSON.parse(storedValues.postsToLike || '[]')
-
-			postsTodisLike = postsTodisLike.filter((postId: string) => postId !== id)
-
-			if (likes.includes(userId)) {
-				postsToLike = postsToLike.filter((postId: string) => postId !== id)
-			} else {
-				postsToLike = [...postsToLike, id]
-			}
-
-			await saveSecurely([
-				{ key: 'postsToLike', value: JSON.stringify(postsToLike) },
-				{ key: 'postsTodisLike', value: JSON.stringify(postsTodisLike) },
-			])
-
-			setLikes(updatedLikes)
-			setdisLikes(updatedDislikes)
-		} catch (error) {
-			console.error('Failed to handle like confession:', error)
-		}
-	}, [likes, dislikes, id, userId])
-
+		await likeConfession({
+			id,
+			likes,
+			dislikes,
+			itemLikes: item.likes,
+			setLikes,
+			setdisLikes,
+		})
+	}, [isAnonymous, likes, dislikes, id])
 	const handleDislikeConfession = useCallback(async () => {
 		if (isAnonymous) {
-			setGuestModalVisible(true)
-			return
+			return setGuestModalVisible(true)
 		}
 
-		try {
-			const updatedDislikes = dislikes.includes(userId)
-				? dislikes.filter((dislike) => dislike !== userId)
-				: [...dislikes, userId]
-
-			const updatedLikes = likes.includes(userId) ? likes.filter((like) => like !== userId) : likes
-
-			const storedValues = await getStoredValues(['postsTodisLike', 'postsToLike'])
-			let postsTodisLike = JSON.parse(storedValues.postsTodisLike || '[]')
-			let postsToLike = JSON.parse(storedValues.postsToLike || '[]')
-
-			postsToLike = postsToLike.filter((postId: string) => postId !== id)
-
-			if (dislikes.includes(userId)) {
-				postsTodisLike = postsTodisLike.filter((postId: string) => postId !== id)
-			} else {
-				postsTodisLike = [...postsTodisLike, id]
-			}
-
-			await saveSecurely([
-				{ key: 'postsToLike', value: JSON.stringify(postsToLike) },
-				{ key: 'postsTodisLike', value: JSON.stringify(postsTodisLike) },
-			])
-
-			setLikes(updatedLikes)
-			setdisLikes(updatedDislikes)
-		} catch (error) {
-			console.error('Failed to handle dislike confession:', error)
-		}
-	}, [isAnonymous, likes, dislikes, id, userId])
-
+		await disLikeConfession({
+			id,
+			likes,
+			dislikes,
+			itemDisLikes: item.dislikes,
+			setLikes,
+			setdisLikes,
+		})
+	}, [isAnonymous, likes, dislikes, id])
 	const handleAddComment = useCallback(async () => {
 		if (isAnonymous) {
-			setGuestModalVisible(true)
-			return
+			return setGuestModalVisible(true)
 		}
 
-		try {
-			if (loading) return
-			setLoading(true)
-
-			await addComment({
-				comment_text: newComment,
-				confession_id: id,
-				commented_by: userId,
-				replies: [],
-				likes: [],
-				dislikes: [],
-			})
-
-			setcomments((prev) => prev + 1)
-			setNewComment('')
-
-			setLoading(false)
-		} catch (error) {
-			console.log(error)
-			setLoading(false)
-		}
+		await addComment({ id, loading, newComment, setComments, setLoading, setNewComment })
 	}, [newComment, id])
-	const handleFavorite = useCallback(() => {
+	const handleFavorite = useCallback(async () => {
 		if (isAnonymous) {
-			setGuestModalVisible(true)
-			return
+			return setGuestModalVisible(true)
 		}
-	}, [])
-	const handleShareConfession = useCallback(() => {
+		await favoriteConfession({ id, isFavorite, setIsFavorite, itemFavorites: item.favorites })
+	}, [isAnonymous, isFavorite, id])
+	const handleShareConfession = useCallback(async () => {
 		if (isAnonymous) {
-			setGuestModalVisible(true)
-			return
+			return setGuestModalVisible(true)
 		}
-	}, [])
 
+		await shareConfession({ id, itemShares: item.shares })
+	}, [isAnonymous, id])
+	// CONFESSION FUNCTIONS END
+
+	// CONFESSION COMPONENTS
 	const renderTimeDisplay = () => (
 		<View style={styles.timeCon}>
 			<Text style={[styles.timeText, { color: theme.colors.gray[400] }]}>
@@ -176,7 +117,7 @@ const ConfessionCard = ({ item }: { item: CONFESSIONSPROPS }): JSX.Element => {
 					<Feather
 						name="chevrons-up"
 						size={26}
-						color={likes.includes(userId) ? theme.colors.primary[300] : theme.colors.gray[400]}
+						color={likes.includes(userId) ? theme.colors.primary[500] : theme.colors.gray[400]}
 					/>
 				</TouchableOpacity>
 				<Text style={[styles.likesText, { color: theme.colors.gray[400] }]} numberOfLines={5}>
@@ -186,7 +127,7 @@ const ConfessionCard = ({ item }: { item: CONFESSIONSPROPS }): JSX.Element => {
 					<Feather
 						name="chevrons-down"
 						size={26}
-						color={dislikes.includes(userId) ? theme.colors.red : theme.colors.gray[400]}
+						color={dislikes.includes(userId) ? theme.colors.disliked : theme.colors.gray[400]}
 					/>
 				</TouchableOpacity>
 			</View>
@@ -205,15 +146,7 @@ const ConfessionCard = ({ item }: { item: CONFESSIONSPROPS }): JSX.Element => {
 	)
 	const renderBodyDisplay = () => (
 		<TouchableOpacity onPress={navigateToDetails} style={styles.body} activeOpacity={0.7}>
-			<TouchableOpacity
-				activeOpacity={1}
-				onPress={() => undefined}
-				style={{
-					flexDirection: 'row',
-					alignItems: 'center',
-					flexWrap: 'wrap',
-					gap: moderateScale(10),
-				}}>
+			<TouchableOpacity activeOpacity={1} onPress={() => undefined} style={styles.tagsContainer}>
 				{confession_types?.map((type) => (
 					<TouchableOpacity
 						activeOpacity={0.8}
@@ -244,10 +177,48 @@ const ConfessionCard = ({ item }: { item: CONFESSIONSPROPS }): JSX.Element => {
 				</View>
 			</View>
 			<TouchableOpacity activeOpacity={0.8} onPress={handleFavorite}>
-				<AntDesign name={'hearto'} size={24} color={theme.colors.gray[400]} />
+				<AntDesign
+					name={isFavorite ? 'heart' : 'hearto'}
+					size={24}
+					color={isFavorite ? theme.colors.primary[500] : theme.colors.gray[400]}
+				/>
 			</TouchableOpacity>
 		</View>
 	)
+	// CONFESSION COMPONENTS END
+
+	useEffect(() => {
+		;(async () => {
+			// await deleteStoredValues(['postsToFavorite', 'postsToUnFavorite'])
+			const {
+				postsToLike,
+				postsToUnlike,
+				postsTodisLike,
+				postsToUndislike,
+				postsToFavorite,
+				postsToUnFavorite,
+				postsToShare,
+			} = await getStoredValues([
+				'postsToLike',
+				'postsToUnlike',
+				'postsTodisLike',
+				'postsToUndislike',
+				'postsToFavorite',
+				'postsToUnFavorite',
+				'postsToShare',
+			])
+
+			console.log({
+				postsToLike,
+				postsToUnlike,
+				postsTodisLike,
+				postsToUndislike,
+				postsToFavorite,
+				postsToUnFavorite,
+				postsToShare,
+			})
+		})()
+	}, [isFavorite, likes, dislikes])
 
 	return (
 		<>
@@ -258,55 +229,12 @@ const ConfessionCard = ({ item }: { item: CONFESSIONSPROPS }): JSX.Element => {
 				{renderFooterDisplay()}
 			</View>
 			{commenting ? (
-				<View
-					style={{
-						justifyContent: 'space-between',
-						backgroundColor: theme.colors.gray[100],
-						marginVertical: moderateScale(5),
-						marginHorizontal: moderateScale(20),
-						borderRadius: moderateScale(10),
-						borderWidth: 1.5,
-						borderColor: theme.colors.primary[500],
-					}}>
-					<TextInput
-						value={newComment}
-						onChangeText={setNewComment}
-						placeholder="Comment here..."
-						maxLength={COMMENT_LENGTH}
-						cursorColor={theme.colors.primary[500]}
-						multiline
-						scrollEnabled
-						textBreakStrategy="highQuality"
-						textAlign="left"
-						keyboardType="default"
-						style={[styles.commentInput, { color: theme.colors.typography }]}
-						placeholderTextColor={theme.colors.gray[400]}
-						autoCorrect
-						autoCapitalize="sentences"
-						spellCheck
-						dataDetectorTypes={['link', 'phoneNumber', 'address', 'calendarEvent']}
-					/>
-					<TouchableOpacity
-						activeOpacity={0.8}
-						disabled={!newComment || loading}
-						onPress={handleAddComment}
-						style={{
-							backgroundColor: theme.colors.primary[500],
-							alignSelf: 'flex-end',
-							borderRadius: moderateScale(25),
-							justifyContent: 'center',
-							alignItems: 'center',
-							width: moderateScale(25),
-							aspectRatio: 1,
-							margin: moderateScale(8),
-						}}>
-						{loading ? (
-							<ActivityIndicator size={'small'} color={theme.colors.white} />
-						) : (
-							<Ionicons name="add-sharp" size={moderateScale(25)} color={theme.colors.white} />
-						)}
-					</TouchableOpacity>
-				</View>
+				<CommentCard
+					loading={loading}
+					handleAddComment={handleAddComment}
+					setNewComment={setNewComment}
+					newComment={newComment}
+				/>
 			) : null}
 			<GuestModal visible={guestModalVisible} onPress={() => setGuestModalVisible(false)} />
 		</>
@@ -326,15 +254,26 @@ const stylesheet = createStyleSheet({
 		marginTop: moderateScale(5),
 		borderRadius: moderateScale(10),
 	},
-	header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-	confessedUser: { flexDirection: 'row', alignItems: 'center', gap: moderateScale(10) },
+	header: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+	},
+	confessedUser: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: moderateScale(10),
+	},
 	imageCon: {
 		width: moderateScale(40),
 		aspectRatio: 1,
 		borderRadius: moderateScale(25),
 		overflow: 'hidden',
 	},
-	image: { width: '100%', height: '100%' },
+	image: {
+		width: '100%',
+		height: '100%',
+	},
 	displayName: {
 		fontFamily: 'Medium',
 		fontSize: moderateScale(14),
@@ -343,7 +282,9 @@ const stylesheet = createStyleSheet({
 		fontFamily: 'Medium',
 		fontSize: moderateScale(11),
 	},
-	body: { marginVertical: moderateScale(10) },
+	body: {
+		marginVertical: moderateScale(10),
+	},
 	confessionTypeCon: {
 		alignSelf: 'flex-start',
 		paddingHorizontal: moderateScale(10),
@@ -360,12 +301,18 @@ const stylesheet = createStyleSheet({
 		fontFamily: 'Regular',
 		fontSize: moderateScale(14),
 	},
-	timeCon: { marginBottom: moderateScale(10) },
+	timeCon: {
+		marginBottom: moderateScale(10),
+	},
 	timeText: {
 		fontFamily: 'Regular',
 		fontSize: moderateScale(12),
 	},
-	footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+	footer: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+	},
 	likeCountCon: {
 		flexDirection: 'row',
 		justifyContent: 'space-between',
@@ -388,12 +335,10 @@ const stylesheet = createStyleSheet({
 		fontSize: moderateScale(16),
 		textAlign: 'justify',
 	},
-	commentInput: {
-		flex: 1,
-		flexGrow: 1,
-		fontFamily: 'Regular',
-		fontSize: moderateScale(13),
-		paddingHorizontal: moderateScale(15),
-		paddingVertical: moderateScale(10),
+	tagsContainer: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		flexWrap: 'wrap',
+		gap: moderateScale(10),
 	},
 })

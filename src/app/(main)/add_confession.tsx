@@ -47,6 +47,7 @@ const AddConfession = () => {
 		try {
 			setLoading(true)
 			await addConfession({
+				created_at: new Date().toISOString(),
 				confession_text: confessionText,
 				confession_types: confessionTypes,
 				confessed_by: userId,
@@ -55,6 +56,7 @@ const AddConfession = () => {
 				comments: [],
 				shares: [],
 				views: [],
+				favorites: [],
 			})
 
 			setConfessionTypeText('')
@@ -222,7 +224,7 @@ const stylesheet = createStyleSheet({
 	confessionTextInput: {
 		textAlignVertical: 'top',
 		fontFamily: 'Regular',
-		fontSize: moderateScale(15),
+		fontSize: moderateScale(13),
 	},
 	confessButton: {
 		padding: moderateScale(15),

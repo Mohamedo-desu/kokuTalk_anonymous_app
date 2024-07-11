@@ -1,15 +1,17 @@
 import Input from '@/components/Input'
 import Loader from '@/components/Loader'
+import { signInFirebase } from '@/services/authActions'
 import { SignInValidationSchema } from '@/services/validations'
+import { useAuthStoreSelectors } from '@/store/authStore'
 import { DEVICE_WIDTH } from '@/utils'
 import { getStoredValues, saveSecurely } from '@/utils/storageUtils'
-import { supabase } from '@/utils/supabase'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Formik } from 'formik'
 import React, { ForwardedRef, forwardRef, useEffect, useState } from 'react'
 import { FlatList, Text, TouchableOpacity, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { moderateScale } from 'react-native-size-matters'
+import { Toast } from 'react-native-toast-notifications'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
 const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
@@ -18,6 +20,8 @@ const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
+
+	const updateUser = useAuthStoreSelectors.use.updateUser()
 
 	const handleSignIn = async ({ email, password }: { email: string; password: string }) => {
 		try {
@@ -28,18 +32,19 @@ const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 				{ key: 'password', value: password },
 			])
 
-			let { error } = await supabase.auth.signInWithPassword({
+			const user = await signInFirebase({
 				email,
 				password,
 			})
-			if (error) {
-				throw new Error(error.message)
-			}
+
+			updateUser(user)
 
 			setLoading(false)
 		} catch (error) {
-			console.log(error)
 			setLoading(false)
+			Toast.show(`${error}`, {
+				type: 'danger',
+			})
 		}
 	}
 

@@ -1,6 +1,7 @@
 import { Fonts } from '@/constants/Fonts'
 import AuthProvider from '@/providers/AuthProvider'
 import CustomThemeProvider from '@/providers/ThemeProvider'
+import ToastProvider from '@/providers/ToastProvider'
 import '@/unistyle/unistyles'
 import * as Sentry from '@sentry/react-native'
 import Constants from 'expo-constants'
@@ -99,7 +100,9 @@ export default function RootLayout() {
 		<CustomThemeProvider>
 			<AuthProvider>
 				<GestureHandlerRootView style={{ flex: 1 }}>
-					<Slot />
+					<ToastProvider>
+						<Slot />
+					</ToastProvider>
 				</GestureHandlerRootView>
 			</AuthProvider>
 		</CustomThemeProvider>

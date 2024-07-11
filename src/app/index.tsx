@@ -1,41 +1,42 @@
 import { appName } from '@/constants/appDetails'
+import { getUserDataFromFirestore } from '@/services/authActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
+import { auth } from '@/utils/firebase'
 import { getStoredValues } from '@/utils/storageUtils'
-import { supabase } from '@/utils/supabase'
+import { onAuthStateChanged } from 'firebase/auth'
 import React, { useEffect } from 'react'
 import { Text, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
+import { Toast } from 'react-native-toast-notifications'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
 const SplashScreen = () => {
 	const { styles, theme } = useStyles(stylesheet)
 	const setDidTryAutoLogin = useAuthStoreSelectors.use.setDidTryAutoLogin()
 
-	const updateUser = useAuthStoreSelectors.use.updateUser()
 	const setAuthenticated = useAuthStoreSelectors.use.setAuthenticated()
 	const setAnonymous = useAuthStoreSelectors.use.setAnonymous()
+	const updateUser = useAuthStoreSelectors.use.updateUser()
 
 	useEffect(() => {
 		const tryLogin = async () => {
 			try {
 				const { isAnonymous } = await getStoredValues(['isAnonymous'])
 
-				supabase.auth.onAuthStateChange((_event, session) => {
-					if (session) {
+				onAuthStateChanged(auth, async (user) => {
+					if (user) {
 						try {
-							updateUser({
-								id: session.user.id,
-								display_name: session.user.user_metadata.display_name,
-								user_name: session.user.user_metadata.user_name,
-								email: session.user.email,
-								gender: session.user.user_metadata.gender,
-								photo_url: session.user.user_metadata.photo_url,
-								age: session.user.user_metadata.age,
-							})
+							const userDoc = await getUserDataFromFirestore(user.uid)
+
+							updateUser(userDoc)
+
 							setAuthenticated()
 							setDidTryAutoLogin()
 						} catch (error) {
 							setDidTryAutoLogin()
+							Toast.show(`${error}`, {
+								type: 'danger',
+							})
 						}
 					} else if (isAnonymous) {
 						setAnonymous()
@@ -43,9 +44,11 @@ const SplashScreen = () => {
 						setDidTryAutoLogin()
 					}
 				})
-			} catch (error) {
-				console.log(error)
+			} catch (error: any) {
 				setDidTryAutoLogin()
+				Toast.show(`${error}`, {
+					type: 'danger',
+				})
 			}
 		}
 		tryLogin()

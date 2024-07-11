@@ -13,19 +13,24 @@ export interface CONFESSIONSPROPS {
 	likes: string[]
 	comments: string[]
 	confession_text: string
+	confessed_by: string
 	confession_types: string[]
 	shares: string[]
 	views: string[]
+	favorites: string[]
 	user: {
+		id: string
 		display_name: string
 		user_name: string
 		photo_url: string
 		gender: string
 		age: string
 	}
+	fetchIndex: number
 }
 
 export interface ADDCONFESSIONPROPS {
+	created_at: string
 	confession_text: string
 	confession_types: string[]
 	confessed_by: string
@@ -34,6 +39,7 @@ export interface ADDCONFESSIONPROPS {
 	comments: string[]
 	shares: string[]
 	views: string[]
+	favorites: string[]
 }
 
 export interface ADDCOMMENTPROPS {
@@ -43,4 +49,18 @@ export interface ADDCOMMENTPROPS {
 	replies: string[]
 	likes: string[]
 	dislikes: string[]
+}
+
+export interface User {
+	id: string
+	display_name: string
+	email: string
+	user_name: string
+	photo_url: string
+	gender: string
+	age: string
+	confessions: string[]
+	comments: string[]
+	replies: string[]
+	favorites: string[]
 }

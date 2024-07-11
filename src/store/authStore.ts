@@ -1,3 +1,4 @@
+import { User } from '@/types'
 import { create } from 'zustand'
 import { createSelectors } from './createSelectors'
 
@@ -6,16 +7,7 @@ export interface AuthState {
 	isAuthenticated: boolean
 	isAnonymous: boolean
 	isLoggingOut: boolean
-	currentUser: {
-		id: string
-		display_name: string
-		user_name: string
-		email: string
-		password: string
-		gender: string
-		age: string
-		photo_url: string
-	}
+	currentUser: User
 }
 
 interface AuthActions {
@@ -43,7 +35,8 @@ const useAuthStore = create<AuthState & AuthActions>((set) => ({
 	setDidTryAutoLogin: () => set(() => ({ didTryAutoLogin: true })),
 	setIsLoggingOut: () => set(() => ({ isLoggingOut: true })),
 	setcurrentUser: (currentUser) => set({ currentUser }),
-	updateUser: (user: any) => set((state) => ({ currentUser: { ...state.currentUser, ...user } })),
+	updateUser: (user: Partial<User>) =>
+		set((state) => ({ currentUser: { ...state.currentUser, ...user } })),
 	logOut: () => set(() => initialState),
 }))
 

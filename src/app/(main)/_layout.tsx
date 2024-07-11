@@ -1,7 +1,7 @@
 import DrawerContent from '@/components/DrawerContent'
 import GradientCommentHeader from '@/components/GradientCommentHeader'
-import useScheduleTask from '@/hooks/useScheduleTask'
-import { updateLikesAndDislikes, updateUnseenConfessions } from '@/services/confessionActions'
+import useNetworkState from '@/hooks/useNetworkState'
+import useScheduleAll from '@/hooks/useScheduleAll'
 import { Stack } from 'expo-router'
 import { Drawer } from 'expo-router/drawer'
 
@@ -11,8 +11,8 @@ import { Drawer } from 'expo-router/drawer'
  * @returns JSX.Element The rendered MainLayout component.
  */
 const MainLayout = (): JSX.Element => {
-	useScheduleTask({ taskFunction: updateUnseenConfessions, period: 3 * 60 * 1000 })
-	useScheduleTask({ taskFunction: updateLikesAndDislikes, period: 2 * 60 * 1000 })
+	useNetworkState()
+	useScheduleAll()
 
 	return (
 		<Drawer
