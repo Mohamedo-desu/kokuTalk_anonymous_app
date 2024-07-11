@@ -8,12 +8,12 @@ export interface NOTIFICATIONPROPS {
 
 export interface CONFESSIONSPROPS {
 	id: string
+	created_at: string
 	dislikes: string[]
 	likes: string[]
 	comments: string[]
 	confession_text: string
 	confession_types: string[]
-	created_at: string
 	shares: string[]
 	views: string[]
 	user: {
@@ -34,4 +34,13 @@ export interface ADDCONFESSIONPROPS {
 	comments: string[]
 	shares: string[]
 	views: string[]
+}
+
+export interface ADDCOMMENTPROPS {
+	comment_text: string
+	confession_id: string
+	commented_by: string
+	replies: string[]
+	likes: string[]
+	dislikes: string[]
 }

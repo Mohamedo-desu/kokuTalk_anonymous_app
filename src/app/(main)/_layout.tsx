@@ -1,7 +1,7 @@
 import DrawerContent from '@/components/DrawerContent'
 import GradientCommentHeader from '@/components/GradientCommentHeader'
 import useScheduleTask from '@/hooks/useScheduleTask'
-import { updateUnseenConfessions } from '@/services/confessionActions'
+import { updateLikesAndDislikes, updateUnseenConfessions } from '@/services/confessionActions'
 import { Stack } from 'expo-router'
 import { Drawer } from 'expo-router/drawer'
 
@@ -11,7 +11,9 @@ import { Drawer } from 'expo-router/drawer'
  * @returns JSX.Element The rendered MainLayout component.
  */
 const MainLayout = (): JSX.Element => {
-	useScheduleTask({ taskFunction: updateUnseenConfessions, period: 5 * 60 * 1000 })
+	useScheduleTask({ taskFunction: updateUnseenConfessions, period: 3 * 60 * 1000 })
+	useScheduleTask({ taskFunction: updateLikesAndDislikes, period: 2 * 60 * 1000 })
+
 	return (
 		<Drawer
 			screenOptions={{ headerShown: false, drawerType: 'slide', swipeEnabled: true }}

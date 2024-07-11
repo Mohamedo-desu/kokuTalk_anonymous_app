@@ -1,11 +1,14 @@
 import useIsAnonymous from '@/hooks/useIsAnonymous'
+import { addComment } from '@/services/confessionActions'
+import { useAuthStoreSelectors } from '@/store/authStore'
 import { CONFESSIONSPROPS } from '@/types'
 import { shortenNumber } from '@/utils/generalUtils'
+import { getStoredValues, saveSecurely } from '@/utils/storageUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { AntDesign, Feather, Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { memo, useCallback, useState } from 'react'
-import { Image, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { useCallback, useState } from 'react'
+import { ActivityIndicator, Image, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 import GuestModal from './GuestModal'
@@ -18,18 +21,23 @@ import GuestModal from './GuestModal'
 
 const COMMENT_LENGTH = 500
 
-const ConfessionCard = memo(({ item }: { item: CONFESSIONSPROPS }): JSX.Element => {
+const ConfessionCard = ({ item }: { item: CONFESSIONSPROPS }): JSX.Element => {
 	const { theme, styles } = useStyles(stylesheet)
 	const { id, confession_text, confession_types, created_at } = item
 	const { display_name, gender, age, photo_url } = item.user
 
+	const userId = useAuthStoreSelectors.use.currentUser().id
+
 	const isAnonymous = useIsAnonymous()
 	const [guestModalVisible, setGuestModalVisible] = useState(false)
 
-	const [likeCount, setlikeCount] = useState(item.likes.length - item.dislikes.length)
+	const [likes, setLikes] = useState(item.likes)
+	const [dislikes, setdisLikes] = useState(item.dislikes)
+
 	const [comments, setcomments] = useState(item.comments.length)
 	const [newComment, setNewComment] = useState('')
 	const [commenting, setCommenting] = useState(false)
+	const [loading, setLoading] = useState(false)
 
 	const navigateToDetails = useCallback(() => {
 		router.navigate({
@@ -38,34 +46,115 @@ const ConfessionCard = memo(({ item }: { item: CONFESSIONSPROPS }): JSX.Element 
 		})
 	}, [id])
 
-	const handleLikeConfession = useCallback(() => {
+	const handleLikeConfession = useCallback(async () => {
 		if (isAnonymous) {
 			setGuestModalVisible(true)
 			return
 		}
-		setlikeCount((prev) => prev + 1)
-	}, [])
-	const handleDislikeConfession = useCallback(() => {
+		try {
+			const updatedLikes = likes.includes(userId)
+				? likes.filter((like) => like !== userId)
+				: [...likes, userId]
+			const updatedDislikes = dislikes.includes(userId)
+				? dislikes.filter((dislike) => dislike !== userId)
+				: dislikes
+
+			const storedValues = await getStoredValues(['postsTodisLike', 'postsToLike'])
+
+			let postsTodisLike = JSON.parse(storedValues.postsTodisLike || '[]')
+			let postsToLike = JSON.parse(storedValues.postsToLike || '[]')
+
+			postsTodisLike = postsTodisLike.filter((postId: string) => postId !== id)
+
+			if (likes.includes(userId)) {
+				postsToLike = postsToLike.filter((postId: string) => postId !== id)
+			} else {
+				postsToLike = [...postsToLike, id]
+			}
+
+			await saveSecurely([
+				{ key: 'postsToLike', value: JSON.stringify(postsToLike) },
+				{ key: 'postsTodisLike', value: JSON.stringify(postsTodisLike) },
+			])
+
+			setLikes(updatedLikes)
+			setdisLikes(updatedDislikes)
+		} catch (error) {
+			console.error('Failed to handle like confession:', error)
+		}
+	}, [likes, dislikes, id, userId])
+
+	const handleDislikeConfession = useCallback(async () => {
 		if (isAnonymous) {
 			setGuestModalVisible(true)
 			return
 		}
-		setlikeCount((prev) => prev - 1)
-	}, [])
-	const handleAddComment = useCallback(() => {
+
+		try {
+			const updatedDislikes = dislikes.includes(userId)
+				? dislikes.filter((dislike) => dislike !== userId)
+				: [...dislikes, userId]
+
+			const updatedLikes = likes.includes(userId) ? likes.filter((like) => like !== userId) : likes
+
+			const storedValues = await getStoredValues(['postsTodisLike', 'postsToLike'])
+			let postsTodisLike = JSON.parse(storedValues.postsTodisLike || '[]')
+			let postsToLike = JSON.parse(storedValues.postsToLike || '[]')
+
+			postsToLike = postsToLike.filter((postId: string) => postId !== id)
+
+			if (dislikes.includes(userId)) {
+				postsTodisLike = postsTodisLike.filter((postId: string) => postId !== id)
+			} else {
+				postsTodisLike = [...postsTodisLike, id]
+			}
+
+			await saveSecurely([
+				{ key: 'postsToLike', value: JSON.stringify(postsToLike) },
+				{ key: 'postsTodisLike', value: JSON.stringify(postsTodisLike) },
+			])
+
+			setLikes(updatedLikes)
+			setdisLikes(updatedDislikes)
+		} catch (error) {
+			console.error('Failed to handle dislike confession:', error)
+		}
+	}, [isAnonymous, likes, dislikes, id, userId])
+
+	const handleAddComment = useCallback(async () => {
 		if (isAnonymous) {
 			setGuestModalVisible(true)
 			return
 		}
-		setCommenting((prev) => !prev)
-	}, [])
+
+		try {
+			if (loading) return
+			setLoading(true)
+
+			await addComment({
+				comment_text: newComment,
+				confession_id: id,
+				commented_by: userId,
+				replies: [],
+				likes: [],
+				dislikes: [],
+			})
+
+			setcomments((prev) => prev + 1)
+			setNewComment('')
+
+			setLoading(false)
+		} catch (error) {
+			console.log(error)
+			setLoading(false)
+		}
+	}, [newComment, id])
 	const handleFavorite = useCallback(() => {
 		if (isAnonymous) {
 			setGuestModalVisible(true)
 			return
 		}
 	}, [])
-
 	const handleShareConfession = useCallback(() => {
 		if (isAnonymous) {
 			setGuestModalVisible(true)
@@ -83,18 +172,26 @@ const ConfessionCard = memo(({ item }: { item: CONFESSIONSPROPS }): JSX.Element 
 	const renderFooterDisplay = () => (
 		<View style={styles.footer}>
 			<View style={styles.likeCountCon}>
-				<TouchableOpacity onPress={handleLikeConfession}>
-					<Feather name="chevrons-up" size={26} color={theme.colors.gray[400]} />
+				<TouchableOpacity activeOpacity={0.8} onPress={handleLikeConfession}>
+					<Feather
+						name="chevrons-up"
+						size={26}
+						color={likes.includes(userId) ? theme.colors.primary[300] : theme.colors.gray[400]}
+					/>
 				</TouchableOpacity>
 				<Text style={[styles.likesText, { color: theme.colors.gray[400] }]} numberOfLines={5}>
-					{shortenNumber(likeCount)}
+					{shortenNumber(likes.length - dislikes.length)}
 				</Text>
-				<TouchableOpacity onPress={handleDislikeConfession}>
-					<Feather name="chevrons-down" size={26} color={theme.colors.gray[400]} />
+				<TouchableOpacity activeOpacity={0.8} onPress={handleDislikeConfession}>
+					<Feather
+						name="chevrons-down"
+						size={26}
+						color={dislikes.includes(userId) ? theme.colors.red : theme.colors.gray[400]}
+					/>
 				</TouchableOpacity>
 			</View>
 			<View style={styles.commentShareCon}>
-				<TouchableOpacity onPress={handleAddComment}>
+				<TouchableOpacity onPress={() => setCommenting(!commenting)}>
 					<Ionicons name="chatbox-ellipses-outline" size={26} color={theme.colors.gray[400]} />
 				</TouchableOpacity>
 				<Text style={[styles.comment, { color: theme.colors.gray[400] }]} numberOfLines={5}>
@@ -160,7 +257,7 @@ const ConfessionCard = memo(({ item }: { item: CONFESSIONSPROPS }): JSX.Element 
 				{renderTimeDisplay()}
 				{renderFooterDisplay()}
 			</View>
-			{commenting && (
+			{commenting ? (
 				<View
 					style={{
 						justifyContent: 'space-between',
@@ -191,24 +288,30 @@ const ConfessionCard = memo(({ item }: { item: CONFESSIONSPROPS }): JSX.Element 
 					/>
 					<TouchableOpacity
 						activeOpacity={0.8}
+						disabled={!newComment || loading}
+						onPress={handleAddComment}
 						style={{
 							backgroundColor: theme.colors.primary[500],
 							alignSelf: 'flex-end',
 							borderRadius: moderateScale(25),
 							justifyContent: 'center',
 							alignItems: 'center',
-							width: moderateScale(30),
+							width: moderateScale(25),
 							aspectRatio: 1,
 							margin: moderateScale(8),
 						}}>
-						<Ionicons name="add-sharp" size={moderateScale(25)} color={theme.colors.white} />
+						{loading ? (
+							<ActivityIndicator size={'small'} color={theme.colors.white} />
+						) : (
+							<Ionicons name="add-sharp" size={moderateScale(25)} color={theme.colors.white} />
+						)}
 					</TouchableOpacity>
 				</View>
-			)}
+			) : null}
 			<GuestModal visible={guestModalVisible} onPress={() => setGuestModalVisible(false)} />
 		</>
 	)
-})
+}
 
 export default ConfessionCard
 

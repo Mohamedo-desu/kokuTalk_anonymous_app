@@ -9,6 +9,7 @@ const colors = {
 	black: '#141414',
 	success: '#7ED321',
 	error: '#FF0000',
+	red: '#813d3d',
 } as const
 
 const margins = {
