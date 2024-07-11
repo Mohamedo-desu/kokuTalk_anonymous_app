@@ -50,7 +50,7 @@ const HomePage = () => {
 	}, [theme.colors.gray[400]])
 
 	useEffect(() => {
-		(async () => {
+		;(async () => {
 			try {
 				const newConfessions = await fetchConfessions({ userId, fetchLimit: PAGE_SIZE })
 
@@ -214,7 +214,7 @@ const HomePage = () => {
 					viewabilityConfig={{
 						itemVisiblePercentThreshold: 100,
 						minimumViewTime: 5000,
-						waitForInteraction: true,
+						waitForInteraction: false,
 					}}
 					onViewableItemsChanged={onViewableItemsChanged}
 				/>

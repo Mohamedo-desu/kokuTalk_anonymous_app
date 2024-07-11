@@ -11,9 +11,15 @@ import {
 	getDoc,
 	getDocs,
 	limit,
+	orderBy,
 	query,
+	QueryDocumentSnapshot,
+	setDoc,
+	startAfter,
+	where,
 	writeBatch,
 } from 'firebase/firestore'
+import { getUserDataFromFirestore } from './authActions'
 
 export const fetchConfessions = async ({
 	userId,
@@ -76,8 +82,10 @@ export const addConfession = async (confessionBody: ADDCONFESSIONPROPS) => {
 		const batch = writeBatch(db)
 
 		const confessionsRef = collection(db, 'confessions')
-		const docRef = await addDoc(confessionsRef, confessionBody)
+		const docRef = await addDoc(confessionsRef, {})
+
 		const confessionId = docRef.id
+		await setDoc(docRef, { id: confessionId, ...confessionBody })
 
 		if (confessionBody.confessed_by) {
 			const userDocRef = doc(db, 'users', confessionBody.confessed_by)
@@ -266,5 +274,69 @@ export const updateFavoritedConfessions = async () => {
 		await batch.commit()
 	} catch (error: any) {
 		throw new Error(error.message || 'An error occurred while updating favorited confessions')
+	}
+}
+
+// CURRENT USER CONFESSION ACTIONS
+
+export const fetchMyConfessions = async ({
+	lastVisible,
+	setLastVisible,
+}: {
+	lastVisible: QueryDocumentSnapshot
+	setLastVisible: (lastVisible: QueryDocumentSnapshot) => void
+}) => {
+	try {
+		const userId = useAuthStoreSelectors.getState().currentUser.id
+
+		if (!userId) {
+			return []
+		}
+
+		const userDoc = await getUserDataFromFirestore(userId)
+
+		const userConfessions = userDoc.confessions as unknown as string[]
+
+		if (!userConfessions || userConfessions.length === 0) {
+			return []
+		}
+		const confessionsRef = collection(db, 'confessions')
+
+		let q = query(
+			confessionsRef,
+			where('id', 'in', userConfessions),
+			orderBy('created_at', 'desc'),
+			limit(10),
+		)
+
+		if (lastVisible) {
+			q = query(
+				confessionsRef,
+				where('id', 'in', userConfessions),
+				orderBy('created_at', 'desc'),
+				startAfter(lastVisible),
+				limit(10),
+			)
+		}
+
+		const querySnapshot = await getDocs(q)
+
+		if (querySnapshot.empty) {
+			console.log('No matching documents.')
+			return []
+		}
+
+		const confessions = querySnapshot.docs.map((doc) => ({
+			id: doc.id,
+			...doc.data(),
+		})) as CONFESSIONSPROPS[]
+
+		setLastVisible(querySnapshot.docs[querySnapshot.docs.length - 1])
+
+		return confessions
+	} catch (error) {
+		console.log(error)
+
+		throw new Error('An error occurred while fetching your confessions')
 	}
 }

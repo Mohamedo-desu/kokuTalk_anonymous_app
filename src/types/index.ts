@@ -26,7 +26,6 @@ export interface CONFESSIONSPROPS {
 		gender: string
 		age: string
 	}
-	fetchIndex: number
 }
 
 export interface ADDCONFESSIONPROPS {
@@ -59,7 +58,7 @@ export interface User {
 	photo_url: string
 	gender: string
 	age: string
-	confessions: string[]
+	confessions: CONFESSIONSPROPS[]
 	comments: string[]
 	replies: string[]
 	favorites: string[]
