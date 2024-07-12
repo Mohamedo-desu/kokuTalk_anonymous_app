@@ -68,7 +68,7 @@ export const fetchConfessions = async ({
 			}
 		})
 
-		const sortedConfessions = unseenConfessions.concat(seenConfessions).slice(0, fetchLimit)
+		const sortedConfessions = unseenConfessions.concat(seenConfessions)
 
 		return sortedConfessions
 	} catch (error: any) {

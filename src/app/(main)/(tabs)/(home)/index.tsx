@@ -202,8 +202,6 @@ const HomePage = () => {
 						paddingBottom: safeAreaInsets.bottom + moderateScale(80),
 						paddingTop: moderateScale(10),
 					}}
-					alwaysBounceHorizontal
-					automaticallyAdjustContentInsets
 					estimatedItemSize={200}
 					indicatorStyle={theme.colors.typography}
 					onScrollEndDrag={() => loadMoreConfessions({ prepend: false })}
