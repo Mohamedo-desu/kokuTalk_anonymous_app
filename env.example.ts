@@ -1,14 +1,19 @@
-// # sentry
+// //  sentry
 
 // SENTRY_AUTH_TOKEN =
-// SENTRY_DSN =
-// EXPO_PUBLIC_SENTRY_PROJECT =
+// SENTRY_ORG =  
+// EXPO_PUBLIC_SENTRY_PROJECT =  
 
-// # Supabase
+// //  firebase
 
-// SUPABASE_URL =
-// SUPABASE_ANON_KEY =
+// FIREBASE_API_KEY =  
+// FIREBASE_AUTH_DOMAIN =  
+// FIREBASE_DATABASE_URL =  
+// FIREBASE_PROJECT_ID=  
+// FIREBASE_STORAGE_BUCKET = 
+// FIREBASE_MESSAGING_SENDER_ID =  
+// FIREBASE_APP_ID = 
+// FIREBASE_MEASUREMENT_ID =  
 
-// # Google
-
+// //  Google
 // GOOGLE_SERVICES_JSON = './google-services.json'

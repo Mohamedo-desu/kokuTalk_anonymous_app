@@ -1,12 +1,12 @@
 import ConfessionCard from '@/components/ConfessionCard'
 import Skeleton from '@/components/Skeleton'
+import { PAGE_SIZE } from '@/constants/appDetails'
 import useNetworkState from '@/hooks/useNetworkState'
 import { fetchMyConfessions } from '@/services/confessionActions'
 import { CONFESSIONSPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
 import { FlashList } from '@shopify/flash-list'
 import { LinearGradient } from 'expo-linear-gradient'
-import { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore'
 import { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -19,11 +19,10 @@ const MyConfessions = () => {
 	const safeAreaInsets = useSafeAreaInsets()
 	const [loading, setLoading] = useState(true)
 	const [refreshing, setRefreshing] = useState(false)
+	const [fetchingMore, setFetchingMore] = useState(false)
 
 	const [myConfession, setMyConfession] = useState<CONFESSIONSPROPS[]>([])
-	const [lastVisible, setLastVisible] = useState<
-		QueryDocumentSnapshot<DocumentData, DocumentData> | any
-	>()
+	const [lastDocumentFetched, setLastDocumentFetched] = useState(null)
 
 	const isNetwork = useNetworkState()
 
@@ -54,7 +53,11 @@ const MyConfessions = () => {
 					setLoading(true)
 				}
 
-				const confessions = await fetchMyConfessions({ lastVisible, setLastVisible })
+				const confessions = await fetchMyConfessions({
+					fetchLimit: PAGE_SIZE,
+					lastDocumentFetched,
+					setLastDocumentFetched,
+				})
 				setMyConfession(confessions)
 				setLoading(false)
 			} catch (error) {
@@ -66,25 +69,58 @@ const MyConfessions = () => {
 		})()
 	}, [isNetwork])
 
-	const keyExtractor = useCallback((item: CONFESSIONSPROPS, i: number) => `${i}-${item.id}`, [])
-
-	const loadMoreConfessions = async () => {
-		try {
-			if (refreshing) return
-			setRefreshing(true)
-
-			const confessions = await fetchMyConfessions({ lastVisible, setLastVisible })
-			if (confessions.length > 0) {
-				setMyConfession((prev) => [...prev, ...confessions])
+	const loadMoreConfessions = useCallback(
+		async ({ prepend }: { prepend: boolean }) => {
+			if (prepend) {
+				if (refreshing) return
+				setRefreshing(true)
+			} else {
+				if (fetchingMore) return
+				setFetchingMore(true)
 			}
-			setRefreshing(false)
-		} catch (error) {
-			setRefreshing(false)
-			Toast.show(`${error}`, {
-				type: 'danger',
-			})
-		}
-	}
+
+			try {
+				const newConfessions = await fetchMyConfessions({
+					fetchLimit: PAGE_SIZE,
+					lastDocumentFetched,
+					setLastDocumentFetched,
+				})
+
+				setMyConfession((prev) => {
+					const combinedConfessions = prepend
+						? [...newConfessions, ...prev]
+						: [...prev, ...newConfessions]
+
+					const uniqueConfessionIds = Array.from(
+						new Set(combinedConfessions.map((confession) => confession.id)),
+					).filter((id) => id !== undefined)
+					const uniqueConfessions = uniqueConfessionIds
+						.map((id) => combinedConfessions.find((confession) => confession.id === id))
+						.filter((confession) => confession !== undefined)
+
+					return uniqueConfessions
+				})
+
+				if (prepend) {
+					setRefreshing(false)
+				} else {
+					setFetchingMore(false)
+				}
+			} catch (error) {
+				if (prepend) {
+					setRefreshing(false)
+				} else {
+					setFetchingMore(false)
+				}
+				Toast.show(`${error}`, {
+					type: 'danger',
+				})
+			}
+		},
+		[lastDocumentFetched, refreshing, fetchingMore],
+	)
+
+	const keyExtractor = useCallback((item: CONFESSIONSPROPS, i: number) => `${i}-${item.id}`, [])
 
 	return (
 		<LinearGradient
@@ -121,7 +157,7 @@ const MyConfessions = () => {
 					}}
 					refreshControl={
 						<RefreshControl
-							onRefresh={() => loadMoreConfessions()}
+							onRefresh={() => loadMoreConfessions({ prepend: true })}
 							refreshing={refreshing}
 							tintColor={theme.colors.primary[500]}
 							colors={[theme.colors.primary[500], theme.colors.primary[400]]}
@@ -131,9 +167,9 @@ const MyConfessions = () => {
 					estimatedItemSize={200}
 					indicatorStyle={theme.colors.typography}
 					ListEmptyComponent={ListEmptyComponent}
-					onScrollEndDrag={() => loadMoreConfessions()}
+					onScrollEndDrag={() => loadMoreConfessions({ prepend: false })}
 					ListFooterComponent={() =>
-						refreshing && (
+						fetchingMore && (
 							<View style={{ padding: safeAreaInsets.bottom }}>
 								<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
 							</View>

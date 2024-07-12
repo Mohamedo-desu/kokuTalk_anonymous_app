@@ -9,10 +9,11 @@ import {
 	shareConfession,
 } from '@/utils/confessionUtils'
 import { shortenNumber } from '@/utils/generalUtils'
+import { getStoredValues } from '@/utils/storageUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { AntDesign, Feather, Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Image, Text, TouchableOpacity, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
@@ -25,19 +26,22 @@ import GuestModal from './GuestModal'
  * @returns {JSX.Element} The confession card component
  */
 
-const ConfessionCard = ({ item }: { item: CONFESSIONSPROPS }): JSX.Element => {
+const ConfessionCard = ({
+	item,
+	numberOfLines,
+}: {
+	item: CONFESSIONSPROPS
+	numberOfLines: number
+}): JSX.Element => {
 	const isAnonymous = useIsAnonymous()
 
 	const userId = useAuthStoreSelectors.getState().currentUser.id
-	const user = useAuthStoreSelectors.use.currentUser()
 
-	const confessesBy = item.user || user
-
-	const isOwner = confessesBy?.id === userId
+	const isOwner = item.user?.id === userId
 
 	const { theme, styles } = useStyles(stylesheet)
 	const { id, confession_text, confession_types, created_at } = item
-	const { display_name, gender, age, photo_url } = confessesBy
+	const { display_name, gender, age, photo_url } = item.user
 
 	const [guestModalVisible, setGuestModalVisible] = useState(false)
 
@@ -51,6 +55,8 @@ const ConfessionCard = ({ item }: { item: CONFESSIONSPROPS }): JSX.Element => {
 	const [loading, setLoading] = useState(false)
 
 	const [toggleDetails, setToggleDetails] = useState(false)
+
+	console.log(numberOfLines)
 
 	// CONFESSION FUNCTIONS
 	const navigateToDetails = useCallback(() => {
@@ -104,7 +110,17 @@ const ConfessionCard = ({ item }: { item: CONFESSIONSPROPS }): JSX.Element => {
 			return setGuestModalVisible(true)
 		}
 
-		await shareConfession({ id, itemShares: item.shares })
+		await shareConfession({
+			id,
+			itemShares: item.shares,
+			messageBody: confession_text.substring(0, 120) + '...',
+			confesser: {
+				display_name,
+				gender,
+				age,
+				photo_url,
+			},
+		})
 	}, [isAnonymous, id])
 	// CONFESSION FUNCTIONS END
 
@@ -266,7 +282,9 @@ const ConfessionCard = ({ item }: { item: CONFESSIONSPROPS }): JSX.Element => {
 					</TouchableOpacity>
 				))}
 			</TouchableOpacity>
-			<Text style={[styles.confessionText, { color: theme.colors.typography }]} numberOfLines={5}>
+			<Text
+				style={[styles.confessionText, { color: theme.colors.typography }]}
+				numberOfLines={numberOfLines}>
 				{confession_text}
 			</Text>
 		</TouchableOpacity>
@@ -303,6 +321,42 @@ const ConfessionCard = ({ item }: { item: CONFESSIONSPROPS }): JSX.Element => {
 		</View>
 	)
 	// CONFESSION COMPONENTS END
+
+	useEffect(() => {
+		;(async () => {
+			// await deleteStoredValues(['postsToFavorite', 'postsToUnFavorite'])
+			const {
+				postsToLike,
+				postsToUnlike,
+				postsTodisLike,
+				postsToUndislike,
+				postsToFavorite,
+				postsToUnFavorite,
+				postsToShare,
+				unseenConfessions,
+			} = await getStoredValues([
+				'postsToLike',
+				'postsToUnlike',
+				'postsTodisLike',
+				'postsToUndislike',
+				'postsToFavorite',
+				'postsToUnFavorite',
+				'postsToShare',
+				'unseenConfessions',
+			])
+
+			console.log({
+				postsToLike,
+				postsToUnlike,
+				postsTodisLike,
+				postsToUndislike,
+				postsToFavorite,
+				postsToUnFavorite,
+				postsToShare,
+				unseenConfessions,
+			})
+		})()
+	}, [isFavorite, likes, dislikes])
 
 	return (
 		<>

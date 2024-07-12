@@ -173,15 +173,32 @@ export const addComment = async ({
 	}
 }
 
-export const shareConfession = async ({ id, itemShares }: { id: string; itemShares: string[] }) => {
+export const shareConfession = async ({
+	id,
+	itemShares,
+	messageBody,
+	confesser,
+}: {
+	id: string
+	itemShares: string[]
+	messageBody: string
+	confesser: {
+		display_name: string
+		gender: string
+		age: string
+		photo_url: string
+	}
+}) => {
 	try {
 		const userId = useAuthStoreSelectors.getState().currentUser.id
 
 		const storedValues = await getStoredValues(['postsToShare'])
 		let postsToShare = JSON.parse(storedValues.postsToShare || '[]')
 
+		const message = `KokuTalk | Confess Anonymously\n\n${messageBody}\n\nConfessed by: ${confesser.display_name} (${confesser.gender}, ${confesser.age} years old)\n\nOpen this confession in KokuTalk: kokutalk://confession_details/${id}`
+
 		const result = await Share.share({
-			message: 'KokuTalk | Share Anonymously',
+			message: message,
 		})
 
 		if (result.action === Share.sharedAction) {

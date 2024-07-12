@@ -1,29 +1,35 @@
+import ConfessionCard from '@/components/ConfessionCard'
+import { fetchConfessionById } from '@/services/confessionActions'
+import { CONFESSIONSPROPS } from '@/types'
 import { useLocalSearchParams } from 'expo-router'
-import React, { useEffect } from 'react'
-import { Text, View } from 'react-native'
-import { moderateScale } from 'react-native-size-matters'
+import React, { useEffect, useState } from 'react'
+import { View } from 'react-native'
+import { Toast } from 'react-native-toast-notifications'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
 const ConfessionDetails = () => {
 	const { id }: Partial<{ id: string }> = useLocalSearchParams()
 	const { theme, styles } = useStyles(stylesheet)
+	const [confession, setConfession] = useState<CONFESSIONSPROPS | any>()
+	const [loading, setLoading] = useState(true)
 
 	useEffect(() => {
-		// TODO: get the confession details
+		;(async () => {
+			try {
+				setLoading(true)
+				const confession = await fetchConfessionById({ id })
+				setConfession(confession)
+				setLoading(false)
+			} catch (error) {
+				setLoading(false)
+				Toast.show(`${error}`, {
+					type: 'danger',
+				})
+			}
+		})()
 	}, [id])
 
-	return (
-		<View style={styles.container}>
-			<Text
-				style={{
-					color: theme.colors.typography,
-					fontFamily: 'Medium',
-					fontSize: moderateScale(20),
-				}}>
-				id:{id}
-			</Text>
-		</View>
-	)
+	return <View style={styles.container}>{!loading && <ConfessionCard item={confession} />}</View>
 }
 
 export default ConfessionDetails
@@ -31,7 +37,5 @@ export default ConfessionDetails
 const stylesheet = createStyleSheet({
 	container: {
 		flex: 1,
-		justifyContent: 'center',
-		alignItems: 'center',
 	},
 })
