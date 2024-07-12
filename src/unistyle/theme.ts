@@ -7,7 +7,7 @@ const colors = {
 
 	white: '#ffffff',
 	black: '#141414',
-	success: '#7ED321',
+	success: '#096826',
 	error: '#680909',
 	warning: '#ad9e13',
 	disliked: '#c95353',

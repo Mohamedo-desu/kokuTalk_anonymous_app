@@ -241,7 +241,7 @@ const ConfessionCard = ({ item }: { item: CONFESSIONSPROPS }): JSX.Element => {
 						styles.likesText,
 						{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
 					]}>
-					vi :
+					vie :
 				</Text>
 
 				<Text

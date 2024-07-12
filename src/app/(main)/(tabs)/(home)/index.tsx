@@ -15,7 +15,7 @@ import { moderateScale } from 'react-native-size-matters'
 import { Toast } from 'react-native-toast-notifications'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
-const PAGE_SIZE = 50
+const PAGE_SIZE = 4
 
 const HomePage = () => {
 	const { theme, styles } = useStyles(stylesheet)
@@ -52,6 +52,10 @@ const HomePage = () => {
 	useEffect(() => {
 		;(async () => {
 			try {
+				if (!loading) {
+					setLoading(true)
+				}
+
 				const newConfessions = await fetchConfessions({ userId, fetchLimit: PAGE_SIZE })
 
 				if (newConfessions) {
@@ -75,7 +79,7 @@ const HomePage = () => {
 				})
 			}
 		})()
-	}, [])
+	}, [isNetwork])
 
 	const loadMoreConfessions = async ({ prepend }: { prepend: boolean }) => {
 		try {

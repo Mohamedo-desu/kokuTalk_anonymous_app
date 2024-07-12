@@ -50,6 +50,10 @@ const MyConfessions = () => {
 	useEffect(() => {
 		;(async () => {
 			try {
+				if (!loading) {
+					setLoading(true)
+				}
+
 				const confessions = await fetchMyConfessions({ lastVisible, setLastVisible })
 				setMyConfession(confessions)
 				setLoading(false)
@@ -60,7 +64,7 @@ const MyConfessions = () => {
 				})
 			}
 		})()
-	}, [])
+	}, [isNetwork])
 
 	const keyExtractor = useCallback((item: CONFESSIONSPROPS, i: number) => `${i}-${item.id}`, [])
 

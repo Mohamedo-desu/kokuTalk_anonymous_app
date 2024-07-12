@@ -10,8 +10,8 @@ const useNetworkState = () => {
 		const getNetInfo = async () => {
 			const netStatus = await NetInfo.fetch()
 
-			setIsConnected(netStatus.isConnected)
-			setIsNetwork(netStatus.isConnected)
+			setIsConnected(netStatus.isInternetReachable)
+			setIsNetwork(netStatus.isInternetReachable)
 		}
 		const unSubscribe = NetInfo.addEventListener(getNetInfo)
 
