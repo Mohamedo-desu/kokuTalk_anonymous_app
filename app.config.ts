@@ -53,7 +53,6 @@ export default {
 		ios: {
 			supportsTablet: true,
 			bundleIdentifier: 'com.mohamedodesu.kokutalk',
-			buildNumber: '1',
 		},
 		android: {
 			adaptiveIcon: {
@@ -65,7 +64,6 @@ export default {
 			compileSdkVersion: 34,
 			targetSdkVersion: 34,
 			buildToolsVersion: '34.0.0',
-			versionCode: 1,
 		},
 		updates: {
 			url: 'https://u.expo.dev/911e2d2e-e548-4ba5-94ac-a87712b2bcc9',
