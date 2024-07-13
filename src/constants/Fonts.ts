@@ -1,8 +1,8 @@
 const Fonts = {
-	Bold: require('@/assets/fonts/NotoSerif-Bold.ttf'),
+	Bold: require('@/assets/fonts/NotoSans-Bold.ttf'),
 	Medium: require('@/assets/fonts/NotoSans-Medium.ttf'),
 	Regular: require('@/assets/fonts/NotoSans-Regular.ttf'),
-	SemiBold: require('@/assets/fonts/Poppins-SemiBold.ttf'),
+	SemiBold: require('@/assets/fonts/NotoSans-SemiBold.ttf'),
 	Italic: require('@/assets/fonts/NotoSans-Italic.ttf'),
 }
 

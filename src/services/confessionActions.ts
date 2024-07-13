@@ -1,5 +1,5 @@
 import { useAuthStoreSelectors } from '@/store/authStore'
-import { ADDCONFESSIONPROPS, COMMENTPROPS, CONFESSIONPROPS } from '@/types'
+import { ADDCONFESSIONPROPS, COMMENTPROPS, CONFESSIONPROPS, REPLYPROPS } from '@/types'
 import { db } from '@/utils/firebase'
 import { deleteStoredValues, getStoredValues } from '@/utils/storageUtils'
 import {
@@ -229,6 +229,39 @@ export const uploadComment = async (commentBody: COMMENTPROPS) => {
 	}
 }
 
+export const uploadReply = async (replyBody: REPLYPROPS | any) => {
+	try {
+		if (!replyBody) return
+		const batch = writeBatch(db)
+
+		const replyCollectionRef = collection(db, 'replies')
+
+		const replyRef = await addDoc(replyCollectionRef, {})
+		const replyId = replyRef.id
+
+		await setDoc(replyRef, {
+			...replyBody,
+			id: replyId,
+			created_at: new Date().toISOString(),
+		})
+
+		if (replyBody.comment_id) {
+			const commentDocRef = doc(db, 'comments', replyBody.comment_id)
+			batch.update(commentDocRef, { replies: arrayUnion(replyId) })
+		}
+		if (replyBody.replied_by) {
+			const userDocRef = doc(db, 'users', replyBody.replied_by)
+			batch.update(userDocRef, { replies: arrayUnion(replyId) })
+		}
+
+		await batch.commit()
+
+		return replyId
+	} catch (error: any) {
+		throw new Error(error.message || 'Failed to add comment')
+	}
+}
+
 export const updateSharedConfessions = async () => {
 	try {
 		const userId = useAuthStoreSelectors.getState().currentUser.id
@@ -394,6 +427,75 @@ export const fetchConfessionComments = async ({
 		console.log(error)
 
 		throw new Error('An error occurred while fetching the comments')
+	}
+}
+
+export const fetchCommentReplies = async ({
+	commentsReplies,
+	fetchLimit,
+	lastDocumentFetched,
+	setLastDocumentFetched,
+}: {
+	commentsReplies: string[] | undefined
+	fetchLimit: number
+	lastDocumentFetched: QueryDocumentSnapshot | null
+	setLastDocumentFetched: any
+}) => {
+	try {
+		if (!commentsReplies || commentsReplies.length === 0) {
+			return []
+		}
+
+		const repliesRef = collection(db, 'replies')
+
+		let q
+
+		if (lastDocumentFetched) {
+			q = query(
+				repliesRef,
+				where('id', 'in', commentsReplies),
+				orderBy('created_at', 'desc'),
+				startAfter(lastDocumentFetched),
+				limit(fetchLimit),
+			)
+		} else {
+			q = query(
+				repliesRef,
+				where('id', 'in', commentsReplies),
+				orderBy('created_at', 'desc'),
+				limit(fetchLimit),
+			)
+		}
+
+		const querySnapshot = await getDocs(q)
+
+		if (querySnapshot.empty) {
+			console.log('No more replies to fetch')
+
+			return []
+		}
+
+		const replies = await Promise.all(
+			querySnapshot.docs.map(async (confessDoc) => {
+				const reply = confessDoc.data() as REPLYPROPS
+
+				if (reply.replied_by) {
+					const userDoc = await getUserDataFromFirestore(reply.replied_by)
+
+					reply.user = userDoc as CONFESSIONPROPS['user']
+				}
+
+				return reply
+			}) as Promise<REPLYPROPS>[],
+		)
+
+		setLastDocumentFetched(querySnapshot.docs[querySnapshot.docs.length - 1])
+
+		return replies
+	} catch (error) {
+		console.log(error)
+
+		throw new Error('An error occurred while fetching the replies')
 	}
 }
 

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Dispatch, SetStateAction } from 'react'
-import { ActivityIndicator, TextInput, TouchableOpacity } from 'react-native'
+import { ActivityIndicator, TextInput, TouchableOpacity, ViewStyle } from 'react-native'
 import Animated, { ZoomIn, ZoomOut } from 'react-native-reanimated'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
@@ -12,12 +12,14 @@ const AddCommentCard = ({
 	setNewComment,
 	loading,
 	placeHolder,
+	style,
 	handleAddComment,
 }: {
 	newComment: string
 	setNewComment: Dispatch<SetStateAction<string>>
 	loading: boolean
 	placeHolder: string
+	style: ViewStyle
 	handleAddComment: () => void
 }) => {
 	const { theme, styles } = useStyles(stylesheet)
@@ -27,6 +29,7 @@ const AddCommentCard = ({
 			exiting={ZoomOut}
 			style={[
 				styles.comment,
+				style,
 				{ backgroundColor: theme.colors.gray[100], borderColor: theme.colors.primary[500] },
 			]}>
 			<TextInput
@@ -67,10 +70,10 @@ export default AddCommentCard
 const stylesheet = createStyleSheet({
 	comment: {
 		justifyContent: 'space-between',
-		marginVertical: moderateScale(5),
-		marginHorizontal: moderateScale(20),
+		marginTop: moderateScale(3),
+		marginHorizontal: moderateScale(10),
 		borderRadius: moderateScale(10),
-		borderWidth: 1.5,
+		overflow: 'hidden',
 	},
 	commentInput: {
 		flex: 1,

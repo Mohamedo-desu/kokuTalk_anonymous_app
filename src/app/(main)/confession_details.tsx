@@ -8,6 +8,7 @@ import { fetchConfessionById, fetchConfessionComments } from '@/services/confess
 import { COMMENTPROPS, CONFESSIONPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
 import { FlashList } from '@shopify/flash-list'
+import { LinearGradient } from 'expo-linear-gradient'
 import { useLocalSearchParams } from 'expo-router'
 import React, { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, RefreshControl, Text, View } from 'react-native'
@@ -29,7 +30,7 @@ const ConfessionDetails = () => {
 	const { theme, styles } = useStyles(stylesheet)
 	const [confession, setConfession] = useState<CONFESSIONPROPS>()
 	const [comments, setComments] = useState<COMMENTPROPS[]>([])
-	const [loading, setLoading] = useState(false)
+	const [loading, setLoading] = useState(true)
 	const [commentsLoading, setCommentsLoading] = useState(true)
 
 	const safeAreaInsets = useSafeAreaInsets()
@@ -62,7 +63,6 @@ const ConfessionDetails = () => {
 		;(async () => {
 			try {
 				if (!commentsLoading) setCommentsLoading(true)
-				setCommentsLoading(true)
 				const comments = await fetchConfessionComments({
 					confessionComments: confession?.comments,
 					fetchLimit: PAGE_SIZE,
@@ -189,12 +189,16 @@ const ConfessionDetails = () => {
 	})
 
 	return (
-		<View style={styles.container}>
+		<LinearGradient
+			colors={[theme.colors.background, theme.colors.background]}
+			start={{ x: 0, y: 0 }}
+			end={{ x: 0, y: 0 }}
+			style={styles.container}>
 			{loading ? (
 				<View style={{ alignItems: 'center', flex: 1 }}>
 					<Skeleton
 						width={DEVICE_WIDTH - moderateScale(25)}
-						height={moderateScale(350)}
+						height={moderateScale(200)}
 						style={[styles.skeleton, { marginBottom: moderateScale(10) }]}
 					/>
 					{Array(4)
@@ -222,17 +226,21 @@ const ConfessionDetails = () => {
 								style={{ backgroundColor: theme.colors.gray[300] }}
 							/>
 						}
+						keyboardShouldPersistTaps="handled"
 						keyExtractor={(item: COMMENTPROPS) => item.id}
 						contentContainerStyle={{
-							paddingBottom: safeAreaInsets.bottom + moderateScale(80),
-							paddingTop: moderateScale(10),
+							paddingBottom: safeAreaInsets.bottom + moderateScale(300),
+							paddingTop: moderateScale(5),
 						}}
 						estimatedItemSize={200}
 						indicatorStyle={theme.colors.typography}
 						onScrollEndDrag={() => loadMoreConfessions({ prepend: false })}
 						ListHeaderComponent={
 							confession && (
-								<ConfessionCard item={confession} numberOfLines={0} isDetailsScreen={true} />
+								<>
+									<ConfessionCard item={confession} numberOfLines={0} isDetailsScreen={true} />
+									<View style={{ marginVertical: moderateScale(5) }} />
+								</>
 							)
 						}
 						ListFooterComponent={() =>
@@ -261,7 +269,7 @@ const ConfessionDetails = () => {
 					)}
 				</>
 			)}
-		</View>
+		</LinearGradient>
 	)
 }
 

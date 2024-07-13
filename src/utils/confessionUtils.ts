@@ -150,6 +150,8 @@ export const addComment = async ({
 		setLoading(true)
 
 		await uploadComment({
+			id: '',
+			created_at: '',
 			comment_text: newComment,
 			confession_id: id,
 			commented_by: userId,

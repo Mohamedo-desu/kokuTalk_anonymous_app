@@ -119,14 +119,21 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 						styles.likesText,
 						{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
 					]}>
-					votes :
+					{shortenNumber(likes.length - dislikes.length)}
 				</Text>
 				<Text
 					style={[
 						styles.likesText,
 						{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
 					]}>
-					{shortenNumber(likes.length - dislikes.length)}
+					upvotes
+				</Text>
+				<Text
+					style={[
+						styles.likesText,
+						{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
+					]}>
+					{`\u2022`}
 				</Text>
 			</TouchableOpacity>
 		)

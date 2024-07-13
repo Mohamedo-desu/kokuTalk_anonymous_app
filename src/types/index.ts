@@ -70,6 +70,7 @@ export interface REPLYPROPS {
 	id: string
 	reply_text: string
 	comment_id: string
+	confession_id: string
 	replied_by: string
 	likes: string[]
 	dislikes: string[]

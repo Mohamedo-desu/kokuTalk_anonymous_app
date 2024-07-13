@@ -150,9 +150,10 @@ const SavedConfessions = () => {
 					renderItem={renderConfessionCard}
 					keyExtractor={(item: CONFESSIONSPROPS) => item.id}
 					contentContainerStyle={{
-						paddingBottom: safeAreaInsets.bottom + moderateScale(80),
+						paddingBottom: safeAreaInsets.bottom + moderateScale(300),
 						paddingTop: moderateScale(10),
 					}}
+					keyboardShouldPersistTaps="handled"
 					refreshControl={
 						<RefreshControl
 							onRefresh={() => loadMoreConfessions({ prepend: true })}

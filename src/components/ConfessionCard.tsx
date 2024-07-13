@@ -14,8 +14,8 @@ import { formatRelativeTime } from '@/utils/timeUtils'
 import { AntDesign, Feather, Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { useCallback, useState } from 'react'
-import { Image, Text, TouchableOpacity, View } from 'react-native'
-import Animated from 'react-native-reanimated'
+import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 import AddCommentCard from './AddCommentCard'
@@ -58,11 +58,25 @@ const ConfessionCard = ({
 
 	const [comments, setComments] = useState(item.comments.length)
 	const [newComment, setNewComment] = useState('')
-	const [commenting, setCommenting] = useState(false)
 	const [loading, setLoading] = useState(false)
 
 	const [toggleDetails, setToggleDetails] = useState(false)
 	const [showFullReply, setShowFullReply] = useState(false)
+
+	const animatedHeight = useSharedValue(0)
+
+	const rnStyles = useAnimatedStyle(() => {
+		return {
+			height: withTiming(animatedHeight.value, { duration: 500 }),
+			borderWidth: withTiming(animatedHeight.value > 0 ? 1.5 : 0, {
+				duration: 500,
+			}),
+		}
+	}, [animatedHeight])
+
+	const toggleCommentCard = useCallback(() => {
+		animatedHeight.value = animatedHeight.value > 0 ? 0 : moderateScale(85)
+	}, [animatedHeight])
 
 	// CONFESSION FUNCTIONS
 	const navigateToDetails = useCallback(() => {
@@ -175,7 +189,7 @@ const ConfessionCard = ({
 				/>
 
 				<View style={styles.commentShareCon}>
-					<TouchableOpacity onPress={() => setCommenting(!commenting)}>
+					<TouchableOpacity onPress={toggleCommentCard}>
 						<Ionicons name="chatbox-ellipses-outline" size={25} color={theme.colors.gray[400]} />
 					</TouchableOpacity>
 					<Text style={[styles.comment, { color: theme.colors.gray[400] }]} numberOfLines={5}>
@@ -187,101 +201,115 @@ const ConfessionCard = ({
 				</View>
 			</View>
 		) : (
-			<TouchableOpacity
-				activeOpacity={0.7}
-				onPress={() => setToggleDetails(!toggleDetails)}
-				style={[
-					styles.commentShareCon,
-					{
-						flex: 1,
-						width: '100%',
-						alignItems: 'center',
-						justifyContent: 'space-between',
-					},
-				]}>
-				<Text
-					style={[
-						styles.likesText,
-						{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
-					]}>
-					vot :
-				</Text>
-				<Text
-					style={[
-						styles.likesText,
-						{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
-					]}>
-					{shortenNumber(likes.length - dislikes.length)}
-				</Text>
-
-				<Text
-					style={[
-						styles.likesText,
-						{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
-					]}>
-					com :
-				</Text>
-
-				<Text
-					style={[
-						styles.comment,
-						{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
-					]}
-					numberOfLines={5}>
-					{shortenNumber(comments)}
-				</Text>
-
-				<Text
-					style={[
-						styles.likesText,
-						{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
-					]}>
-					sha :
-				</Text>
-
-				<Text
-					style={[
-						styles.comment,
-						{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
-					]}
-					numberOfLines={5}>
-					{shortenNumber(item.shares.length)}
-				</Text>
-
-				<Text
-					style={[
-						styles.likesText,
-						{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
-					]}>
-					fav :
-				</Text>
-
-				<Text
-					style={[
-						styles.comment,
-						{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
-					]}
-					numberOfLines={5}>
-					{shortenNumber(item.favorites.length)}
-				</Text>
-
-				<Text
-					style={[
-						styles.likesText,
-						{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
-					]}>
-					vie :
-				</Text>
-
-				<Text
-					style={[
-						styles.comment,
-						{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
-					]}
-					numberOfLines={5}>
-					{shortenNumber(item.views.length)}
-				</Text>
-			</TouchableOpacity>
+			<ScrollView style={{ flex: 1 }} horizontal showsHorizontalScrollIndicator={false}>
+				<TouchableOpacity
+					style={styles.detailsCon}
+					activeOpacity={0.7}
+					onPress={() => setToggleDetails(!toggleDetails)}>
+					<Text
+						style={[
+							styles.likesText,
+							{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
+						]}>
+						{shortenNumber(likes.length - dislikes.length)}
+					</Text>
+					<Text
+						style={[
+							styles.likesText,
+							{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
+						]}>
+						upvotes
+					</Text>
+					<Text
+						style={[
+							styles.likesText,
+							{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
+						]}>
+						{`\u2022`}
+					</Text>
+					<Text
+						style={[
+							styles.comment,
+							{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
+						]}
+						numberOfLines={5}>
+						{shortenNumber(comments)}
+					</Text>
+					<Text
+						style={[
+							styles.likesText,
+							{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
+						]}>
+						comments
+					</Text>
+					<Text
+						style={[
+							styles.likesText,
+							{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
+						]}>
+						{`\u2022`}
+					</Text>
+					<Text
+						style={[
+							styles.comment,
+							{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
+						]}
+						numberOfLines={5}>
+						{shortenNumber(item.shares.length)}
+					</Text>
+					<Text
+						style={[
+							styles.likesText,
+							{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
+						]}>
+						shares
+					</Text>
+					<Text
+						style={[
+							styles.likesText,
+							{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
+						]}>
+						{`\u2022`}
+					</Text>
+					<Text
+						style={[
+							styles.comment,
+							{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
+						]}
+						numberOfLines={5}>
+						{shortenNumber(item.favorites.length)}
+					</Text>
+					<Text
+						style={[
+							styles.likesText,
+							{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
+						]}>
+						favorites
+					</Text>
+					<Text
+						style={[
+							styles.likesText,
+							{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
+						]}>
+						{`\u2022`}
+					</Text>
+					<Text
+						style={[
+							styles.comment,
+							{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
+						]}
+						numberOfLines={5}>
+						{shortenNumber(item.views.length)}
+					</Text>
+					<Text
+						style={[
+							styles.likesText,
+							{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
+						]}>
+						views
+					</Text>
+				</TouchableOpacity>
+			</ScrollView>
 		)
 	const renderBodyDisplay = () => (
 		<TouchableOpacity
@@ -401,15 +429,15 @@ const ConfessionCard = ({
 				{renderTimeDisplay()}
 				{renderFooterDisplay()}
 			</Animated.View>
-			{commenting ? (
-				<AddCommentCard
-					loading={loading}
-					handleAddComment={handleAddComment}
-					setNewComment={setNewComment}
-					newComment={newComment}
-					placeHolder="Comment here..."
-				/>
-			) : null}
+			<AddCommentCard
+				loading={loading}
+				handleAddComment={handleAddComment}
+				setNewComment={setNewComment}
+				newComment={newComment}
+				placeHolder="Comment here..."
+				style={rnStyles}
+			/>
+
 			<GuestModal visible={guestModalVisible} onPress={() => setGuestModalVisible(false)} />
 		</>
 	)
@@ -515,5 +543,11 @@ const stylesheet = createStyleSheet({
 		alignItems: 'center',
 		flexWrap: 'wrap',
 		gap: moderateScale(10),
+	},
+	detailsCon: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		gap: moderateScale(5),
 	},
 })

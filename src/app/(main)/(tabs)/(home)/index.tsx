@@ -209,9 +209,10 @@ const HomePage = () => {
 							style={{ backgroundColor: theme.colors.gray[300] }}
 						/>
 					}
+					keyboardShouldPersistTaps="handled"
 					keyExtractor={(item: CONFESSIONPROPS) => item.id}
 					contentContainerStyle={{
-						paddingBottom: safeAreaInsets.bottom + moderateScale(80),
+						paddingBottom: safeAreaInsets.bottom + moderateScale(300),
 						paddingTop: moderateScale(10),
 					}}
 					estimatedItemSize={200}

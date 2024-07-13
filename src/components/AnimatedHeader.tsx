@@ -1,5 +1,5 @@
 import { shortenNumber } from '@/utils/generalUtils'
-import { Text, View, ViewStyle } from 'react-native'
+import { ScrollView, Text, ViewStyle } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
@@ -26,7 +26,10 @@ const AnimatedHeader = ({
 			<Text numberOfLines={1} style={[styles.confessionText, { color: theme.colors.typography }]}>
 				{confession_text}
 			</Text>
-			<View style={styles.detailsCon}>
+			<ScrollView
+				horizontal
+				showsHorizontalScrollIndicator={false}
+				contentContainerStyle={styles.detailsCon}>
 				<Text numberOfLines={1} style={[styles.detailText, { color: theme.colors.gray[300] }]}>
 					{shortenNumber(upVotes)} upvotes
 				</Text>
@@ -46,7 +49,7 @@ const AnimatedHeader = ({
 				<Text numberOfLines={1} style={[styles.detailText, { color: theme.colors.gray[300] }]}>
 					{shortenNumber(viewsCount)} views
 				</Text>
-			</View>
+			</ScrollView>
 		</Animated.View>
 	)
 }
@@ -67,6 +70,7 @@ const stylesheet = createStyleSheet({
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'space-between',
+		gap: moderateScale(5),
 	},
 	detailText: {
 		fontFamily: 'Medium',
