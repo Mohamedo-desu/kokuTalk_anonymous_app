@@ -1,6 +1,7 @@
 import useIsAnonymous from '@/hooks/useIsAnonymous'
 import { useAuthStoreSelectors } from '@/store/authStore'
-import { CONFESSIONSPROPS } from '@/types'
+import { CONFESSIONPROPS } from '@/types'
+import { DEVICE_WIDTH } from '@/utils'
 import {
 	addComment,
 	disLikeConfession,
@@ -9,29 +10,35 @@ import {
 	shareConfession,
 } from '@/utils/confessionUtils'
 import { shortenNumber } from '@/utils/generalUtils'
-import { getStoredValues } from '@/utils/storageUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { AntDesign, Feather, Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Image, Text, TouchableOpacity, View } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
-import CommentCard from './CommentCard'
+import AddCommentCard from './AddCommentCard'
 import GuestModal from './GuestModal'
 
 /**
  * Renders a confession card component
- * @param {CONFESSIONSPROPS} item - The confession card props
+ * @param {CONFESSIONPROPS} item - The confession card props
  * @returns {JSX.Element} The confession card component
  */
+
+const CONFESSION_LENGTH = Math.floor(DEVICE_WIDTH / 2)
 
 const ConfessionCard = ({
 	item,
 	numberOfLines,
+	isDetailsScreen = false,
+	index,
 }: {
-	item: CONFESSIONSPROPS
+	item: CONFESSIONPROPS
 	numberOfLines: number
+	isDetailsScreen?: boolean
+	index?: number
 }): JSX.Element => {
 	const isAnonymous = useIsAnonymous()
 
@@ -55,8 +62,7 @@ const ConfessionCard = ({
 	const [loading, setLoading] = useState(false)
 
 	const [toggleDetails, setToggleDetails] = useState(false)
-
-	console.log(numberOfLines)
+	const [showFullReply, setShowFullReply] = useState(false)
 
 	// CONFESSION FUNCTIONS
 	const navigateToDetails = useCallback(() => {
@@ -97,7 +103,14 @@ const ConfessionCard = ({
 			return setGuestModalVisible(true)
 		}
 
-		await addComment({ id, loading, newComment, setComments, setLoading, setNewComment })
+		await addComment({
+			id,
+			loading,
+			newComment,
+			setComments,
+			setLoading,
+			setNewComment,
+		})
 	}, [newComment, id])
 	const handleFavorite = useCallback(async () => {
 		if (isAnonymous) {
@@ -271,7 +284,10 @@ const ConfessionCard = ({
 			</TouchableOpacity>
 		)
 	const renderBodyDisplay = () => (
-		<TouchableOpacity onPress={navigateToDetails} style={styles.body} activeOpacity={0.7}>
+		<TouchableOpacity
+			onPress={isDetailsScreen ? undefined : navigateToDetails}
+			style={styles.body}
+			activeOpacity={isDetailsScreen ? 1 : 0.7}>
 			<TouchableOpacity activeOpacity={1} onPress={() => undefined} style={styles.tagsContainer}>
 				{confession_types?.map((type) => (
 					<TouchableOpacity
@@ -282,11 +298,30 @@ const ConfessionCard = ({
 					</TouchableOpacity>
 				))}
 			</TouchableOpacity>
-			<Text
-				style={[styles.confessionText, { color: theme.colors.typography }]}
-				numberOfLines={numberOfLines}>
-				{confession_text}
-			</Text>
+			{isDetailsScreen ? (
+				<>
+					<Text style={[styles.confessionText, { color: theme.colors.typography }]}>
+						{showFullReply
+							? confession_text
+							: confession_text.length > CONFESSION_LENGTH
+								? confession_text.slice(0, CONFESSION_LENGTH) + '...'
+								: confession_text}
+					</Text>
+					{confession_text.length > CONFESSION_LENGTH && (
+						<TouchableOpacity onPress={() => setShowFullReply(!showFullReply)}>
+							<Text style={[styles.confessionText, { color: theme.colors.primary[300] }]}>
+								{showFullReply ? 'See Less' : 'See More'}
+							</Text>
+						</TouchableOpacity>
+					)}
+				</>
+			) : (
+				<Text
+					style={[styles.confessionText, { color: theme.colors.typography }]}
+					numberOfLines={numberOfLines}>
+					{confession_text}
+				</Text>
+			)}
 		</TouchableOpacity>
 	)
 	const renderHeaderDisplay = () => (
@@ -322,56 +357,57 @@ const ConfessionCard = ({
 	)
 	// CONFESSION COMPONENTS END
 
-	useEffect(() => {
-		;(async () => {
-			// await deleteStoredValues(['postsToFavorite', 'postsToUnFavorite'])
-			const {
-				postsToLike,
-				postsToUnlike,
-				postsTodisLike,
-				postsToUndislike,
-				postsToFavorite,
-				postsToUnFavorite,
-				postsToShare,
-				unseenConfessions,
-			} = await getStoredValues([
-				'postsToLike',
-				'postsToUnlike',
-				'postsTodisLike',
-				'postsToUndislike',
-				'postsToFavorite',
-				'postsToUnFavorite',
-				'postsToShare',
-				'unseenConfessions',
-			])
+	// useEffect(() => {
+	// 	;(async () => {
+	// 		// await deleteStoredValues(['postsToFavorite', 'postsToUnFavorite'])
+	// 		const {
+	// 			postsToLike,
+	// 			postsToUnlike,
+	// 			postsTodisLike,
+	// 			postsToUndislike,
+	// 			postsToFavorite,
+	// 			postsToUnFavorite,
+	// 			postsToShare,
+	// 			unseenConfessions,
+	// 		} = await getStoredValues([
+	// 			'postsToLike',
+	// 			'postsToUnlike',
+	// 			'postsTodisLike',
+	// 			'postsToUndislike',
+	// 			'postsToFavorite',
+	// 			'postsToUnFavorite',
+	// 			'postsToShare',
+	// 			'unseenConfessions',
+	// 		])
 
-			console.log({
-				postsToLike,
-				postsToUnlike,
-				postsTodisLike,
-				postsToUndislike,
-				postsToFavorite,
-				postsToUnFavorite,
-				postsToShare,
-				unseenConfessions,
-			})
-		})()
-	}, [isFavorite, likes, dislikes])
+	// 		console.log({
+	// 			postsToLike,
+	// 			postsToUnlike,
+	// 			postsTodisLike,
+	// 			postsToUndislike,
+	// 			postsToFavorite,
+	// 			postsToUnFavorite,
+	// 			postsToShare,
+	// 			unseenConfessions,
+	// 		})
+	// 	})()
+	// }, [isFavorite, likes, dislikes])
 
 	return (
 		<>
-			<View style={[styles.card, { backgroundColor: theme.colors.gray[100] }]}>
+			<Animated.View style={[styles.card, { backgroundColor: theme.colors.gray[100] }]}>
 				{renderHeaderDisplay()}
 				{renderBodyDisplay()}
 				{renderTimeDisplay()}
 				{renderFooterDisplay()}
-			</View>
+			</Animated.View>
 			{commenting ? (
-				<CommentCard
+				<AddCommentCard
 					loading={loading}
 					handleAddComment={handleAddComment}
 					setNewComment={setNewComment}
 					newComment={newComment}
+					placeHolder="Comment here..."
 				/>
 			) : null}
 			<GuestModal visible={guestModalVisible} onPress={() => setGuestModalVisible(false)} />
@@ -437,7 +473,7 @@ const stylesheet = createStyleSheet({
 	},
 	confessionText: {
 		fontFamily: 'Regular',
-		fontSize: moderateScale(14),
+		fontSize: moderateScale(13),
 	},
 	timeCon: {
 		marginBottom: moderateScale(10),

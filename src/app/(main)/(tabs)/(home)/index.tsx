@@ -4,17 +4,20 @@ import { PAGE_SIZE } from '@/constants/appDetails'
 import useNetworkState from '@/hooks/useNetworkState'
 import { fetchConfessions } from '@/services/confessionActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
-import { CONFESSIONSPROPS } from '@/types'
+import { CONFESSIONPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
 import { getStoredValues, saveSecurely } from '@/utils/storageUtils'
 import { FlashList } from '@shopify/flash-list'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, RefreshControl, ScrollView, Text, View } from 'react-native'
+import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { moderateScale } from 'react-native-size-matters'
 import { Toast } from 'react-native-toast-notifications'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
+
+const AnimatedFlatlist = Animated.createAnimatedComponent(FlashList)
 
 const HomePage = () => {
 	const { theme, styles } = useStyles(stylesheet)
@@ -23,19 +26,22 @@ const HomePage = () => {
 	const [fetchingMore, setFetchingMore] = useState(false)
 	const [refreshing, setRefreshing] = useState(false)
 
-	const [confessions, setConfessions] = useState<CONFESSIONSPROPS[]>([])
+	const [confessions, setConfessions] = useState<CONFESSIONPROPS[]>([])
 	const [lastDocumentFetched, setLastDocumentFetched] = useState(null)
 
 	const userId = useAuthStoreSelectors.use.currentUser().id
 	const isNetwork = useNetworkState()
 
-	const renderConfessionCard = useCallback(({ item }: { item: CONFESSIONSPROPS }) => {
-		if (!item) {
-			return null
-		}
+	const renderConfessionCard = useCallback(
+		({ item, index }: { item: CONFESSIONPROPS; index: number }) => {
+			if (!item) {
+				return null
+			}
 
-		return <ConfessionCard item={item} numberOfLines={5} />
-	}, [])
+			return <ConfessionCard item={item} index={index} numberOfLines={2} />
+		},
+		[],
+	)
 
 	const ListEmptyComponent = useCallback(() => {
 		return (
@@ -84,58 +90,54 @@ const HomePage = () => {
 		})()
 	}, [isNetwork])
 
-	const loadMoreConfessions = useCallback(
-		async ({ prepend }: { prepend: boolean }) => {
-			try {
-				if (prepend) {
-					if (refreshing) return
-					setRefreshing(true)
-				} else {
-					if (fetchingMore) return
-					setFetchingMore(true)
-				}
+	const loadMoreConfessions = async ({ prepend }: { prepend: boolean }) => {
+		try {
+			if (prepend) {
+				if (refreshing) return
+				setRefreshing(true)
+			} else {
+				if (fetchingMore) return
+				setFetchingMore(true)
+			}
 
-				const newConfessions = await fetchConfessions({
-					fetchLimit: PAGE_SIZE,
-					lastDocumentFetched,
-					setLastDocumentFetched,
-				})
-				if (newConfessions.length > 0) {
-					setConfessions((prev) => {
-						const combinedConfessions = prepend
-							? [...newConfessions, ...prev]
-							: [...prev, ...newConfessions]
+			const newConfessions = await fetchConfessions({
+				fetchLimit: PAGE_SIZE,
+				lastDocumentFetched,
+				setLastDocumentFetched,
+			})
 
-						const uniqueConfessionIds = Array.from(
-							new Set(combinedConfessions.map((confession) => confession.id)),
-						).filter((id) => id !== undefined)
-						const uniqueConfessions = uniqueConfessionIds
-							.map((id) => combinedConfessions.find((confession) => confession.id === id))
-							.filter((confession) => confession !== undefined)
+			if (newConfessions.length > 0) {
+				setConfessions((prev) => {
+					const combinedConfessions = prepend
+						? [...newConfessions, ...prev]
+						: [...prev, ...newConfessions]
 
-						return uniqueConfessions
-					})
-				}
-				if (prepend) {
-					setRefreshing(false)
-				} else {
-					setFetchingMore(false)
-				}
-			} catch (error) {
-				if (prepend) {
-					setRefreshing(false)
-				} else {
-					setFetchingMore(false)
-				}
-				Toast.show(`${error}`, {
-					type: 'danger',
+					const uniqueConfessionIds = Array.from(
+						new Set(combinedConfessions.map((confession) => confession.id)),
+					).filter((id) => id !== undefined)
+					const uniqueConfessions = uniqueConfessionIds
+						.map((id) => combinedConfessions.find((confession) => confession.id === id))
+						.filter((confession) => confession !== undefined)
+
+					return uniqueConfessions
 				})
 			}
-		},
-		[lastDocumentFetched, refreshing, fetchingMore],
-	)
-
-	const keyExtractor = useCallback((item: CONFESSIONSPROPS, i: number) => `${i}-${item.id}`, [])
+			if (prepend) {
+				setRefreshing(false)
+			} else {
+				setFetchingMore(false)
+			}
+		} catch (error) {
+			if (prepend) {
+				setRefreshing(false)
+			} else {
+				setFetchingMore(false)
+			}
+			Toast.show(`${error}`, {
+				type: 'danger',
+			})
+		}
+	}
 
 	const onViewableItemsChanged = async ({ viewableItems }: { viewableItems: any[] }) => {
 		const unseenItems = viewableItems
@@ -195,7 +197,7 @@ const HomePage = () => {
 						))}
 				</ScrollView>
 			) : (
-				<FlashList
+				<AnimatedFlatlist
 					data={confessions}
 					renderItem={renderConfessionCard}
 					refreshControl={
@@ -207,7 +209,7 @@ const HomePage = () => {
 							style={{ backgroundColor: theme.colors.gray[300] }}
 						/>
 					}
-					keyExtractor={keyExtractor}
+					keyExtractor={(item: CONFESSIONPROPS) => item.id}
 					contentContainerStyle={{
 						paddingBottom: safeAreaInsets.bottom + moderateScale(80),
 						paddingTop: moderateScale(10),

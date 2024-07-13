@@ -52,7 +52,7 @@ const SavedConfessions = () => {
 				if (!loading) {
 					setLoading(true)
 				}
-
+				setLastDocumentFetched(null)
 				const confessions = await fetchFavoriteConfessions({
 					fetchLimit: PAGE_SIZE,
 					lastDocumentFetched,
@@ -120,8 +120,6 @@ const SavedConfessions = () => {
 		[lastDocumentFetched, refreshing, fetchingMore],
 	)
 
-	const keyExtractor = useCallback((item: CONFESSIONSPROPS, i: number) => `${i}-${item.id}`, [])
-
 	return (
 		<LinearGradient
 			colors={[theme.colors.background, theme.colors.background]}
@@ -150,7 +148,7 @@ const SavedConfessions = () => {
 				<FlashList
 					data={favoriteConfessions}
 					renderItem={renderConfessionCard}
-					keyExtractor={keyExtractor}
+					keyExtractor={(item: CONFESSIONSPROPS) => item.id}
 					contentContainerStyle={{
 						paddingBottom: safeAreaInsets.bottom + moderateScale(80),
 						paddingTop: moderateScale(10),

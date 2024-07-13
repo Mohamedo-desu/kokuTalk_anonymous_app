@@ -1,28 +1,27 @@
 import useIsAnonymous from '@/hooks/useIsAnonymous'
 import { useAuthStoreSelectors } from '@/store/authStore'
-import { COMMENTPROPS, REPLYPROPS } from '@/types'
+import { REPLYPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
 import { disLikeConfession, likeConfession } from '@/utils/confessionUtils'
 import { shortenNumber } from '@/utils/generalUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
-import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons'
+import { AntDesign, Feather } from '@expo/vector-icons'
 import { useCallback, useState } from 'react'
 import { Image, Text, TouchableOpacity, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
-import AddCommentCard from './AddCommentCard'
 import GuestModal from './GuestModal'
 
 /**
- * Renders a Comment card component
- * @param {COMMENTPROPS} item - The Comment card props
- * @returns {JSX.Element} The Comment card component
+ * Renders a Reply card component
+ * @param {REPLYPROPS} item - The Reply card props
+ * @returns {JSX.Element} The Reply card component
  */
 
-const COMMENT_LENGTH = Math.floor(DEVICE_WIDTH / 2)
+const REPLY_LENGTH = Math.floor(DEVICE_WIDTH / 2)
 
-const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): JSX.Element => {
+const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.Element => {
 	const isAnonymous = useIsAnonymous()
 
 	const userId = useAuthStoreSelectors.getState().currentUser.id
@@ -30,7 +29,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 	const isOwner = item.user?.id === userId
 
 	const { theme, styles } = useStyles(stylesheet)
-	const { id, comment_text, created_at } = item
+	const { id, reply_text, created_at } = item
 	const { display_name, gender, age, photo_url } = item.user
 
 	const [guestModalVisible, setGuestModalVisible] = useState(false)
@@ -38,19 +37,13 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 	const [likes, setLikes] = useState(item.likes)
 	const [dislikes, setdisLikes] = useState(item.dislikes)
 
-	const [repliesCount, setRepliesCount] = useState(item.replies.length)
-	const [replies, setReplies] = useState<REPLYPROPS[]>([])
 	const [loading, setLoading] = useState(false)
-	const [showReplies, setshowReplies] = useState(true)
-	const [replying, setReplying] = useState(false)
-	const [newReply, setNewReply] = useState('')
 
 	const [toggleDetails, setToggleDetails] = useState(false)
-	const [showFullComment, setShowFullComment] = useState(false)
+	const [showFullReply, setShowFullReply] = useState(false)
 
-	// COMMENT FUNCTIONS
-
-	const handleLikeComment = useCallback(async () => {
+	// REPLY FUNCTIONS
+	const handleLikeReply = useCallback(async () => {
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
@@ -63,7 +56,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 			setdisLikes,
 		})
 	}, [isAnonymous, likes, dislikes, id])
-	const handleDislikeComment = useCallback(async () => {
+	const handleDislikeReply = useCallback(async () => {
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
@@ -77,14 +70,9 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 			setdisLikes,
 		})
 	}, [isAnonymous, likes, dislikes, id])
-	const handleAddReply = useCallback(async () => {
-		if (isAnonymous) {
-			return setGuestModalVisible(true)
-		}
-	}, [id])
-	// COMMENT FUNCTIONS END
+	// REPLY FUNCTIONS END
 
-	// COMMENT COMPONENTS
+	// REPLY COMPONENTS
 	const renderTimeDisplay = () => (
 		<View style={styles.timeCon}>
 			<Text style={[styles.timeText, { color: theme.colors.gray[400] }]}>
@@ -96,10 +84,10 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 		!toggleDetails ? (
 			<View style={styles.footer}>
 				<View style={styles.likeCountCon}>
-					<TouchableOpacity activeOpacity={0.8} onPress={handleLikeComment}>
+					<TouchableOpacity activeOpacity={0.8} onPress={handleLikeReply}>
 						<Feather
 							name="chevrons-up"
-							size={20}
+							size={25}
 							color={likes.includes(userId) ? theme.colors.primary[500] : theme.colors.gray[400]}
 						/>
 					</TouchableOpacity>
@@ -108,10 +96,10 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 						{shortenNumber(likes.length - dislikes.length)}
 					</Text>
 
-					<TouchableOpacity activeOpacity={0.8} onPress={handleDislikeComment}>
+					<TouchableOpacity activeOpacity={0.8} onPress={handleDislikeReply}>
 						<Feather
 							name="chevrons-down"
-							size={20}
+							size={25}
 							color={dislikes.includes(userId) ? theme.colors.disliked : theme.colors.gray[400]}
 						/>
 					</TouchableOpacity>
@@ -120,15 +108,6 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 					style={{ flexGrow: 1, height: '100%' }}
 					onPress={() => setToggleDetails(!toggleDetails)}
 				/>
-
-				<View style={styles.replieshareCon}>
-					<TouchableOpacity onPress={() => setReplying(!replying)}>
-						<MaterialIcons name="replay" size={20} color={theme.colors.gray[400]} />
-					</TouchableOpacity>
-					<Text style={[styles.replies, { color: theme.colors.gray[400] }]} numberOfLines={5}>
-						{shortenNumber(repliesCount)}
-					</Text>
-				</View>
 			</View>
 		) : (
 			<TouchableOpacity
@@ -149,38 +128,21 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 					]}>
 					{shortenNumber(likes.length - dislikes.length)}
 				</Text>
-
-				<Text
-					style={[
-						styles.likesText,
-						{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
-					]}>
-					replies :
-				</Text>
-
-				<Text
-					style={[
-						styles.replies,
-						{ color: theme.colors.gray[400], fontSize: moderateScale(12), fontFamily: 'Italic' },
-					]}
-					numberOfLines={5}>
-					{shortenNumber(repliesCount)}
-				</Text>
 			</TouchableOpacity>
 		)
 	const renderBodyDisplay = () => (
 		<TouchableOpacity style={styles.body} activeOpacity={0.7}>
-			<Text style={[styles.commentText, { color: theme.colors.typography }]}>
-				{showFullComment
-					? comment_text
-					: comment_text.length > COMMENT_LENGTH
-						? comment_text.slice(0, COMMENT_LENGTH) + '...'
-						: comment_text}
+			<Text style={[styles.replyText, { color: theme.colors.typography }]}>
+				{showFullReply
+					? reply_text
+					: reply_text.length > REPLY_LENGTH
+						? reply_text.slice(0, REPLY_LENGTH) + '...'
+						: reply_text}
 			</Text>
-			{comment_text.length > COMMENT_LENGTH && (
-				<TouchableOpacity onPress={() => setShowFullComment(!showFullComment)}>
-					<Text style={[styles.commentText, { color: theme.colors.primary[300] }]}>
-						{showFullComment ? 'See Less' : 'See More'}
+			{reply_text.length > REPLY_LENGTH && (
+				<TouchableOpacity onPress={() => setShowFullReply(!showFullReply)}>
+					<Text style={[styles.replyText, { color: theme.colors.primary[300] }]}>
+						{showFullReply ? 'See Less' : 'See More'}
 					</Text>
 				</TouchableOpacity>
 			)}
@@ -208,69 +170,26 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 			</TouchableOpacity>
 		</View>
 	)
-	const renderReplies = () => (showReplies ? <></> : null)
-	// CONFESSION COMPONENTS END
-
-	// useEffect(() => {
-	// 	;(async () => {
-	// 		// await deleteStoredValues(['postsToFavorite', 'postsToUnFavorite'])
-	// 		const {
-	// 			postsToLike,
-	// 			postsToUnlike,
-	// 			postsTodisLike,
-	// 			postsToUndislike,
-	// 			postsToFavorite,
-	// 			postsToUnFavorite,
-	// 			postsToShare,
-	// 			unseenConfessions,
-	// 		} = await getStoredValues([
-	// 			'postsToLike',
-	// 			'postsToUnlike',
-	// 			'postsTodisLike',
-	// 			'postsToUndislike',
-	// 			'postsToFavorite',
-	// 			'postsToUnFavorite',
-	// 			'postsToShare',
-	// 			'unseenConfessions',
-	// 		])
-
-	// 		console.log({
-	// 			postsToLike,
-	// 			postsToUnlike,
-	// 			postsTodisLike,
-	// 			postsToUndislike,
-	// 			postsToFavorite,
-	// 			postsToUnFavorite,
-	// 			postsToShare,
-	// 			unseenConfessions,
-	// 		})
-	// 	})()
-	// }, [ likes, dislikes])
-
+	// REPLY COMPONENTS END
 	return (
 		<>
-			<Animated.View style={[styles.card, { backgroundColor: theme.colors.gray[100] }]}>
+			<Animated.View
+				style={[
+					styles.card,
+					{ backgroundColor: theme.colors.gray[100], borderLeftColor: theme.colors.gray[300] },
+				]}>
 				{renderHeaderDisplay()}
 				{renderBodyDisplay()}
 				{renderTimeDisplay()}
 				{renderFooterDisplay()}
-				{renderReplies()}
 			</Animated.View>
-			{replying ? (
-				<AddCommentCard
-					loading={loading}
-					handleAddComment={handleAddReply}
-					setNewComment={setNewReply}
-					newComment={newReply}
-					placeHolder="Reply to here..."
-				/>
-			) : null}
+
 			<GuestModal visible={guestModalVisible} onPress={() => setGuestModalVisible(false)} />
 		</>
 	)
 }
 
-export default commentCard
+export default ReplyCard
 
 const stylesheet = createStyleSheet({
 	container: {
@@ -279,9 +198,9 @@ const stylesheet = createStyleSheet({
 	card: {
 		paddingHorizontal: moderateScale(15),
 		paddingVertical: moderateScale(10),
-		marginHorizontal: moderateScale(10),
+		marginHorizontal: moderateScale(15),
 		marginTop: moderateScale(5),
-		borderRadius: moderateScale(10),
+		borderLeftWidth: 1,
 	},
 	header: {
 		flexDirection: 'row',
@@ -294,7 +213,7 @@ const stylesheet = createStyleSheet({
 		gap: moderateScale(10),
 	},
 	imageCon: {
-		width: moderateScale(30),
+		width: moderateScale(25),
 		aspectRatio: 1,
 		borderRadius: moderateScale(15),
 		overflow: 'hidden',
@@ -305,26 +224,26 @@ const stylesheet = createStyleSheet({
 	},
 	displayName: {
 		fontFamily: 'Medium',
-		fontSize: moderateScale(11),
+		fontSize: moderateScale(10),
 	},
 	ageGender: {
 		fontFamily: 'Medium',
-		fontSize: moderateScale(9),
+		fontSize: moderateScale(8),
 	},
 	body: {
 		marginVertical: moderateScale(0),
 	},
 
-	commentText: {
+	replyText: {
 		fontFamily: 'Regular',
-		fontSize: moderateScale(12),
+		fontSize: moderateScale(10),
 	},
 	timeCon: {
 		marginBottom: moderateScale(5),
 	},
 	timeText: {
 		fontFamily: 'Regular',
-		fontSize: moderateScale(10),
+		fontSize: moderateScale(9),
 	},
 	footer: {
 		flexDirection: 'row',
@@ -335,19 +254,12 @@ const stylesheet = createStyleSheet({
 		flexDirection: 'row',
 		justifyContent: 'space-between',
 		alignItems: 'center',
-		width: moderateScale(70),
+		width: moderateScale(65),
 	},
 	likesText: {
 		fontFamily: 'Medium',
-		fontSize: moderateScale(12),
+		fontSize: moderateScale(10),
 		textAlign: 'justify',
-	},
-	replieshareCon: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between',
-		alignContent: 'center',
-		width: moderateScale(50),
 	},
 	detailsCon: {
 		flex: 1,
@@ -356,10 +268,5 @@ const stylesheet = createStyleSheet({
 		justifyContent: 'space-between',
 		alignContent: 'center',
 		width: '100%',
-	},
-	replies: {
-		fontFamily: 'Medium',
-		fontSize: moderateScale(12),
-		textAlign: 'justify',
 	},
 })

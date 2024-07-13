@@ -1,5 +1,5 @@
 import { useAuthStoreSelectors } from '@/store/authStore'
-import { ADDCOMMENTPROPS, ADDCONFESSIONPROPS, CONFESSIONSPROPS } from '@/types'
+import { ADDCONFESSIONPROPS, COMMENTPROPS, CONFESSIONPROPS } from '@/types'
 import { db } from '@/utils/firebase'
 import { deleteStoredValues, getStoredValues } from '@/utils/storageUtils'
 import {
@@ -55,12 +55,12 @@ export const fetchConfessions = async ({
 
 		const confessions = await Promise.all(
 			snapshot.docs.map(async (confessDoc) => {
-				const confession = confessDoc.data() as CONFESSIONSPROPS
+				const confession = confessDoc.data() as CONFESSIONPROPS
 
 				if (confession.confessed_by) {
 					const userDoc = await getUserDataFromFirestore(confession.confessed_by)
 
-					confession.user = userDoc as CONFESSIONSPROPS['user']
+					confession.user = userDoc as CONFESSIONPROPS['user']
 				}
 
 				return confession
@@ -71,8 +71,8 @@ export const fetchConfessions = async ({
 			return confessions
 		}
 
-		const seenConfessions: CONFESSIONSPROPS[] = []
-		const unseenConfessions: CONFESSIONSPROPS[] = []
+		const seenConfessions: CONFESSIONPROPS[] = []
+		const unseenConfessions: CONFESSIONPROPS[] = []
 
 		confessions.forEach((confession) => {
 			if (confession.views && confession.views.includes(userId)) {
@@ -197,13 +197,20 @@ export const updateLikesAndDislikes = async () => {
 	}
 }
 
-export const uploadComment = async (commentBody: ADDCOMMENTPROPS) => {
+export const uploadComment = async (commentBody: COMMENTPROPS) => {
 	try {
 		const batch = writeBatch(db)
 
-		const commentRef = await addDoc(collection(db, 'comments'), commentBody)
+		const commentCollectionRef = collection(db, 'comments')
 
+		const commentRef = await addDoc(commentCollectionRef, {})
 		const commentId = commentRef.id
+
+		await setDoc(commentRef, {
+			...commentBody,
+			id: commentId,
+			created_at: new Date().toISOString(),
+		})
 
 		if (commentBody.confession_id) {
 			const confessionDocRef = doc(db, 'confessions', commentBody.confession_id)
@@ -300,25 +307,93 @@ export const fetchConfessionById = async ({ id }: { id: string | undefined }) =>
 		const confessionSnapshot = await getDoc(confessionRef)
 
 		if (!confessionSnapshot.exists()) {
-			return []
+			return
 		}
 
 		const confession = {
 			id: confessionSnapshot.id,
 			...confessionSnapshot.data(),
-		} as CONFESSIONSPROPS
+		} as CONFESSIONPROPS
 
-		if (confession.confessed_by) {
-			const userDoc = await getUserDataFromFirestore(confession.confessed_by)
-			confession.user = userDoc
-
-			return confession
+		if (!confession.confessed_by) {
+			return
 		}
 
-		return []
+		const userDoc = await getUserDataFromFirestore(confession.confessed_by)
+		confession.user = userDoc as CONFESSIONPROPS['user']
+
+		return confession
 	} catch (error) {
 		console.error('Error fetching confession or comments:', error)
 		throw new Error('Error fetching confession or comments:')
+	}
+}
+export const fetchConfessionComments = async ({
+	confessionComments,
+	fetchLimit,
+	lastDocumentFetched,
+	setLastDocumentFetched,
+}: {
+	confessionComments: string[] | undefined
+	fetchLimit: number
+	lastDocumentFetched: QueryDocumentSnapshot | null
+	setLastDocumentFetched: any
+}) => {
+	try {
+		if (!confessionComments || confessionComments.length === 0) {
+			return []
+		}
+
+		const commentsRef = collection(db, 'comments')
+
+		let q
+
+		if (lastDocumentFetched) {
+			q = query(
+				commentsRef,
+				where('id', 'in', confessionComments),
+				orderBy('created_at', 'desc'),
+				startAfter(lastDocumentFetched),
+				limit(fetchLimit),
+			)
+		} else {
+			q = query(
+				commentsRef,
+				where('id', 'in', confessionComments),
+				orderBy('created_at', 'desc'),
+				limit(fetchLimit),
+			)
+		}
+
+		const querySnapshot = await getDocs(q)
+
+		if (querySnapshot.empty) {
+			console.log('No more comments to fetch')
+
+			return []
+		}
+
+		const comments = await Promise.all(
+			querySnapshot.docs.map(async (confessDoc) => {
+				const comment = confessDoc.data() as COMMENTPROPS
+
+				if (comment.commented_by) {
+					const userDoc = await getUserDataFromFirestore(comment.commented_by)
+
+					comment.user = userDoc as CONFESSIONPROPS['user']
+				}
+
+				return comment
+			}) as Promise<COMMENTPROPS>[],
+		)
+
+		setLastDocumentFetched(querySnapshot.docs[querySnapshot.docs.length - 1])
+
+		return comments
+	} catch (error) {
+		console.log(error)
+
+		throw new Error('An error occurred while fetching the comments')
 	}
 }
 
@@ -355,17 +430,11 @@ export const fetchMyConfessions = async ({
 			q = query(
 				confessionsRef,
 				where('id', 'in', userConfessions),
-				orderBy('created_at', 'desc'),
 				startAfter(lastDocumentFetched),
 				limit(fetchLimit),
 			)
 		} else {
-			q = query(
-				confessionsRef,
-				where('id', 'in', userConfessions),
-				orderBy('created_at', 'desc'),
-				limit(fetchLimit),
-			)
+			q = query(confessionsRef, where('id', 'in', userConfessions), limit(fetchLimit))
 		}
 
 		const querySnapshot = await getDocs(q)
@@ -376,10 +445,10 @@ export const fetchMyConfessions = async ({
 
 		const confessions = await Promise.all(
 			querySnapshot.docs.map(async (confessDoc) => {
-				const confession = { user: userDoc, ...confessDoc.data() } as unknown as CONFESSIONSPROPS
+				const confession = { user: userDoc, ...confessDoc.data() } as unknown as CONFESSIONPROPS
 
 				return confession
-			}),
+			}) as Promise<CONFESSIONPROPS>[],
 		)
 
 		setLastDocumentFetched(querySnapshot.docs[querySnapshot.docs.length - 1])
@@ -420,17 +489,11 @@ export const fetchFavoriteConfessions = async ({
 			q = query(
 				confessionsRef,
 				where('id', 'in', userFavorites),
-				orderBy('created_at', 'desc'),
 				startAfter(lastDocumentFetched),
 				limit(fetchLimit),
 			)
 		} else {
-			q = query(
-				confessionsRef,
-				where('id', 'in', userFavorites),
-				orderBy('created_at', 'desc'),
-				limit(fetchLimit),
-			)
+			q = query(confessionsRef, where('id', 'in', userFavorites), limit(fetchLimit))
 		}
 
 		const querySnapshot = await getDocs(q)
@@ -441,12 +504,12 @@ export const fetchFavoriteConfessions = async ({
 
 		const favorites = await Promise.all(
 			querySnapshot.docs.map(async (confessDoc) => {
-				const confession = confessDoc.data() as CONFESSIONSPROPS
+				const confession = confessDoc.data() as CONFESSIONPROPS
 
 				if (confession.confessed_by) {
 					const userDoc = await getUserDataFromFirestore(confession.confessed_by)
 
-					confession.user = userDoc as CONFESSIONSPROPS['user']
+					confession.user = userDoc as CONFESSIONPROPS['user']
 				}
 
 				return confession

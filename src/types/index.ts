@@ -6,7 +6,7 @@ export interface NOTIFICATIONPROPS {
 	body: string
 }
 
-export interface CONFESSIONSPROPS {
+export interface CONFESSIONPROPS {
 	id: string
 	created_at: string
 	dislikes: string[]
@@ -41,15 +41,6 @@ export interface ADDCONFESSIONPROPS {
 	favorites: string[]
 }
 
-export interface ADDCOMMENTPROPS {
-	comment_text: string
-	confession_id: string
-	commented_by: string
-	replies: string[]
-	likes: string[]
-	dislikes: string[]
-}
-
 export interface User {
 	id: string
 	display_name: string
@@ -58,8 +49,30 @@ export interface User {
 	photo_url: string
 	gender: string
 	age: string
-	confessions: CONFESSIONSPROPS[]
-	comments: string[]
+	confessions: CONFESSIONPROPS[]
+	comments: COMMENTPROPS[]
 	replies: string[]
-	favorites: string[]
+	favorites: CONFESSIONPROPS[]
+}
+
+export interface COMMENTPROPS {
+	id: string
+	comment_text: string
+	confession_id: string
+	commented_by: string
+	replies: string[]
+	likes: string[]
+	dislikes: string[]
+	user: CONFESSIONPROPS['user']
+	created_at: string
+}
+export interface REPLYPROPS {
+	id: string
+	reply_text: string
+	comment_id: string
+	replied_by: string
+	likes: string[]
+	dislikes: string[]
+	user: CONFESSIONPROPS['user']
+	created_at: string
 }

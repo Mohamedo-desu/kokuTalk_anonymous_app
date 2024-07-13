@@ -3,7 +3,7 @@ import Skeleton from '@/components/Skeleton'
 import { PAGE_SIZE } from '@/constants/appDetails'
 import useNetworkState from '@/hooks/useNetworkState'
 import { fetchMyConfessions } from '@/services/confessionActions'
-import { CONFESSIONSPROPS } from '@/types'
+import { CONFESSIONPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
 import { FlashList } from '@shopify/flash-list'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -21,17 +21,17 @@ const MyConfessions = () => {
 	const [refreshing, setRefreshing] = useState(false)
 	const [fetchingMore, setFetchingMore] = useState(false)
 
-	const [myConfession, setMyConfession] = useState<CONFESSIONSPROPS[]>([])
+	const [myConfession, setMyConfession] = useState<CONFESSIONPROPS[]>([])
 	const [lastDocumentFetched, setLastDocumentFetched] = useState(null)
 
 	const isNetwork = useNetworkState()
 
-	const renderConfessionCard = useCallback(({ item }: { item: CONFESSIONSPROPS }) => {
+	const renderConfessionCard = useCallback(({ item }: { item: CONFESSIONPROPS }) => {
 		if (!item) {
 			return null
 		}
 
-		return <ConfessionCard item={item} />
+		return <ConfessionCard item={item} isDetailsScreen={false} numberOfLines={0} />
 	}, [])
 
 	const ListEmptyComponent = useCallback(() => {
@@ -52,7 +52,7 @@ const MyConfessions = () => {
 				if (!loading) {
 					setLoading(true)
 				}
-
+				setLastDocumentFetched(null)
 				const confessions = await fetchMyConfessions({
 					fetchLimit: PAGE_SIZE,
 					lastDocumentFetched,
@@ -120,8 +120,6 @@ const MyConfessions = () => {
 		[lastDocumentFetched, refreshing, fetchingMore],
 	)
 
-	const keyExtractor = useCallback((item: CONFESSIONSPROPS, i: number) => `${i}-${item.id}`, [])
-
 	return (
 		<LinearGradient
 			colors={[theme.colors.background, theme.colors.background]}
@@ -150,7 +148,7 @@ const MyConfessions = () => {
 				<FlashList
 					data={myConfession}
 					renderItem={renderConfessionCard}
-					keyExtractor={keyExtractor}
+					keyExtractor={(item: CONFESSIONPROPS) => item.id}
 					contentContainerStyle={{
 						paddingBottom: safeAreaInsets.bottom + moderateScale(80),
 						paddingTop: moderateScale(10),
