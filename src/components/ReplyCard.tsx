@@ -3,11 +3,11 @@ import { useAuthStoreSelectors } from '@/store/authStore'
 import { REPLYPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
 import { shortenNumber } from '@/utils/generalUtils'
-import { disLikeReply, likeReply } from '@/utils/ReplyUtils'
+import { deleteReply, disLikeReply, likeReply } from '@/utils/ReplyUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { AntDesign, Feather } from '@expo/vector-icons'
 import { useCallback, useState } from 'react'
-import { Image, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Image, Text, TouchableOpacity, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
@@ -33,6 +33,7 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 	const { display_name, gender, age, photo_url } = item.user
 
 	const [guestModalVisible, setGuestModalVisible] = useState(false)
+	const [deleting, setDeleting] = useState(false)
 
 	const [likes, setLikes] = useState(item.likes)
 	const [dislikes, setdisLikes] = useState(item.dislikes)
@@ -68,6 +69,19 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 			setdisLikes,
 		})
 	}, [isAnonymous, likes, dislikes, id])
+	const handleDeleteReply = useCallback(async () => {
+		if (isAnonymous) {
+			return setGuestModalVisible(true)
+		}
+		if (deleting) return
+		setDeleting(true)
+		await deleteReply({
+			commentId: item.comment_id,
+			replyId: id,
+			repliedById: item.replied_by,
+		})
+		setDeleting(false)
+	}, [isAnonymous, id])
 	// REPLY FUNCTIONS END
 
 	// REPLY COMPONENTS
@@ -169,10 +183,17 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 					</Text>
 				</View>
 			</View>
-
-			<TouchableOpacity activeOpacity={0.8} onPress={() => undefined}>
-				<AntDesign name={'ellipsis1'} size={24} color={theme.colors.gray[400]} />
-			</TouchableOpacity>
+			{isOwner &&
+				(deleting ? (
+					<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
+				) : (
+					<TouchableOpacity
+						onPressIn={handleDeleteReply}
+						activeOpacity={0.8}
+						onPress={() => undefined}>
+						<AntDesign name={'ellipsis1'} size={24} color={theme.colors.gray[400]} />
+					</TouchableOpacity>
+				))}
 		</View>
 	)
 	// REPLY COMPONENTS END
@@ -263,7 +284,7 @@ const stylesheet = createStyleSheet({
 	},
 	likesText: {
 		fontFamily: 'Medium',
-		fontSize: moderateScale(10),
+		fontSize: moderateScale(12),
 		textAlign: 'justify',
 	},
 	detailsCon: {

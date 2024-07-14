@@ -1,5 +1,5 @@
 import { REPLY_STORED_KEYS } from '@/constants/appDetails'
-import { uploadReply } from '@/services/ReplyActions'
+import { deleteAReply, uploadReply } from '@/services/ReplyActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { Dispatch, SetStateAction } from 'react'
 import { Toast } from 'react-native-toast-notifications'
@@ -167,6 +167,27 @@ export const disLikeReply = async ({
 		setLikes(updatedLikes)
 		setdisLikes(updatedDislikes)
 	} catch (error) {
+		Toast.show(`${error}`, {
+			type: 'danger',
+		})
+	}
+}
+export const deleteReply = async ({
+	commentId,
+	replyId,
+	repliedById,
+}: {
+	commentId: string
+	replyId: string
+	repliedById: string
+}) => {
+	try {
+		await deleteAReply({
+			commentId,
+			replyId,
+			repliedById,
+		})
+	} catch (error: unknown) {
 		Toast.show(`${error}`, {
 			type: 'danger',
 		})

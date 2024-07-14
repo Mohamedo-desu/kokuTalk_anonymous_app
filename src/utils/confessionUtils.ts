@@ -1,4 +1,5 @@
 import { CONFESSION_STORED_KEYS } from '@/constants/appDetails'
+import { deleteAConfession } from '@/services/confessionActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { Dispatch, SetStateAction } from 'react'
 import { Share } from 'react-native'
@@ -275,6 +276,25 @@ export const favoriteConfession = async ({
 		])
 		setIsFavorite(!isFavorite)
 	} catch (error) {
+		Toast.show(`${error}`, {
+			type: 'danger',
+		})
+	}
+}
+
+export const deleteConfession = async ({
+	confessionId,
+	confessedUserId,
+}: {
+	confessionId: string
+	confessedUserId: string
+}) => {
+	try {
+		await deleteAConfession({
+			confessionId,
+			confessedUserId,
+		})
+	} catch (error: unknown) {
 		Toast.show(`${error}`, {
 			type: 'danger',
 		})

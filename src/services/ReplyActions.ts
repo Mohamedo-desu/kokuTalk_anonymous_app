@@ -111,3 +111,47 @@ export const updateReplyLikesAndDislikes = async () => {
 		throw new Error(error.message || 'An error occurred while updating likes and dislikes replies')
 	}
 }
+
+export const deleteAReply = async ({
+	commentId,
+	replyId,
+	repliedById,
+}: {
+	commentId: string
+	replyId: string
+	repliedById: string
+}) => {
+	try {
+		const userId = useAuthStoreSelectors.getState().currentUser.id
+
+		if (!userId || !replyId || !repliedById) {
+			return
+		}
+
+		if (userId !== repliedById) {
+			throw new Error('Unauthorized to delete this reply')
+		}
+
+		const batch = writeBatch(db)
+
+		const replyRef = doc(db, 'replies', replyId)
+
+		batch.delete(replyRef)
+
+		const commentDocRef = doc(db, 'comments', commentId)
+		batch.update(commentDocRef, {
+			replies: arrayRemove(replyId),
+		})
+
+		const userDocRef = doc(db, 'users', userId)
+		batch.update(userDocRef, {
+			replies: arrayRemove(replyId),
+		})
+
+		await batch.commit()
+
+		console.log('reply deleted successfully')
+	} catch (error: any) {
+		throw new Error(error.message || 'Failed to delete reply')
+	}
+}

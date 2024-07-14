@@ -4,14 +4,14 @@ import { fetchCommentReplies } from '@/services/commentActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { COMMENTPROPS, REPLYPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
-import { disLikeComment, likeComment } from '@/utils/commentUtils'
+import { deleteComment, disLikeComment, likeComment } from '@/utils/commentUtils'
 import { shortenNumber } from '@/utils/generalUtils'
 import { addReply } from '@/utils/ReplyUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons'
 import { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, Image, Text, TouchableOpacity, View } from 'react-native'
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+import Animated, { useSharedValue } from 'react-native-reanimated'
 import { moderateScale } from 'react-native-size-matters'
 import { Toast } from 'react-native-toast-notifications'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
@@ -48,6 +48,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 	const [replies, setReplies] = useState<REPLYPROPS[]>([])
 
 	const [loading, setLoading] = useState(false)
+	const [deleting, setDeleting] = useState(false)
 	const [newReply, setNewReply] = useState('')
 
 	const [toggleDetails, setToggleDetails] = useState(false)
@@ -58,20 +59,11 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 	const [fetchingMore, setFetchingMore] = useState(false)
 	const [fetchingFirstComment, setFetchingFirstComment] = useState(true)
 
-	const animatedHeight = useSharedValue(0)
-
-	const rnStyles = useAnimatedStyle(() => {
-		return {
-			height: withTiming(animatedHeight.value, { duration: 500 }),
-			borderWidth: withTiming(animatedHeight.value > 0 ? 1.5 : 0, {
-				duration: 500,
-			}),
-		}
-	}, [animatedHeight])
+	const animatedAddCommentHeight = useSharedValue(0)
 
 	const toggleCommentCard = useCallback(() => {
-		animatedHeight.value = animatedHeight.value > 0 ? 0 : moderateScale(85)
-	}, [animatedHeight])
+		animatedAddCommentHeight.value = animatedAddCommentHeight.value > 0 ? 0 : moderateScale(85)
+	}, [animatedAddCommentHeight])
 
 	// COMMENT FUNCTIONS
 
@@ -119,6 +111,19 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 		setNewReply('')
 		setLoading(false)
 	}, [id, newReply, isAnonymous, loading, confession_id])
+	const handleDeleteComment = useCallback(async () => {
+		if (isAnonymous) {
+			return setGuestModalVisible(true)
+		}
+		if (deleting) return
+		setDeleting(true)
+		await deleteComment({
+			confessionId: confession_id,
+			commentId: id,
+			commentedById: item.user.id,
+		})
+		setDeleting(false)
+	}, [isAnonymous, id])
 	// COMMENT FUNCTIONS END
 
 	// COMMENT COMPONENTS
@@ -245,9 +250,17 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 				</View>
 			</View>
 
-			<TouchableOpacity activeOpacity={0.8} onPress={() => undefined}>
-				<AntDesign name={'ellipsis1'} size={24} color={theme.colors.gray[400]} />
-			</TouchableOpacity>
+			{isOwner &&
+				(deleting ? (
+					<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
+				) : (
+					<TouchableOpacity
+						onPressIn={handleDeleteComment}
+						activeOpacity={0.8}
+						onPress={() => undefined}>
+						<AntDesign name={'ellipsis1'} size={24} color={theme.colors.gray[400]} />
+					</TouchableOpacity>
+				))}
 		</View>
 	)
 	const renderReplies = () => {
@@ -347,7 +360,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 				setNewComment={setNewReply}
 				newComment={newReply}
 				placeHolder="Reply to here..."
-				style={rnStyles}
+				animatedAddCommentHeight={animatedAddCommentHeight}
 			/>
 
 			<GuestModal visible={guestModalVisible} onPress={() => setGuestModalVisible(false)} />

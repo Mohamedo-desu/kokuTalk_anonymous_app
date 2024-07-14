@@ -409,6 +409,62 @@ export const fetchConfessionComments = async ({
 	}
 }
 
+export const deleteAConfession = async ({
+	confessionId,
+	confessedUserId,
+}: {
+	confessionId: string
+	confessedUserId: string
+}) => {
+	try {
+		const userId = useAuthStoreSelectors.getState().currentUser.id
+
+		if (!userId || !confessionId || !confessedUserId) {
+			return
+		}
+
+		if (userId !== confessedUserId) {
+			throw new Error('Unauthorized to delete this confession')
+		}
+
+		const batch = writeBatch(db)
+
+		const confessionRef = doc(db, 'confessions', confessionId)
+
+		const commentsRef = collection(db, 'comments')
+		const commentsQuery = query(commentsRef, where('confession_id', '==', confessionId))
+		const commentsSnapshot = await getDocs(commentsQuery)
+
+		commentsSnapshot.forEach((commentDoc) => {
+			const commentId = commentDoc.id
+			const commentRef = doc(db, 'comments', commentId)
+			batch.delete(commentRef)
+		})
+
+		const repliesRef = collection(db, 'replies')
+		const repliesQuery = query(repliesRef, where('confession_id', '==', confessionId))
+		const repliesSnapshot = await getDocs(repliesQuery)
+
+		repliesSnapshot.forEach((replyDoc) => {
+			const replyId = replyDoc.id
+			const replyRef = doc(db, 'replies', replyId)
+			batch.delete(replyRef)
+		})
+
+		const userDocRef = doc(db, 'users', userId)
+		batch.update(userDocRef, {
+			confessions: arrayRemove(confessionId),
+		})
+
+		batch.delete(confessionRef)
+
+		await batch.commit()
+
+		console.log('Confession and associated comments/replies deleted successfully')
+	} catch (error: any) {
+		throw new Error(error.message || 'Failed to delete confession')
+	}
+}
 // CURRENT USER CONFESSION ACTIONS
 export const fetchMyConfessions = async ({
 	fetchLimit,

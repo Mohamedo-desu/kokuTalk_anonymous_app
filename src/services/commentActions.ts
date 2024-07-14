@@ -106,7 +106,7 @@ export const uploadComment = async (commentBody: COMMENTPROPS) => {
 		})
 
 		if (commentBody.confession_id) {
-			const confessionDocRef = doc(db, 'comments', commentBody.confession_id)
+			const confessionDocRef = doc(db, 'confessions', commentBody.confession_id)
 			batch.update(confessionDocRef, { comments: arrayUnion(commentId) })
 		}
 		if (commentBody.commented_by) {
@@ -190,5 +190,58 @@ export const fetchCommentReplies = async ({
 		console.log(error)
 
 		throw new Error('An error occurred while fetching the replies')
+	}
+}
+export const deleteAComment = async ({
+	confessionId,
+	commentId,
+	commentedById,
+}: {
+	confessionId: string
+	commentId: string
+	commentedById: string
+}) => {
+	try {
+		const userId = useAuthStoreSelectors.getState().currentUser.id
+
+		if (!userId || !commentId || !commentedById) {
+			return
+		}
+
+		if (userId !== commentedById) {
+			throw new Error('Unauthorized to delete this comment')
+		}
+
+		const batch = writeBatch(db)
+
+		const commentRef = doc(db, 'comments', commentId)
+
+		const repliesRef = collection(db, 'replies')
+		const repliesQuery = query(repliesRef, where('comment_id', '==', commentId))
+		const repliesSnapshot = await getDocs(repliesQuery)
+
+		repliesSnapshot.forEach((replyDoc) => {
+			const replyId = replyDoc.id
+			const replyRef = doc(db, 'replies', replyId)
+			batch.delete(replyRef)
+		})
+
+		const confessionDocRef = doc(db, 'confessions', confessionId)
+		batch.update(confessionDocRef, {
+			comments: arrayRemove(commentId),
+		})
+
+		const userDocRef = doc(db, 'users', userId)
+		batch.update(userDocRef, {
+			comments: arrayRemove(commentId),
+		})
+
+		batch.delete(commentRef)
+
+		await batch.commit()
+
+		console.log('Comment and associated replies deleted successfully')
+	} catch (error: any) {
+		throw new Error(error.message || 'Failed to delete comment')
 	}
 }

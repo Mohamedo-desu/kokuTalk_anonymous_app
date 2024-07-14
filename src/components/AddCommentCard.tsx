@@ -1,7 +1,13 @@
 import { Ionicons } from '@expo/vector-icons'
 import { Dispatch, SetStateAction } from 'react'
-import { ActivityIndicator, TextInput, TouchableOpacity, ViewStyle } from 'react-native'
-import Animated, { ZoomIn, ZoomOut } from 'react-native-reanimated'
+import { ActivityIndicator, TextInput, TouchableOpacity } from 'react-native'
+import Animated, {
+	SharedValue,
+	useAnimatedStyle,
+	withTiming,
+	ZoomIn,
+	ZoomOut,
+} from 'react-native-reanimated'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
@@ -12,24 +18,35 @@ const AddCommentCard = ({
 	setNewComment,
 	loading,
 	placeHolder,
-	style,
 	handleAddComment,
+	animatedAddCommentHeight,
 }: {
 	newComment: string
 	setNewComment: Dispatch<SetStateAction<string>>
 	loading: boolean
 	placeHolder: string
-	style: ViewStyle
+	animatedAddCommentHeight: SharedValue<number>
+
 	handleAddComment: () => void
 }) => {
 	const { theme, styles } = useStyles(stylesheet)
+
+	const rnStyles = useAnimatedStyle(() => {
+		return {
+			height: withTiming(animatedAddCommentHeight.value, { duration: 200 }),
+			borderWidth: withTiming(animatedAddCommentHeight.value > 0 ? 1.5 : 0, {
+				duration: 50,
+			}),
+		}
+	}, [animatedAddCommentHeight])
+
 	return (
 		<Animated.View
 			entering={ZoomIn}
 			exiting={ZoomOut}
 			style={[
 				styles.comment,
-				style,
+				rnStyles,
 				{ backgroundColor: theme.colors.gray[100], borderColor: theme.colors.primary[500] },
 			]}>
 			<TextInput

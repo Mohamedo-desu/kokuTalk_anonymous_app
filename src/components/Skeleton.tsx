@@ -26,7 +26,7 @@ const Skeleton: React.FC<SkeletonProps> = ({ width, height, style }) => {
 		const loopAnimation = Animated.loop(
 			Animated.timing(translateX, {
 				toValue: width,
-				duration: 400,
+				duration: 300,
 				useNativeDriver: true,
 			}),
 		)

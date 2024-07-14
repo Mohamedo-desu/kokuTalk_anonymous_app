@@ -1,5 +1,5 @@
 import { COMMENT_STORED_KEYS } from '@/constants/appDetails'
-import { uploadComment } from '@/services/commentActions'
+import { deleteAComment, uploadComment } from '@/services/commentActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { Dispatch, SetStateAction } from 'react'
 import { Toast } from 'react-native-toast-notifications'
@@ -181,6 +181,27 @@ export const disLikeComment = async ({
 		setLikes(updatedLikes)
 		setdisLikes(updatedDislikes)
 	} catch (error) {
+		Toast.show(`${error}`, {
+			type: 'danger',
+		})
+	}
+}
+export const deleteComment = async ({
+	confessionId,
+	commentId,
+	commentedById,
+}: {
+	confessionId: string
+	commentId: string
+	commentedById: string
+}) => {
+	try {
+		await deleteAComment({
+			confessionId,
+			commentId,
+			commentedById,
+		})
+	} catch (error: unknown) {
 		Toast.show(`${error}`, {
 			type: 'danger',
 		})

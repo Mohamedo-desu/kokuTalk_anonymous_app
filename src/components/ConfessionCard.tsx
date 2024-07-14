@@ -1,4 +1,5 @@
 import useIsAnonymous from '@/hooks/useIsAnonymous'
+import { deleteAConfession } from '@/services/confessionActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { CONFESSIONPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
@@ -11,14 +12,15 @@ import {
 } from '@/utils/confessionUtils'
 import { shortenNumber } from '@/utils/generalUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
-import { AntDesign, Feather, Ionicons } from '@expo/vector-icons'
+import { Feather, Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { useCallback, useState } from 'react'
-import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import Animated, { useSharedValue } from 'react-native-reanimated'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 import AddCommentCard from './AddCommentCard'
+import AnimatedMenu from './AnimatedMenu'
 import GuestModal from './GuestModal'
 
 /**
@@ -59,24 +61,15 @@ const ConfessionCard = ({
 	const [comments, setComments] = useState(item.comments.length)
 	const [newComment, setNewComment] = useState('')
 	const [loading, setLoading] = useState(false)
+	const [deleting, setDeleting] = useState(false)
 
 	const [toggleDetails, setToggleDetails] = useState(false)
 	const [showFullReply, setShowFullReply] = useState(false)
 
-	const animatedHeight = useSharedValue(0)
-
-	const rnStyles = useAnimatedStyle(() => {
-		return {
-			height: withTiming(animatedHeight.value, { duration: 500 }),
-			borderWidth: withTiming(animatedHeight.value > 0 ? 1.5 : 0, {
-				duration: 500,
-			}),
-		}
-	}, [animatedHeight])
-
+	const animatedAddCommentHeight = useSharedValue(0)
 	const toggleCommentCard = useCallback(() => {
-		animatedHeight.value = animatedHeight.value > 0 ? 0 : moderateScale(85)
-	}, [animatedHeight])
+		animatedAddCommentHeight.value = animatedAddCommentHeight.value > 0 ? 0 : moderateScale(85)
+	}, [animatedAddCommentHeight])
 
 	// CONFESSION FUNCTIONS
 	const navigateToDetails = useCallback(() => {
@@ -149,8 +142,25 @@ const ConfessionCard = ({
 			},
 		})
 	}, [isAnonymous, id])
+	const handleDeleteConfession = useCallback(async () => {
+		if (isAnonymous) {
+			return setGuestModalVisible(true)
+		}
+		setDeleting(true)
+		await deleteAConfession({
+			confessionId: id,
+			confessedUserId: item.confessed_by,
+		})
+		setDeleting(false)
+	}, [isAnonymous, id])
 	// CONFESSION FUNCTIONS END
 
+	const menuOptions = [
+		{
+			title: 'Delete',
+			onPress: handleDeleteConfession,
+		},
+	]
 	// CONFESSION COMPONENTS
 	const renderTimeDisplay = () => (
 		<View style={styles.timeCon}>
@@ -368,17 +378,19 @@ const ConfessionCard = ({
 					</Text>
 				</View>
 			</View>
-			{!isOwner ? (
+			{isOwner ? (
+				deleting ? (
+					<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
+				) : (
+					<AnimatedMenu options={menuOptions} />
+				)
+			) : (
 				<TouchableOpacity activeOpacity={0.8} onPress={handleFavorite}>
-					<AntDesign
-						name={isFavorite ? 'heart' : 'hearto'}
+					<Ionicons
+						name={isFavorite ? 'heart' : 'heart-outline'}
 						size={24}
 						color={isFavorite ? theme.colors.primary[500] : theme.colors.gray[400]}
 					/>
-				</TouchableOpacity>
-			) : (
-				<TouchableOpacity activeOpacity={0.8} onPress={() => undefined}>
-					<AntDesign name={'ellipsis1'} size={24} color={theme.colors.gray[400]} />
 				</TouchableOpacity>
 			)}
 		</View>
@@ -399,7 +411,7 @@ const ConfessionCard = ({
 				setNewComment={setNewComment}
 				newComment={newComment}
 				placeHolder="Comment here..."
-				style={rnStyles}
+				animatedAddCommentHeight={animatedAddCommentHeight}
 			/>
 
 			<GuestModal visible={guestModalVisible} onPress={() => setGuestModalVisible(false)} />
