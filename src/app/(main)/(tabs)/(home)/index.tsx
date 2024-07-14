@@ -28,6 +28,7 @@ const HomePage = () => {
 
 	const [confessions, setConfessions] = useState<CONFESSIONPROPS[]>([])
 	const [lastDocumentFetched, setLastDocumentFetched] = useState(null)
+	const [noMoreDocuments, setNoMoreDocuments] = useState(false)
 
 	const userId = useAuthStoreSelectors.use.currentUser().id
 	const isNetwork = useNetworkState()
@@ -66,6 +67,7 @@ const HomePage = () => {
 					fetchLimit: PAGE_SIZE,
 					lastDocumentFetched,
 					setLastDocumentFetched,
+					setNoMoreDocuments,
 				})
 
 				setConfessions((prev) => {
@@ -92,6 +94,10 @@ const HomePage = () => {
 
 	const loadMoreConfessions = async ({ prepend }: { prepend: boolean }) => {
 		try {
+			if (noMoreDocuments) {
+				return
+			}
+
 			if (prepend) {
 				if (refreshing) return
 				setRefreshing(true)
@@ -104,6 +110,7 @@ const HomePage = () => {
 				fetchLimit: PAGE_SIZE,
 				lastDocumentFetched,
 				setLastDocumentFetched,
+				setNoMoreDocuments,
 			})
 
 			if (newConfessions.length > 0) {

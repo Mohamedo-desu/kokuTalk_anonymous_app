@@ -2,8 +2,8 @@ import useIsAnonymous from '@/hooks/useIsAnonymous'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { REPLYPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
-import { disLikeConfession, likeConfession } from '@/utils/confessionUtils'
 import { shortenNumber } from '@/utils/generalUtils'
+import { disLikeReply, likeReply } from '@/utils/ReplyUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { AntDesign, Feather } from '@expo/vector-icons'
 import { useCallback, useState } from 'react'
@@ -37,8 +37,6 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 	const [likes, setLikes] = useState(item.likes)
 	const [dislikes, setdisLikes] = useState(item.dislikes)
 
-	const [loading, setLoading] = useState(false)
-
 	const [toggleDetails, setToggleDetails] = useState(false)
 	const [showFullReply, setShowFullReply] = useState(false)
 
@@ -47,7 +45,7 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
-		await likeConfession({
+		await likeReply({
 			id,
 			likes,
 			dislikes,
@@ -61,7 +59,7 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 			return setGuestModalVisible(true)
 		}
 
-		await disLikeConfession({
+		await disLikeReply({
 			id,
 			likes,
 			dislikes,
@@ -87,7 +85,7 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 					<TouchableOpacity activeOpacity={0.8} onPress={handleLikeReply}>
 						<Feather
 							name="chevrons-up"
-							size={25}
+							size={20}
 							color={likes.includes(userId) ? theme.colors.primary[500] : theme.colors.gray[400]}
 						/>
 					</TouchableOpacity>
@@ -99,7 +97,7 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 					<TouchableOpacity activeOpacity={0.8} onPress={handleDislikeReply}>
 						<Feather
 							name="chevrons-down"
-							size={25}
+							size={20}
 							color={dislikes.includes(userId) ? theme.colors.disliked : theme.colors.gray[400]}
 						/>
 					</TouchableOpacity>

@@ -2,8 +2,8 @@ import useIsAnonymous from '@/hooks/useIsAnonymous'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { CONFESSIONPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
+import { addComment } from '@/utils/commentUtils'
 import {
-	addComment,
 	disLikeConfession,
 	favoriteConfession,
 	likeConfession,
@@ -384,42 +384,6 @@ const ConfessionCard = ({
 		</View>
 	)
 	// CONFESSION COMPONENTS END
-
-	// useEffect(() => {
-	// 	;(async () => {
-	// 		// await deleteStoredValues(['postsToFavorite', 'postsToUnFavorite'])
-	// 		const {
-	// 			postsToLike,
-	// 			postsToUnlike,
-	// 			postsTodisLike,
-	// 			postsToUndislike,
-	// 			postsToFavorite,
-	// 			postsToUnFavorite,
-	// 			postsToShare,
-	// 			unseenConfessions,
-	// 		} = await getStoredValues([
-	// 			'postsToLike',
-	// 			'postsToUnlike',
-	// 			'postsTodisLike',
-	// 			'postsToUndislike',
-	// 			'postsToFavorite',
-	// 			'postsToUnFavorite',
-	// 			'postsToShare',
-	// 			'unseenConfessions',
-	// 		])
-
-	// 		console.log({
-	// 			postsToLike,
-	// 			postsToUnlike,
-	// 			postsTodisLike,
-	// 			postsToUndislike,
-	// 			postsToFavorite,
-	// 			postsToUnFavorite,
-	// 			postsToShare,
-	// 			unseenConfessions,
-	// 		})
-	// 	})()
-	// }, [isFavorite, likes, dislikes])
 
 	return (
 		<>

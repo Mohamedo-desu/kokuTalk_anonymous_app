@@ -1,12 +1,12 @@
 import { PAGE_SIZE } from '@/constants/appDetails'
 import useIsAnonymous from '@/hooks/useIsAnonymous'
-import { fetchCommentReplies } from '@/services/confessionActions'
+import { fetchCommentReplies } from '@/services/commentActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { COMMENTPROPS, REPLYPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
-import { addReply } from '@/utils/commentUtils'
-import { disLikeConfession, likeConfession } from '@/utils/confessionUtils'
+import { disLikeComment, likeComment } from '@/utils/commentUtils'
 import { shortenNumber } from '@/utils/generalUtils'
+import { addReply } from '@/utils/ReplyUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons'
 import { useCallback, useEffect, useState } from 'react'
@@ -54,6 +54,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 	const [showFullComment, setShowFullComment] = useState(false)
 
 	const [lastDocumentFetched, setLastDocumentFetched] = useState(null)
+	const [noMoreDocuments, setNoMoreDocuments] = useState(false)
 	const [fetchingMore, setFetchingMore] = useState(false)
 	const [fetchingFirstComment, setFetchingFirstComment] = useState(true)
 
@@ -78,7 +79,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
-		await likeConfession({
+		await likeComment({
 			id,
 			likes,
 			dislikes,
@@ -92,7 +93,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 			return setGuestModalVisible(true)
 		}
 
-		await disLikeConfession({
+		await disLikeComment({
 			id,
 			likes,
 			dislikes,
@@ -159,7 +160,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 
 				<View style={styles.replieshareCon}>
 					<TouchableOpacity onPress={toggleCommentCard}>
-						<MaterialIcons name="replay" size={20} color={theme.colors.gray[400]} />
+						<MaterialIcons name="replay" size={17} color={theme.colors.gray[400]} />
 					</TouchableOpacity>
 					<Text style={[styles.replies, { color: theme.colors.gray[400] }]} numberOfLines={5}>
 						{shortenNumber(repliesCount)}
@@ -299,6 +300,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 	const loadMoreReplies = useCallback(
 		async ({ limit }: { limit: number }) => {
 			try {
+				if (noMoreDocuments) return
 				if (fetchingMore) return
 				setFetchingMore(true)
 				const newReplies = await fetchCommentReplies({
@@ -306,6 +308,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 					fetchLimit: limit,
 					lastDocumentFetched,
 					setLastDocumentFetched,
+					setNoMoreDocuments,
 				})
 
 				setReplies((prev) => [...prev, ...newReplies])

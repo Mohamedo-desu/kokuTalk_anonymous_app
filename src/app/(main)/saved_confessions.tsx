@@ -23,6 +23,7 @@ const SavedConfessions = () => {
 
 	const [favoriteConfessions, setFavoriteConfessions] = useState<CONFESSIONSPROPS[]>([])
 	const [lastDocumentFetched, setLastDocumentFetched] = useState(null)
+	const [noMoreDocuments, setNoMoreDocuments] = useState(false)
 
 	const isNetwork = useNetworkState()
 
@@ -57,6 +58,7 @@ const SavedConfessions = () => {
 					fetchLimit: PAGE_SIZE,
 					lastDocumentFetched,
 					setLastDocumentFetched,
+					setNoMoreDocuments,
 				})
 				setFavoriteConfessions(confessions)
 				setLoading(false)
@@ -71,6 +73,10 @@ const SavedConfessions = () => {
 
 	const loadMoreConfessions = useCallback(
 		async ({ prepend }: { prepend: boolean }) => {
+			if (noMoreDocuments) {
+				return
+			}
+
 			if (prepend) {
 				if (refreshing) return
 				setRefreshing(true)
@@ -84,6 +90,7 @@ const SavedConfessions = () => {
 					fetchLimit: PAGE_SIZE,
 					lastDocumentFetched,
 					setLastDocumentFetched,
+					setNoMoreDocuments,
 				})
 
 				setFavoriteConfessions((prev) => {

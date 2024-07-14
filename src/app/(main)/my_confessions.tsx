@@ -23,6 +23,7 @@ const MyConfessions = () => {
 
 	const [myConfession, setMyConfession] = useState<CONFESSIONPROPS[]>([])
 	const [lastDocumentFetched, setLastDocumentFetched] = useState(null)
+	const [noMoreDocuments, setNoMoreDocuments] = useState(false)
 
 	const isNetwork = useNetworkState()
 
@@ -57,6 +58,7 @@ const MyConfessions = () => {
 					fetchLimit: PAGE_SIZE,
 					lastDocumentFetched,
 					setLastDocumentFetched,
+					setNoMoreDocuments,
 				})
 				setMyConfession(confessions)
 				setLoading(false)
@@ -71,6 +73,9 @@ const MyConfessions = () => {
 
 	const loadMoreConfessions = useCallback(
 		async ({ prepend }: { prepend: boolean }) => {
+			if (noMoreDocuments) {
+				return
+			}
 			if (prepend) {
 				if (refreshing) return
 				setRefreshing(true)
@@ -84,6 +89,7 @@ const MyConfessions = () => {
 					fetchLimit: PAGE_SIZE,
 					lastDocumentFetched,
 					setLastDocumentFetched,
+					setNoMoreDocuments,
 				})
 
 				setMyConfession((prev) => {

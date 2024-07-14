@@ -42,6 +42,7 @@ const ConfessionDetails = () => {
 	const [refreshing, setRefreshing] = useState(false)
 
 	const [lastDocumentFetched, setLastDocumentFetched] = useState(null)
+	const [noMoreDocuments, setNoMoreDocuments] = useState(false)
 
 	useEffect(() => {
 		;(async () => {
@@ -68,6 +69,7 @@ const ConfessionDetails = () => {
 					fetchLimit: PAGE_SIZE,
 					lastDocumentFetched,
 					setLastDocumentFetched,
+					setNoMoreDocuments,
 				})
 
 				setComments(comments)
@@ -119,6 +121,7 @@ const ConfessionDetails = () => {
 	}, [theme.colors.gray[400]])
 	const loadMoreConfessions = async ({ prepend }: { prepend: boolean }) => {
 		try {
+			if (noMoreDocuments) return
 			if (prepend) {
 				if (refreshing) return
 				setRefreshing(true)
@@ -132,6 +135,7 @@ const ConfessionDetails = () => {
 				fetchLimit: PAGE_SIZE,
 				lastDocumentFetched,
 				setLastDocumentFetched,
+				setNoMoreDocuments,
 			})
 
 			if (newConfessions.length > 0) {

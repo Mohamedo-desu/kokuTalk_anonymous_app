@@ -1,4 +1,4 @@
-import { uploadComment } from '@/services/confessionActions'
+import { CONFESSION_STORED_KEYS } from '@/constants/appDetails'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { Dispatch, SetStateAction } from 'react'
 import { Share } from 'react-native'
@@ -30,33 +30,61 @@ export const likeConfession = async ({
 			? dislikes.filter((dislike) => dislike !== userId)
 			: dislikes
 
-		const storedValues = await getStoredValues(['postsTodisLike', 'postsToLike'])
+		const storedValues = await getStoredValues([
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE,
+		])
 
-		let postsTodisLike = JSON.parse(storedValues.postsTodisLike || '[]')
-		let postsToUndislike = JSON.parse(storedValues.postsToUndislike || '[]')
-		let postsToLike = JSON.parse(storedValues.postsToLike || '[]')
-		let postsToUnlike = JSON.parse(storedValues.postsToUnlike || '[]')
+		let confessionsToDislike = JSON.parse(
+			storedValues[CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE] || '[]',
+		)
+		let confessionsToUndislike = JSON.parse(
+			storedValues[CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE] || '[]',
+		)
+		let confessionsToLike = JSON.parse(
+			storedValues[CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE] || '[]',
+		)
+		let confessionsToUnlike = JSON.parse(
+			storedValues[CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE] || '[]',
+		)
 
-		postsTodisLike = postsTodisLike.filter((postId: string) => postId !== id)
-		postsToUndislike = postsToUndislike.filter((postId: string) => postId !== id)
+		confessionsToDislike = confessionsToDislike.filter(
+			(confessionId: string) => confessionId !== id,
+		)
+		confessionsToUndislike = confessionsToUndislike.filter(
+			(confessionId: string) => confessionId !== id,
+		)
 
 		if (updatedLikes.includes(userId)) {
 			if (!itemLikes.includes(userId)) {
-				postsToLike = [...postsToLike, id]
+				confessionsToLike = [...confessionsToLike, id]
 			}
-			postsToUnlike = postsToUnlike.filter((postId: string) => postId !== id)
+			confessionsToUnlike = confessionsToUnlike.filter(
+				(confessionId: string) => confessionId !== id,
+			)
 		} else {
-			postsToLike = postsToLike.filter((postId: string) => postId !== id)
+			confessionsToLike = confessionsToLike.filter((confessionId: string) => confessionId !== id)
 			if (itemLikes.includes(userId)) {
-				postsToUnlike = [...postsToUnlike, id]
+				confessionsToUnlike = [...confessionsToUnlike, id]
 			}
 		}
 
 		await saveSecurely([
-			{ key: 'postsToLike', value: JSON.stringify(postsToLike) },
-			{ key: 'postsTodisLike', value: JSON.stringify(postsTodisLike) },
-			{ key: 'postsToUnlike', value: JSON.stringify(postsToUnlike) },
-			{ key: 'postsToUndislike', value: JSON.stringify(postsToUndislike) },
+			{ key: CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE, value: JSON.stringify(confessionsToLike) },
+			{
+				key: CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE,
+				value: JSON.stringify(confessionsToDislike),
+			},
+			{
+				key: CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE,
+				value: JSON.stringify(confessionsToUnlike),
+			},
+			{
+				key: CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE,
+				value: JSON.stringify(confessionsToUndislike),
+			},
 		])
 
 		setLikes(updatedLikes)
@@ -91,84 +119,60 @@ export const disLikeConfession = async ({
 
 		const updatedLikes = likes.includes(userId) ? likes.filter((like) => like !== userId) : likes
 
-		const storedValues = await getStoredValues(['postsTodisLike', 'postsToLike'])
-		let postsTodisLike = JSON.parse(storedValues.postsTodisLike || '[]')
-		let postsToUndislike = JSON.parse(storedValues.postsToUndislike || '[]')
-		let postsToLike = JSON.parse(storedValues.postsToLike || '[]')
-		let postsToUnlike = JSON.parse(storedValues.postsToUnlike || '[]')
+		const storedValues = await getStoredValues([
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE,
+		])
 
-		postsToLike = postsToLike.filter((postId: string) => postId !== id)
-		postsToUnlike = postsToUnlike.filter((postId: string) => postId !== id)
+		let confessionsTodisLike = JSON.parse(
+			storedValues[CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE] || '[]',
+		)
+		let confessionsToUndislike = JSON.parse(
+			storedValues[CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE] || '[]',
+		)
+		let confessionsToLike = JSON.parse(
+			storedValues[CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE] || '[]',
+		)
+		let confessionsToUnlike = JSON.parse(
+			storedValues[CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE] || '[]',
+		)
+
+		confessionsToLike = confessionsToLike.filter((postId: string) => postId !== id)
+		confessionsToUnlike = confessionsToUnlike.filter((postId: string) => postId !== id)
 
 		if (updatedDislikes.includes(userId)) {
 			if (!itemDisLikes.includes(userId)) {
-				postsTodisLike = [...postsTodisLike, id]
+				confessionsTodisLike = [...confessionsTodisLike, id]
 			}
-			postsToUndislike = postsToUndislike.filter((postId: string) => postId !== id)
+			confessionsToUndislike = confessionsToUndislike.filter((postId: string) => postId !== id)
 		} else {
-			postsTodisLike = postsTodisLike.filter((postId: string) => postId !== id)
+			confessionsTodisLike = confessionsTodisLike.filter((postId: string) => postId !== id)
 			if (itemDisLikes.includes(userId)) {
-				postsToUndislike = [...postsToUndislike, id]
+				confessionsToUndislike = [...confessionsToUndislike, id]
 			}
 		}
 
 		await saveSecurely([
-			{ key: 'postsToLike', value: JSON.stringify(postsToLike) },
-			{ key: 'postsTodisLike', value: JSON.stringify(postsTodisLike) },
-			{ key: 'postsToUnlike', value: JSON.stringify(postsToUnlike) },
-			{ key: 'postsToUndislike', value: JSON.stringify(postsToUndislike) },
+			{ key: CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE, value: JSON.stringify(confessionsToLike) },
+			{
+				key: CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE,
+				value: JSON.stringify(confessionsTodisLike),
+			},
+			{
+				key: CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE,
+				value: JSON.stringify(confessionsToUnlike),
+			},
+			{
+				key: CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE,
+				value: JSON.stringify(confessionsToUndislike),
+			},
 		])
 
 		setLikes(updatedLikes)
 		setdisLikes(updatedDislikes)
 	} catch (error) {
-		Toast.show(`${error}`, {
-			type: 'danger',
-		})
-	}
-}
-
-export const addComment = async ({
-	id,
-	newComment,
-	setComments,
-	setNewComment,
-	setLoading,
-	loading,
-}: {
-	id: string
-	newComment: string
-	setComments: Dispatch<SetStateAction<number>>
-	setNewComment: Dispatch<SetStateAction<string>>
-	setLoading: Dispatch<SetStateAction<boolean>>
-	loading: boolean
-}) => {
-	try {
-		const userId = useAuthStoreSelectors.getState().currentUser.id
-
-		if (loading) return
-		setLoading(true)
-
-		await uploadComment({
-			id: '',
-			created_at: '',
-			comment_text: newComment,
-			confession_id: id,
-			commented_by: userId,
-			replies: [],
-			likes: [],
-			dislikes: [],
-		})
-
-		setComments((prev) => prev + 1)
-		setNewComment('')
-
-		setLoading(false)
-		Toast.show('success', {
-			type: 'success',
-		})
-	} catch (error) {
-		setLoading(false)
 		Toast.show(`${error}`, {
 			type: 'danger',
 		})
@@ -194,8 +198,10 @@ export const shareConfession = async ({
 	try {
 		const userId = useAuthStoreSelectors.getState().currentUser.id
 
-		const storedValues = await getStoredValues(['postsToShare'])
-		let postsToShare = JSON.parse(storedValues.postsToShare || '[]')
+		const storedValues = await getStoredValues([CONFESSION_STORED_KEYS.CONFESSIONS_TO_SHARE])
+		let confessionsToShare = JSON.parse(
+			storedValues[CONFESSION_STORED_KEYS.CONFESSIONS_TO_SHARE] || '[]',
+		)
 
 		const message = `KokuTalk | Confess Anonymously\n\n${messageBody}\n\nConfessed by: ${confesser.display_name} (${confesser.gender}, ${confesser.age} years old)\n\nOpen this confession in KokuTalk: kokutalk://confession_details/${id}`
 
@@ -207,8 +213,13 @@ export const shareConfession = async ({
 			if (itemShares.includes(userId)) {
 				return
 			}
-			postsToShare = Array.from(new Set([...postsToShare, id]))
-			await saveSecurely([{ key: 'postsToShare', value: JSON.stringify(postsToShare) }])
+			confessionsToShare = Array.from(new Set([...confessionsToShare, id]))
+			await saveSecurely([
+				{
+					key: CONFESSION_STORED_KEYS.CONFESSIONS_TO_SHARE,
+					value: JSON.stringify(confessionsToShare),
+				},
+			])
 		}
 	} catch (error: unknown) {
 		Toast.show(`${error}`, {
@@ -230,24 +241,37 @@ export const favoriteConfession = async ({
 	try {
 		const userId = useAuthStoreSelectors.getState().currentUser.id
 
-		const storedValues = await getStoredValues(['postsToFavorite'])
-		let postsToFavorite = JSON.parse(storedValues.postsToFavorite || '[]')
-		let postsToUnFavorite = JSON.parse(storedValues.postsToUnFavorite || '[]')
+		const storedValues = await getStoredValues([
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_FAVORITE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNFAVORITE,
+		])
+		let confessionsToFavorite = JSON.parse(
+			storedValues[CONFESSION_STORED_KEYS.CONFESSIONS_TO_FAVORITE] || '[]',
+		)
+		let confessionsToUnFavorite = JSON.parse(
+			storedValues[CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNFAVORITE] || '[]',
+		)
 
 		if (isFavorite) {
-			postsToFavorite = postsToFavorite.filter((item: string) => item !== id)
+			confessionsToFavorite = confessionsToFavorite.filter((item: string) => item !== id)
 			if (itemFavorites.includes(userId)) {
-				postsToUnFavorite = Array.from(new Set([...postsToUnFavorite, id]))
+				confessionsToUnFavorite = Array.from(new Set([...confessionsToUnFavorite, id]))
 			}
 		} else {
 			if (!itemFavorites.includes(userId)) {
-				postsToFavorite = Array.from(new Set([...postsToFavorite, id]))
+				confessionsToFavorite = Array.from(new Set([...confessionsToFavorite, id]))
 			}
-			postsToUnFavorite = postsToUnFavorite.filter((item: string) => item !== id)
+			confessionsToUnFavorite = confessionsToUnFavorite.filter((item: string) => item !== id)
 		}
 		await saveSecurely([
-			{ key: 'postsToUnFavorite', value: JSON.stringify(postsToUnFavorite) },
-			{ key: 'postsToFavorite', value: JSON.stringify(postsToFavorite) },
+			{
+				key: CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNFAVORITE,
+				value: JSON.stringify(confessionsToUnFavorite),
+			},
+			{
+				key: CONFESSION_STORED_KEYS.CONFESSIONS_TO_FAVORITE,
+				value: JSON.stringify(confessionsToFavorite),
+			},
 		])
 		setIsFavorite(!isFavorite)
 	} catch (error) {

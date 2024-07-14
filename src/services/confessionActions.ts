@@ -1,5 +1,6 @@
+import { CONFESSION_STORED_KEYS } from '@/constants/appDetails'
 import { useAuthStoreSelectors } from '@/store/authStore'
-import { ADDCONFESSIONPROPS, COMMENTPROPS, CONFESSIONPROPS, REPLYPROPS } from '@/types'
+import { ADDCONFESSIONPROPS, COMMENTPROPS, CONFESSIONPROPS } from '@/types'
 import { db } from '@/utils/firebase'
 import { deleteStoredValues, getStoredValues } from '@/utils/storageUtils'
 import {
@@ -19,16 +20,19 @@ import {
 	where,
 	writeBatch,
 } from 'firebase/firestore'
+import { Dispatch, SetStateAction } from 'react'
 import { getUserDataFromFirestore } from './authActions'
 
 export const fetchConfessions = async ({
 	fetchLimit,
 	lastDocumentFetched,
 	setLastDocumentFetched,
+	setNoMoreDocuments,
 }: {
 	fetchLimit: number
 	lastDocumentFetched: QueryDocumentSnapshot | null
 	setLastDocumentFetched: any
+	setNoMoreDocuments: Dispatch<SetStateAction<boolean>>
 }) => {
 	try {
 		const userId = useAuthStoreSelectors.getState().currentUser.id
@@ -50,6 +54,7 @@ export const fetchConfessions = async ({
 		const snapshot = await getDocs(q)
 
 		if (snapshot.empty) {
+			setNoMoreDocuments(true)
 			return []
 		}
 
@@ -119,15 +124,21 @@ export const updateUnseenConfessions = async () => {
 	try {
 		const userId = useAuthStoreSelectors.getState().currentUser.id
 
-		let { unseenConfessions } = await getStoredValues(['unseenConfessions'])
+		if (!userId) {
+			return
+		}
 
-		if (!unseenConfessions || unseenConfessions.length === 0 || !userId) {
+		let { [CONFESSION_STORED_KEYS.UNSEEN_CONFESSIONS]: unseenConfessions } = await getStoredValues([
+			CONFESSION_STORED_KEYS.UNSEEN_CONFESSIONS,
+		])
+
+		if (!unseenConfessions || unseenConfessions.length === 0) {
 			return
 		}
 
 		unseenConfessions = JSON.parse(unseenConfessions)
 
-		await deleteStoredValues(['unseenConfessions'])
+		await deleteStoredValues([CONFESSION_STORED_KEYS.UNSEEN_CONFESSIONS])
 
 		const batch = writeBatch(db)
 
@@ -141,41 +152,55 @@ export const updateUnseenConfessions = async () => {
 		throw new Error(error.message || 'An error occurred while updating unseen confessions')
 	}
 }
-export const updateLikesAndDislikes = async () => {
+export const updateConfessionLikesAndDislikes = async () => {
 	try {
 		const userId = useAuthStoreSelectors.getState().currentUser.id
 
-		const [{ postsToLike }, { postsTodisLike }, { postsToUnlike }, { postsToUndislike }] =
-			await Promise.all([
-				getStoredValues(['postsToLike']),
-				getStoredValues(['postsTodisLike']),
-				getStoredValues(['postsToUnlike']),
-				getStoredValues(['postsToUndislike']),
-			])
+		if (!userId) {
+			return
+		}
 
-		const toLike = postsToLike ? JSON.parse(postsToLike) : []
-		const toDislike = postsTodisLike ? JSON.parse(postsTodisLike) : []
-		const toUnlike = postsToUnlike ? JSON.parse(postsToUnlike) : []
-		const toUndislike = postsToUndislike ? JSON.parse(postsToUndislike) : []
+		const storedValues = await Promise.all([
+			getStoredValues([CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE]),
+			getStoredValues([CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE]),
+			getStoredValues([CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE]),
+			getStoredValues([CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE]),
+		])
+
+		const [
+			{ [CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE]: confessionsToLike },
+			{ [CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE]: confessionsTodisLike },
+			{ [CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE]: confessionsToUnlike },
+			{ [CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE]: confessionsToUndislike },
+		] = storedValues
+
+		const toLike = confessionsToLike ? JSON.parse(confessionsToLike) : []
+		const toDislike = confessionsTodisLike ? JSON.parse(confessionsTodisLike) : []
+		const toUnlike = confessionsToUnlike ? JSON.parse(confessionsToUnlike) : []
+		const toUndislike = confessionsToUndislike ? JSON.parse(confessionsToUndislike) : []
 
 		if (
-			(toLike.length === 0 &&
-				toDislike.length === 0 &&
-				toUnlike.length === 0 &&
-				toUndislike.length === 0) ||
-			!userId
+			toLike.length === 0 &&
+			toDislike.length === 0 &&
+			toUnlike.length === 0 &&
+			toUndislike.length === 0
 		) {
 			return
 		}
 
 		const confessionsRef = collection(db, 'confessions')
 
-		await deleteStoredValues(['postsToLike', 'postsTodisLike', 'postsToUnlike', 'postsToUndislike'])
+		await deleteStoredValues([
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE,
+		])
 
 		const batch = writeBatch(db)
 
-		const updatePosts = (posts: string[], dislikes: boolean, remove: boolean) => {
-			posts.forEach((postId: string) => {
+		const updateConfessions = (confessions: string[], dislikes: boolean, remove: boolean) => {
+			confessions.forEach((postId: string) => {
 				const confessionRef = doc(confessionsRef, postId)
 				batch.update(confessionRef, {
 					[dislikes ? 'dislikes' : 'likes']: remove ? arrayRemove(userId) : arrayUnion(userId),
@@ -184,10 +209,10 @@ export const updateLikesAndDislikes = async () => {
 			})
 		}
 
-		updatePosts(toLike, false, false)
-		updatePosts(toDislike, true, false)
-		updatePosts(toUnlike, false, true)
-		updatePosts(toUndislike, true, true)
+		updateConfessions(toLike, false, false)
+		updateConfessions(toDislike, true, false)
+		updateConfessions(toUnlike, false, true)
+		updateConfessions(toUndislike, true, true)
 
 		await batch.commit()
 	} catch (error: any) {
@@ -197,95 +222,35 @@ export const updateLikesAndDislikes = async () => {
 	}
 }
 
-export const uploadComment = async (commentBody: COMMENTPROPS) => {
-	try {
-		const batch = writeBatch(db)
-
-		const commentCollectionRef = collection(db, 'comments')
-
-		const commentRef = await addDoc(commentCollectionRef, {})
-		const commentId = commentRef.id
-
-		await setDoc(commentRef, {
-			...commentBody,
-			id: commentId,
-			created_at: new Date().toISOString(),
-		})
-
-		if (commentBody.confession_id) {
-			const confessionDocRef = doc(db, 'confessions', commentBody.confession_id)
-			batch.update(confessionDocRef, { comments: arrayUnion(commentId) })
-		}
-		if (commentBody.commented_by) {
-			const userDocRef = doc(db, 'users', commentBody.commented_by)
-			batch.update(userDocRef, { comments: arrayUnion(commentId) })
-		}
-
-		await batch.commit()
-
-		return commentId
-	} catch (error: any) {
-		throw new Error(error.message || 'Failed to add comment')
-	}
-}
-
-export const uploadReply = async (replyBody: REPLYPROPS | any) => {
-	try {
-		if (!replyBody) return
-		const batch = writeBatch(db)
-
-		const replyCollectionRef = collection(db, 'replies')
-
-		const replyRef = await addDoc(replyCollectionRef, {})
-		const replyId = replyRef.id
-
-		await setDoc(replyRef, {
-			...replyBody,
-			id: replyId,
-			created_at: new Date().toISOString(),
-		})
-
-		if (replyBody.comment_id) {
-			const commentDocRef = doc(db, 'comments', replyBody.comment_id)
-			batch.update(commentDocRef, { replies: arrayUnion(replyId) })
-		}
-		if (replyBody.replied_by) {
-			const userDocRef = doc(db, 'users', replyBody.replied_by)
-			batch.update(userDocRef, { replies: arrayUnion(replyId) })
-		}
-
-		await batch.commit()
-
-		return replyId
-	} catch (error: any) {
-		throw new Error(error.message || 'Failed to add comment')
-	}
-}
-
 export const updateSharedConfessions = async () => {
 	try {
 		const userId = useAuthStoreSelectors.getState().currentUser.id
 
-		let { postsToShare } = await getStoredValues(['postsToShare'])
-
-		if (!postsToShare || postsToShare.length === 0 || !userId) {
+		if (!userId) {
 			return
 		}
 
-		postsToShare = JSON.parse(postsToShare)
+		let { [CONFESSION_STORED_KEYS.CONFESSIONS_TO_SHARE]: confessionsToShare } =
+			await getStoredValues([CONFESSION_STORED_KEYS.CONFESSIONS_TO_SHARE])
+
+		if (!confessionsToShare || confessionsToShare.length === 0) {
+			return
+		}
+
+		confessionsToShare = JSON.parse(confessionsToShare)
 
 		const batch = writeBatch(db)
 
-		postsToShare.forEach((confessionId: string) => {
+		confessionsToShare.forEach((confessionId: string) => {
 			const confessionRef = doc(db, 'confessions', confessionId)
 			batch.update(confessionRef, { shares: arrayUnion(userId) })
 		})
 
 		await batch.commit()
 
-		await deleteStoredValues(['postsToShare'])
+		await deleteStoredValues([CONFESSION_STORED_KEYS.CONFESSIONS_TO_SHARE])
 	} catch (error: any) {
-		throw new Error(error.message || 'An error occurred while updating unseen confessions')
+		throw new Error(error.message || 'An error occurred while updating shared confessions')
 	}
 }
 
@@ -293,34 +258,45 @@ export const updateFavoritedConfessions = async () => {
 	try {
 		const userId = useAuthStoreSelectors.getState().currentUser.id
 
-		let { postsToUnFavorite, postsToFavorite } = await getStoredValues([
-			'postsToUnFavorite',
-			'postsToFavorite',
+		if (!userId) {
+			return
+		}
+
+		let storedValues = await getStoredValues([
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNFAVORITE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_FAVORITE,
 		])
 
+		let {
+			[CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNFAVORITE]: confessionsToUnFavorite,
+			[CONFESSION_STORED_KEYS.CONFESSIONS_TO_FAVORITE]: confessionsToFavorite,
+		} = storedValues
+
 		if (
-			(!postsToUnFavorite && !postsToFavorite) ||
-			(postsToFavorite.length === 0 && postsToUnFavorite.length === 0) ||
-			!userId
+			(!confessionsToUnFavorite && !confessionsToFavorite) ||
+			(confessionsToFavorite.length === 0 && confessionsToUnFavorite.length === 0)
 		) {
 			return
 		}
 
-		postsToUnFavorite = JSON.parse(postsToUnFavorite)
-		postsToFavorite = JSON.parse(postsToFavorite)
+		confessionsToUnFavorite = JSON.parse(confessionsToUnFavorite)
+		confessionsToFavorite = JSON.parse(confessionsToFavorite)
 
-		await deleteStoredValues(['postsToUnFavorite', 'postsToFavorite'])
+		await deleteStoredValues([
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNFAVORITE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_FAVORITE,
+		])
 
 		const batch = writeBatch(db)
 
 		const userDocRef = doc(db, 'users', userId)
 
-		postsToFavorite.forEach((confessionId: string) => {
+		confessionsToFavorite.forEach((confessionId: string) => {
 			const confessionRef = doc(db, 'confessions', confessionId)
 			batch.update(confessionRef, { favorites: arrayUnion(userId) })
 			batch.update(userDocRef, { favorites: arrayUnion(confessionId) })
 		})
-		postsToUnFavorite.forEach((confessionId: string) => {
+		confessionsToUnFavorite.forEach((confessionId: string) => {
 			const confessionRef = doc(db, 'confessions', confessionId)
 			batch.update(confessionRef, { favorites: arrayRemove(userId) })
 			batch.update(userDocRef, { favorites: arrayRemove(confessionId) })
@@ -361,16 +337,19 @@ export const fetchConfessionById = async ({ id }: { id: string | undefined }) =>
 		throw new Error('Error fetching confession or comments:')
 	}
 }
+
 export const fetchConfessionComments = async ({
 	confessionComments,
 	fetchLimit,
 	lastDocumentFetched,
 	setLastDocumentFetched,
+	setNoMoreDocuments,
 }: {
 	confessionComments: string[] | undefined
 	fetchLimit: number
 	lastDocumentFetched: QueryDocumentSnapshot | null
 	setLastDocumentFetched: any
+	setNoMoreDocuments: Dispatch<SetStateAction<boolean>>
 }) => {
 	try {
 		if (!confessionComments || confessionComments.length === 0) {
@@ -401,7 +380,7 @@ export const fetchConfessionComments = async ({
 		const querySnapshot = await getDocs(q)
 
 		if (querySnapshot.empty) {
-			console.log('No more comments to fetch')
+			setNoMoreDocuments(true)
 
 			return []
 		}
@@ -430,85 +409,17 @@ export const fetchConfessionComments = async ({
 	}
 }
 
-export const fetchCommentReplies = async ({
-	commentsReplies,
-	fetchLimit,
-	lastDocumentFetched,
-	setLastDocumentFetched,
-}: {
-	commentsReplies: string[] | undefined
-	fetchLimit: number
-	lastDocumentFetched: QueryDocumentSnapshot | null
-	setLastDocumentFetched: any
-}) => {
-	try {
-		if (!commentsReplies || commentsReplies.length === 0) {
-			return []
-		}
-
-		const repliesRef = collection(db, 'replies')
-
-		let q
-
-		if (lastDocumentFetched) {
-			q = query(
-				repliesRef,
-				where('id', 'in', commentsReplies),
-				orderBy('created_at', 'desc'),
-				startAfter(lastDocumentFetched),
-				limit(fetchLimit),
-			)
-		} else {
-			q = query(
-				repliesRef,
-				where('id', 'in', commentsReplies),
-				orderBy('created_at', 'desc'),
-				limit(fetchLimit),
-			)
-		}
-
-		const querySnapshot = await getDocs(q)
-
-		if (querySnapshot.empty) {
-			console.log('No more replies to fetch')
-
-			return []
-		}
-
-		const replies = await Promise.all(
-			querySnapshot.docs.map(async (confessDoc) => {
-				const reply = confessDoc.data() as REPLYPROPS
-
-				if (reply.replied_by) {
-					const userDoc = await getUserDataFromFirestore(reply.replied_by)
-
-					reply.user = userDoc as CONFESSIONPROPS['user']
-				}
-
-				return reply
-			}) as Promise<REPLYPROPS>[],
-		)
-
-		setLastDocumentFetched(querySnapshot.docs[querySnapshot.docs.length - 1])
-
-		return replies
-	} catch (error) {
-		console.log(error)
-
-		throw new Error('An error occurred while fetching the replies')
-	}
-}
-
 // CURRENT USER CONFESSION ACTIONS
-
 export const fetchMyConfessions = async ({
 	fetchLimit,
 	lastDocumentFetched,
 	setLastDocumentFetched,
+	setNoMoreDocuments,
 }: {
 	fetchLimit: number
 	lastDocumentFetched: QueryDocumentSnapshot | null
 	setLastDocumentFetched: any
+	setNoMoreDocuments: Dispatch<SetStateAction<boolean>>
 }) => {
 	try {
 		const userId = useAuthStoreSelectors.getState().currentUser.id
@@ -542,6 +453,7 @@ export const fetchMyConfessions = async ({
 		const querySnapshot = await getDocs(q)
 
 		if (querySnapshot.empty) {
+			setNoMoreDocuments(true)
 			return []
 		}
 
@@ -564,10 +476,12 @@ export const fetchFavoriteConfessions = async ({
 	fetchLimit,
 	lastDocumentFetched,
 	setLastDocumentFetched,
+	setNoMoreDocuments,
 }: {
 	fetchLimit: number
 	lastDocumentFetched: QueryDocumentSnapshot | null
 	setLastDocumentFetched: any
+	setNoMoreDocuments: Dispatch<SetStateAction<boolean>>
 }) => {
 	try {
 		const userId = useAuthStoreSelectors.getState().currentUser.id
@@ -601,6 +515,7 @@ export const fetchFavoriteConfessions = async ({
 		const querySnapshot = await getDocs(q)
 
 		if (querySnapshot.empty) {
+			setNoMoreDocuments(true)
 			return []
 		}
 
