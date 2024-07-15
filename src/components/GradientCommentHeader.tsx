@@ -13,7 +13,7 @@ const BackIcon = () => {
 	const router = useRouter()
 
 	return (
-		<TouchableOpacity onPress={() => router.back()}>
+		<TouchableOpacity onPress={() => router.back()} style={{ width: moderateScale(25) }}>
 			<Ionicons name={'arrow-back-outline'} size={moderateScale(25)} color={theme.colors.white} />
 		</TouchableOpacity>
 	)
@@ -22,9 +22,7 @@ const BackIcon = () => {
 const SettingsIcon = () => {
 	const { theme } = useStyles()
 	return (
-		<TouchableOpacity onPress={() => {}}>
-			<Ionicons name="ellipsis-vertical" size={moderateScale(25)} color={theme.colors.white} />
-		</TouchableOpacity>
+		<TouchableOpacity onPress={() => {}} style={{ width: moderateScale(25) }}></TouchableOpacity>
 	)
 }
 
@@ -33,7 +31,7 @@ const GradientCommentHeader = ({ title }: { title: string }) => {
 	const insets = useSafeAreaInsets()
 	return (
 		<LinearGradient
-			colors={[theme.colors.primary[300], theme.colors.primary[500], theme.colors.primary[400]]}
+			colors={[theme.colors.primary[500], theme.colors.primary[500], theme.colors.primary[500]]}
 			start={{ x: 0, y: 0 }}
 			end={{ x: 0, y: 1 }}>
 			<View style={[styles.header, { paddingTop: insets.top + moderateScale(5) }]}>
@@ -49,8 +47,10 @@ export default GradientCommentHeader
 
 const stylesheet = createStyleSheet({
 	title: {
+		flex: 1,
 		fontFamily: 'Medium',
 		fontSize: moderateScale(20),
+		textAlign: 'center',
 	},
 	header: {
 		flexDirection: 'row',

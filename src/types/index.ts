@@ -26,6 +26,7 @@ export interface CONFESSIONPROPS {
 		gender: string
 		age: string
 	}
+	reports: string[]
 }
 
 export interface ADDCONFESSIONPROPS {
@@ -39,6 +40,7 @@ export interface ADDCONFESSIONPROPS {
 	shares: string[]
 	views: string[]
 	favorites: string[]
+	reports: []
 }
 
 export interface User {
@@ -65,6 +67,7 @@ export interface COMMENTPROPS {
 	dislikes: string[]
 	user: CONFESSIONPROPS['user']
 	created_at: string
+	reports: string[]
 }
 export interface REPLYPROPS {
 	id: string
@@ -75,5 +78,13 @@ export interface REPLYPROPS {
 	likes: string[]
 	dislikes: string[]
 	user: CONFESSIONPROPS['user']
+	created_at: string
+	reports: string[]
+}
+
+export interface REPORTPROPS {
+	confession_id: string
+	report_reason: string
+	reported_by: string
 	created_at: string
 }

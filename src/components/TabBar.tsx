@@ -63,7 +63,7 @@ const TabBar = ({
 	return (
 		<LinearGradient
 			style={[styles.tabBar, { marginBottom: insets.bottom + moderateScale(10) }]}
-			colors={[theme.colors.primary[300], theme.colors.primary[500], theme.colors.primary[400]]}
+			colors={[theme.colors.primary[500], theme.colors.primary[500], theme.colors.primary[500]]}
 			start={{ x: 0.5, y: 1 }}
 			end={{ x: 0.5, y: 0 }}>
 			{routes.map((route) => {

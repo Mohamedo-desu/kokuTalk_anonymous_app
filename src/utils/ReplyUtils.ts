@@ -1,5 +1,5 @@
 import { REPLY_STORED_KEYS } from '@/constants/appDetails'
-import { deleteAReply, uploadReply } from '@/services/ReplyActions'
+import { deleteAReply, reportAReply, uploadReply } from '@/services/ReplyActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { Dispatch, SetStateAction } from 'react'
 import { Toast } from 'react-native-toast-notifications'
@@ -19,13 +19,14 @@ export const addReply = async ({
 
 		await uploadReply({
 			id: '',
+			comment_id: id,
 			created_at: '',
 			reply_text: newReply,
 			confession_id: confessionId,
 			replied_by: userId,
 			likes: [],
 			dislikes: [],
-			comment_id: id,
+			reports: [],
 		})
 
 		Toast.show('success', {
@@ -186,6 +187,27 @@ export const deleteReply = async ({
 			commentId,
 			replyId,
 			repliedById,
+		})
+	} catch (error: unknown) {
+		Toast.show(`${error}`, {
+			type: 'danger',
+		})
+	}
+}
+export const reportReply = async ({
+	replyId,
+	report_reason,
+	reported_by,
+}: {
+	replyId: string
+	report_reason: string
+	reported_by: string
+}) => {
+	try {
+		await reportAReply({
+			replyId,
+			report_reason,
+			reported_by,
 		})
 	} catch (error: unknown) {
 		Toast.show(`${error}`, {

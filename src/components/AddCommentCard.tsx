@@ -33,10 +33,11 @@ const AddCommentCard = ({
 
 	const rnStyles = useAnimatedStyle(() => {
 		return {
-			height: withTiming(animatedAddCommentHeight.value, { duration: 200 }),
-			borderWidth: withTiming(animatedAddCommentHeight.value > 0 ? 1.5 : 0, {
-				duration: 50,
+			height: withTiming(animatedAddCommentHeight.value, { duration: 300 }),
+			borderWidth: withTiming(animatedAddCommentHeight.value > 0 ? 1 : 0, {
+				duration: 200,
 			}),
+			opacity: withTiming(animatedAddCommentHeight.value > 0 ? 1 : 0, { duration: 200 }),
 		}
 	}, [animatedAddCommentHeight])
 

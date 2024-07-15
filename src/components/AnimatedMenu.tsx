@@ -10,7 +10,8 @@ const AnimatedMenu = ({
 }: {
 	options: {
 		title: string
-		onPress: () => void
+		onPress: () => Promise<void>
+		icon: (typeof Ionicons)['name']
 	}[]
 }) => {
 	const { theme, styles } = useStyles(stylesheet)
@@ -19,9 +20,6 @@ const AnimatedMenu = ({
 	const rnMenuStyles = useAnimatedStyle(() => {
 		return {
 			width: withTiming(animatedMenuWidth.value, { duration: 300 }),
-			borderWidth: withTiming(animatedMenuWidth.value > 0 ? 1.5 : 0, {
-				duration: 200,
-			}),
 			opacity: withTiming(animatedMenuWidth.value > 0 ? 1 : 0, { duration: 200 }),
 		}
 	}, [animatedMenuWidth])
@@ -31,12 +29,7 @@ const AnimatedMenu = ({
 
 	return (
 		<View style={styles.menu}>
-			<Animated.View
-				style={[
-					styles.optionsCon,
-					{ backgroundColor: theme.colors.background, borderColor: theme.colors.primary[500] },
-					rnMenuStyles,
-				]}>
+			<Animated.View style={[styles.optionsCon, rnMenuStyles]}>
 				{options.map((option) => (
 					<TouchableOpacity
 						key={option.title}
@@ -45,12 +38,18 @@ const AnimatedMenu = ({
 							option.onPress()
 						}}
 						activeOpacity={0.8}
-						style={styles.row}>
+						style={[
+							styles.row,
+							{
+								borderColor: theme.colors.primary[500],
+								backgroundColor: theme.colors.background,
+							},
+						]}>
 						<Text style={[styles.rowText, { color: theme.colors.primary[500] }]}>
 							{option.title}
 						</Text>
 						<Ionicons
-							name="trash-outline"
+							name={option.icon}
 							size={moderateScale(15)}
 							color={theme.colors.primary[500]}
 						/>
@@ -70,20 +69,24 @@ const stylesheet = createStyleSheet({
 	menu: {
 		flexDirection: 'row',
 		justifyContent: 'flex-end',
-		alignItems: 'center',
-		gap: moderateScale(10),
 	},
 	optionsCon: {
-		justifyContent: 'center',
-		borderRadius: moderateScale(5),
+		position: 'absolute',
+		right: '60%',
 		overflow: 'hidden',
-		height: moderateScale(30),
+		gap: moderateScale(3),
+		height: '100%',
 	},
 	row: {
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'space-between',
 		marginHorizontal: moderateScale(10),
+		borderWidth: 1,
+		paddingVertical: moderateScale(5),
+		paddingHorizontal: moderateScale(10),
+		borderRadius: moderateScale(2),
+		height: '85%',
 	},
 	rowText: {
 		fontWeight: '500',

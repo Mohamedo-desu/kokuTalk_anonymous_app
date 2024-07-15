@@ -239,9 +239,52 @@ export const deleteAComment = async ({
 		batch.delete(commentRef)
 
 		await batch.commit()
-
-		console.log('Comment and associated replies deleted successfully')
 	} catch (error: any) {
 		throw new Error(error.message || 'Failed to delete comment')
+	}
+}
+
+export const reportAComment = async ({
+	commentId,
+	report_reason,
+	reported_by,
+}: {
+	commentId: string
+	report_reason: string
+	reported_by: string
+}) => {
+	try {
+		const userId = useAuthStoreSelectors.getState().currentUser.id
+
+		if (!userId || !commentId) {
+			throw new Error('User ID or Comment ID is missing')
+		}
+
+		const batch = writeBatch(db)
+
+		const reportsRef = doc(db, 'comment_reports', commentId)
+		const collectionDocRef = doc(db, 'comments', commentId)
+
+		await setDoc(
+			reportsRef,
+			{
+				reports: arrayUnion({
+					comment_id: commentId,
+					report_reason,
+					reported_by,
+					reported_at: new Date().toISOString(),
+				}),
+			},
+			{ merge: true },
+		)
+
+		batch.update(collectionDocRef, {
+			reports: arrayUnion(reported_by),
+		})
+
+		await batch.commit()
+	} catch (error: any) {
+		console.error('Error reporting comment: ', error)
+		throw new Error(error.message || 'Failed to report comment')
 	}
 }

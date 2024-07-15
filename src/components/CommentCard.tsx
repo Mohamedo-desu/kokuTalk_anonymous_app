@@ -4,11 +4,11 @@ import { fetchCommentReplies } from '@/services/commentActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { COMMENTPROPS, REPLYPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
-import { deleteComment, disLikeComment, likeComment } from '@/utils/commentUtils'
+import { deleteComment, disLikeComment, likeComment, reportComment } from '@/utils/commentUtils'
 import { shortenNumber } from '@/utils/generalUtils'
 import { addReply } from '@/utils/ReplyUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
-import { AntDesign, Feather, MaterialIcons } from '@expo/vector-icons'
+import { Feather, MaterialIcons } from '@expo/vector-icons'
 import { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, Image, Text, TouchableOpacity, View } from 'react-native'
 import Animated, { useSharedValue } from 'react-native-reanimated'
@@ -16,6 +16,7 @@ import { moderateScale } from 'react-native-size-matters'
 import { Toast } from 'react-native-toast-notifications'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 import AddCommentCard from './AddCommentCard'
+import AnimatedMenu from './AnimatedMenu'
 import GuestModal from './GuestModal'
 import ReplyCard from './ReplyCard'
 import Skeleton from './Skeleton'
@@ -49,6 +50,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 
 	const [loading, setLoading] = useState(false)
 	const [deleting, setDeleting] = useState(false)
+	const [reporting, setReporting] = useState(false)
 	const [newReply, setNewReply] = useState('')
 
 	const [toggleDetails, setToggleDetails] = useState(false)
@@ -123,6 +125,19 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 			commentedById: item.user.id,
 		})
 		setDeleting(false)
+	}, [isAnonymous, id])
+	const handleReportComment = useCallback(async () => {
+		if (isAnonymous) {
+			return setGuestModalVisible(true)
+		}
+		if (reporting) return
+		setReporting(true)
+		await reportComment({
+			commentId: id,
+			report_reason: 'unknown',
+			reported_by: userId,
+		})
+		setReporting(false)
 	}, [isAnonymous, id])
 	// COMMENT FUNCTIONS END
 
@@ -250,17 +265,29 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 				</View>
 			</View>
 
-			{isOwner &&
-				(deleting ? (
-					<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
-				) : (
-					<TouchableOpacity
-						onPressIn={handleDeleteComment}
-						activeOpacity={0.8}
-						onPress={() => undefined}>
-						<AntDesign name={'ellipsis1'} size={24} color={theme.colors.gray[400]} />
-					</TouchableOpacity>
-				))}
+			{deleting || reporting ? (
+				<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
+			) : isOwner ? (
+				<AnimatedMenu
+					options={[
+						{
+							title: 'Delete',
+							onPress: handleDeleteComment,
+							icon: 'trash-outline',
+						},
+					]}
+				/>
+			) : (
+				<AnimatedMenu
+					options={[
+						{
+							title: 'Report',
+							onPress: handleReportComment,
+							icon: 'flag-outline',
+						},
+					]}
+				/>
+			)}
 		</View>
 	)
 	const renderReplies = () => {

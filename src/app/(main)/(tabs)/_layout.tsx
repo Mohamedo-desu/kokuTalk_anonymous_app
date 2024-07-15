@@ -26,13 +26,6 @@ const TabsLayout = () => {
 			/>
 
 			<Tabs.Screen
-				name="explore"
-				options={{
-					headerShown: true,
-					header: () => <GradientHeader title={'Explore'} />,
-				}}
-			/>
-			<Tabs.Screen
 				name="notifications"
 				options={{
 					headerShown: true,

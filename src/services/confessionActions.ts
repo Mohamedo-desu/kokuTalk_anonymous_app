@@ -459,10 +459,52 @@ export const deleteAConfession = async ({
 		batch.delete(confessionRef)
 
 		await batch.commit()
-
-		console.log('Confession and associated comments/replies deleted successfully')
 	} catch (error: any) {
 		throw new Error(error.message || 'Failed to delete confession')
+	}
+}
+export const reportAConfession = async ({
+	confessionId,
+	report_reason,
+	reported_by,
+}: {
+	confessionId: string
+	report_reason: string
+	reported_by: string
+}) => {
+	try {
+		const userId = useAuthStoreSelectors.getState().currentUser.id
+
+		if (!userId || !confessionId) {
+			throw new Error('User ID or Confession ID is missing')
+		}
+
+		const batch = writeBatch(db)
+
+		const reportsRef = doc(db, 'confession_reports', confessionId)
+		const collectionDocRef = doc(db, 'confessions', confessionId)
+
+		await setDoc(
+			reportsRef,
+			{
+				reports: arrayUnion({
+					confession_id: confessionId,
+					report_reason,
+					reported_by,
+					reported_at: new Date().toISOString(),
+				}),
+			},
+			{ merge: true },
+		)
+
+		batch.update(collectionDocRef, {
+			reports: arrayUnion(reported_by),
+		})
+
+		await batch.commit()
+	} catch (error: any) {
+		console.error('Error reporting confession: ', error)
+		throw new Error(error.message || 'Failed to report confession')
 	}
 }
 // CURRENT USER CONFESSION ACTIONS

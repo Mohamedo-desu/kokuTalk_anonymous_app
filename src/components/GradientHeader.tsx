@@ -1,14 +1,16 @@
+import useIsAnonymous from '@/hooks/useIsAnonymous'
 import { Ionicons } from '@expo/vector-icons'
 import { useDrawerStatus } from '@react-navigation/drawer'
 import { DrawerActions } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation, useRouter } from 'expo-router'
-import React from 'react'
+import React, { useState } from 'react'
 import { Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
+import GuestModal from './GuestModal'
 
 const MenuIcon = () => {
 	const { theme } = useStyles()
@@ -26,11 +28,22 @@ const MenuIcon = () => {
 }
 const AddButton = () => {
 	const { theme } = useStyles()
+	const isAnonymous = useIsAnonymous()
 	const router = useRouter()
+	const [guestModalVisible, setGuestModalVisible] = useState(false)
 	return (
-		<TouchableOpacity onPress={() => router.navigate('add_confession')}>
-			<Ionicons name="add-sharp" size={moderateScale(25)} color={theme.colors.white} />
-		</TouchableOpacity>
+		<>
+			<TouchableOpacity
+				onPress={() => {
+					if (isAnonymous) {
+						return setGuestModalVisible(true)
+					}
+					router.navigate('add_confession')
+				}}>
+				<Ionicons name="add-sharp" size={moderateScale(25)} color={theme.colors.white} />
+			</TouchableOpacity>
+			<GuestModal visible={guestModalVisible} onPress={() => setGuestModalVisible(false)} />
+		</>
 	)
 }
 
@@ -39,7 +52,7 @@ const GradientHeader = ({ title }: { title: string }) => {
 	const insets = useSafeAreaInsets()
 	return (
 		<LinearGradient
-			colors={[theme.colors.primary[300], theme.colors.primary[500], theme.colors.primary[400]]}
+			colors={[theme.colors.primary[500], theme.colors.primary[500], theme.colors.primary[500]]}
 			start={{ x: 0, y: 0 }}
 			end={{ x: 0, y: 1 }}>
 			<View style={[styles.header, { paddingTop: insets.top + moderateScale(5) }]}>

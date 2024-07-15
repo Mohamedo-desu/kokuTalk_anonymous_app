@@ -149,9 +149,52 @@ export const deleteAReply = async ({
 		})
 
 		await batch.commit()
-
-		console.log('reply deleted successfully')
 	} catch (error: any) {
 		throw new Error(error.message || 'Failed to delete reply')
+	}
+}
+
+export const reportAReply = async ({
+	replyId,
+	report_reason,
+	reported_by,
+}: {
+	replyId: string
+	report_reason: string
+	reported_by: string
+}) => {
+	try {
+		const userId = useAuthStoreSelectors.getState().currentUser.id
+
+		if (!userId || !replyId) {
+			throw new Error('User ID or Comment ID is missing')
+		}
+
+		const batch = writeBatch(db)
+
+		const reportsRef = doc(db, 'reply_reports', replyId)
+		const collectionDocRef = doc(db, 'replies', replyId)
+
+		await setDoc(
+			reportsRef,
+			{
+				reports: arrayUnion({
+					reply_id: replyId,
+					report_reason,
+					reported_by,
+					reported_at: new Date().toISOString(),
+				}),
+			},
+			{ merge: true },
+		)
+
+		batch.update(collectionDocRef, {
+			reports: arrayUnion(reported_by),
+		})
+
+		await batch.commit()
+	} catch (error: any) {
+		console.error('Error reporting reply: ', error)
+		throw new Error(error.message || 'Failed to report reply')
 	}
 }

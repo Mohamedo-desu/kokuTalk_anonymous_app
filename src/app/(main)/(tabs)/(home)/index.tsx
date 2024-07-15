@@ -264,8 +264,6 @@ const stylesheet = createStyleSheet({
 	flashListContent: {},
 	emptyContainer: {
 		flex: 1,
-		justifyContent: 'center',
-		alignItems: 'center',
 		padding: moderateScale(20),
 	},
 	emptyText: {

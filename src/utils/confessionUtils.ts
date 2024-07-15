@@ -1,5 +1,5 @@
 import { CONFESSION_STORED_KEYS } from '@/constants/appDetails'
-import { deleteAConfession } from '@/services/confessionActions'
+import { deleteAConfession, reportAConfession } from '@/services/confessionActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { Dispatch, SetStateAction } from 'react'
 import { Share } from 'react-native'
@@ -293,6 +293,27 @@ export const deleteConfession = async ({
 		await deleteAConfession({
 			confessionId,
 			confessedUserId,
+		})
+	} catch (error: unknown) {
+		Toast.show(`${error}`, {
+			type: 'danger',
+		})
+	}
+}
+export const reportConfession = async ({
+	confessionId,
+	report_reason,
+	reported_by,
+}: {
+	confessionId: string
+	report_reason: string
+	reported_by: string
+}) => {
+	try {
+		await reportAConfession({
+			confessionId,
+			report_reason,
+			reported_by,
 		})
 	} catch (error: unknown) {
 		Toast.show(`${error}`, {

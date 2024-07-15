@@ -62,7 +62,7 @@ const Notifications = () => {
 	useEffect(() => {
 		// TODO: fetch notifications from server or local database
 		const timeOut = setTimeout(() => {
-			setSections(groupNotifications(APP_NOTIFICATIONS))
+			setSections(groupNotifications([]))
 			setLoading(false)
 		}, 2000)
 
@@ -93,7 +93,9 @@ const Notifications = () => {
 							/>
 						))}
 				</ScrollView>
-			) : sections.length > 0 ? (
+			) : sections[0].data.length > 0 &&
+			  sections[1].data.length > 0 &&
+			  sections[2].data.length > 0 ? (
 				<SectionList
 					style={[styles.sectionList, { backgroundColor: theme.colors.background }]}
 					contentContainerStyle={[
@@ -147,13 +149,11 @@ const stylesheet = createStyleSheet({
 	},
 	emptyContainer: {
 		flex: 1,
-		justifyContent: 'center',
-		alignItems: 'center',
 		padding: moderateScale(20),
 	},
 	emptyText: {
-		fontSize: moderateScale(18),
-		color: 'gray',
+		fontFamily: 'Italic',
+		fontSize: moderateScale(14),
 		textAlign: 'center',
 	},
 })

@@ -57,6 +57,7 @@ const AddConfession = () => {
 				shares: [],
 				views: [],
 				favorites: [],
+				reports: [],
 			})
 
 			setConfessionTypeText('')

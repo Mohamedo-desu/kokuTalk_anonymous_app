@@ -1,13 +1,14 @@
 import useIsAnonymous from '@/hooks/useIsAnonymous'
-import { deleteAConfession } from '@/services/confessionActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { CONFESSIONPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
 import { addComment } from '@/utils/commentUtils'
 import {
+	deleteConfession,
 	disLikeConfession,
 	favoriteConfession,
 	likeConfession,
+	reportConfession,
 	shareConfession,
 } from '@/utils/confessionUtils'
 import { shortenNumber } from '@/utils/generalUtils'
@@ -62,6 +63,7 @@ const ConfessionCard = ({
 	const [newComment, setNewComment] = useState('')
 	const [loading, setLoading] = useState(false)
 	const [deleting, setDeleting] = useState(false)
+	const [reporting, setReporting] = useState(false)
 
 	const [toggleDetails, setToggleDetails] = useState(false)
 	const [showFullReply, setShowFullReply] = useState(false)
@@ -146,21 +148,29 @@ const ConfessionCard = ({
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
+		if (deleting) return
 		setDeleting(true)
-		await deleteAConfession({
+		await deleteConfession({
 			confessionId: id,
 			confessedUserId: item.confessed_by,
 		})
 		setDeleting(false)
 	}, [isAnonymous, id])
+	const handleReportConfession = useCallback(async () => {
+		if (isAnonymous) {
+			return setGuestModalVisible(true)
+		}
+		if (reporting) return
+		setReporting(true)
+		await reportConfession({
+			confessionId: id,
+			report_reason: 'unknown',
+			reported_by: userId,
+		})
+		setReporting(false)
+	}, [isAnonymous, id])
 	// CONFESSION FUNCTIONS END
 
-	const menuOptions = [
-		{
-			title: 'Delete',
-			onPress: handleDeleteConfession,
-		},
-	]
 	// CONFESSION COMPONENTS
 	const renderTimeDisplay = () => (
 		<View style={styles.timeCon}>
@@ -176,7 +186,7 @@ const ConfessionCard = ({
 					<TouchableOpacity activeOpacity={0.8} onPress={handleLikeConfession}>
 						<Feather
 							name="chevrons-up"
-							size={25}
+							size={24}
 							color={likes.includes(userId) ? theme.colors.primary[500] : theme.colors.gray[400]}
 						/>
 					</TouchableOpacity>
@@ -188,7 +198,7 @@ const ConfessionCard = ({
 					<TouchableOpacity activeOpacity={0.8} onPress={handleDislikeConfession}>
 						<Feather
 							name="chevrons-down"
-							size={25}
+							size={24}
 							color={dislikes.includes(userId) ? theme.colors.disliked : theme.colors.gray[400]}
 						/>
 					</TouchableOpacity>
@@ -198,16 +208,29 @@ const ConfessionCard = ({
 					onPress={() => setToggleDetails(!toggleDetails)}
 				/>
 
-				<View style={styles.commentShareCon}>
-					<TouchableOpacity onPress={toggleCommentCard}>
-						<Ionicons name="chatbox-ellipses-outline" size={25} color={theme.colors.gray[400]} />
+				<View
+					style={[
+						styles.commentShareCon,
+						{ width: isOwner ? moderateScale(110) : moderateScale(150) },
+					]}>
+					<TouchableOpacity onPress={toggleCommentCard} activeOpacity={0.8}>
+						<Ionicons name="chatbox-ellipses-outline" size={24} color={theme.colors.gray[400]} />
 					</TouchableOpacity>
 					<Text style={[styles.comment, { color: theme.colors.gray[400] }]} numberOfLines={5}>
 						{shortenNumber(comments)}
 					</Text>
-					<TouchableOpacity onPress={handleShareConfession}>
-						<Ionicons name="share-social-outline" size={25} color={theme.colors.gray[400]} />
+					<TouchableOpacity onPress={handleShareConfession} activeOpacity={0.8}>
+						<Ionicons name="share-social-outline" size={24} color={theme.colors.gray[400]} />
 					</TouchableOpacity>
+					{!isOwner && (
+						<TouchableOpacity onPress={handleFavorite} activeOpacity={0.8}>
+							<Ionicons
+								name={isFavorite ? 'bookmark' : 'bookmark-outline'}
+								size={24}
+								color={isFavorite ? theme.colors.primary[500] : theme.colors.gray[400]}
+							/>
+						</TouchableOpacity>
+					)}
 				</View>
 			</View>
 		) : (
@@ -378,20 +401,28 @@ const ConfessionCard = ({
 					</Text>
 				</View>
 			</View>
-			{isOwner ? (
-				deleting ? (
-					<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
-				) : (
-					<AnimatedMenu options={menuOptions} />
-				)
+			{deleting || reporting ? (
+				<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
+			) : isOwner ? (
+				<AnimatedMenu
+					options={[
+						{
+							title: 'Delete',
+							onPress: handleDeleteConfession,
+							icon: 'trash-outline',
+						},
+					]}
+				/>
 			) : (
-				<TouchableOpacity activeOpacity={0.8} onPress={handleFavorite}>
-					<Ionicons
-						name={isFavorite ? 'heart' : 'heart-outline'}
-						size={24}
-						color={isFavorite ? theme.colors.primary[500] : theme.colors.gray[400]}
-					/>
-				</TouchableOpacity>
+				<AnimatedMenu
+					options={[
+						{
+							title: 'Report',
+							onPress: handleReportConfession,
+							icon: 'flag-outline',
+						},
+					]}
+				/>
 			)}
 		</View>
 	)
@@ -507,7 +538,6 @@ const stylesheet = createStyleSheet({
 		alignItems: 'center',
 		justifyContent: 'space-between',
 		alignContent: 'center',
-		width: moderateScale(100),
 	},
 	comment: {
 		fontFamily: 'Medium',
