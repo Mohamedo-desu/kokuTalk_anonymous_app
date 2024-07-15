@@ -18,6 +18,8 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 	const [loading, setLoading] = useState(false)
 	const [loadingText, setLoadingText] = useState('')
 
+	const [showPassword, setShowPassword] = useState(false)
+
 	const updateUser = useAuthStoreSelectors.use.updateUser()
 	const setAnonymous = useAuthStoreSelectors.use.setAnonymous()
 
@@ -45,12 +47,10 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 		setLoadingText('Skipping...')
 		setLoading(true)
 		await saveSecurely([{ key: 'isAnonymous', value: 'true' }])
-		const timout = setTimeout(() => {
-			setLoadingText('')
-			setLoading(false)
-			setAnonymous()
-			clearTimeout(timout)
-		}, 1000)
+
+		setLoadingText('')
+		setLoading(false)
+		setAnonymous()
 	}
 
 	return (
@@ -81,16 +81,6 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 						<View style={styles.formikContainer}>
 							<View style={[styles.form, { backgroundColor: theme.colors.primary[500] }]}>
 								<Input
-									title="Display Name"
-									errors={errors.display_name}
-									touched={touched.display_name}
-									value={values.display_name}
-									handleChange={handleChange('display_name')}
-									handleBlur={handleBlur('display_name')}
-									autoComplete={'name'}
-									maxLength={15}
-								/>
-								<Input
 									title="Email"
 									errors={errors.email}
 									touched={touched.email}
@@ -99,16 +89,7 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 									handleBlur={handleBlur('email')}
 									autoComplete={'email'}
 								/>
-								<Input
-									title="User Name"
-									errors={errors.user_name}
-									touched={touched.user_name}
-									value={values.user_name}
-									handleChange={handleChange('user_name')}
-									handleBlur={handleBlur('user_name')}
-									autoComplete={'username-new'}
-									maxLength={15}
-								/>
+
 								<Input
 									title="Password"
 									errors={errors.password}
@@ -118,7 +99,9 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 									handleBlur={handleBlur('password')}
 									autoComplete={'new-password'}
 									maxLength={35}
-									secureTextEntry={true}
+									secureTextEntry={!showPassword}
+									icon={showPassword ? 'eye-off' : 'eye'}
+									onPressRightIcon={() => setShowPassword(!showPassword)}
 								/>
 							</View>
 

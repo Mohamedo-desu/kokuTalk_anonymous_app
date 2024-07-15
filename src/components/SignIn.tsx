@@ -20,6 +20,9 @@ const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
+	const [isPasswordEmpty, setIsPasswordEmpty] = useState(true)
+
+	const [showPassword, setShowPassword] = useState(false)
 
 	const updateUser = useAuthStoreSelectors.use.updateUser()
 
@@ -60,9 +63,17 @@ const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 
 			setEmail(email || '')
 			setPassword(password || '')
+			setIsPasswordEmpty(password?.length === 0)
 		}
 		fetchStoredValues()
 	}, [])
+
+	const handlePasswordChange = (password: string) => {
+		if (isPasswordEmpty) {
+			return
+		}
+		setIsPasswordEmpty(password.length === 0)
+	}
 
 	return (
 		<LinearGradient
@@ -100,11 +111,16 @@ const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 									errors={errors.password}
 									touched={touched.password}
 									value={values.password}
-									handleChange={handleChange('password')}
+									handleChange={(e) => {
+										handleChange('password')(e)
+										handlePasswordChange(e)
+									}}
 									handleBlur={handleBlur('password')}
 									autoComplete={'password'}
 									maxLength={35}
-									secureTextEntry={true}
+									secureTextEntry={!showPassword}
+									icon={isPasswordEmpty ? (showPassword ? 'eye-off' : 'eye') : null}
+									onPressRightIcon={() => setShowPassword(!showPassword)}
 								/>
 							</View>
 
