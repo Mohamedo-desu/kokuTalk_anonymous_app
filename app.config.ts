@@ -83,7 +83,7 @@ export default {
 			GOOGLE_SERVICES_JSON: process.env.GOOGLE_SERVICES_JSON,
 		},
 		runtimeVersion: {
-			policy: 'appVersion',
+			policy: 'fingerprint',
 		},
 		updates: {
 			url: 'https://u.expo.dev/911e2d2e-e548-4ba5-94ac-a87712b2bcc9',
