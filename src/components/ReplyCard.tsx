@@ -1,4 +1,5 @@
 import useIsAnonymous from '@/hooks/useIsAnonymous'
+import { moderateContent } from '@/services/openAi/userAiActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { REPLYPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
@@ -167,11 +168,13 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 	const renderBodyDisplay = () => (
 		<TouchableOpacity style={styles.body} activeOpacity={0.7}>
 			<Text style={[styles.replyText, { color: theme.colors.typography }]}>
-				{showFullReply
-					? reply_text
-					: reply_text.length > REPLY_LENGTH
-						? reply_text.slice(0, REPLY_LENGTH) + '...'
-						: reply_text}
+				{moderateContent(
+					showFullReply
+						? reply_text
+						: reply_text.length > REPLY_LENGTH
+							? reply_text.slice(0, REPLY_LENGTH) + '...'
+							: reply_text,
+				)}
 			</Text>
 			{reply_text.length > REPLY_LENGTH && (
 				<TouchableOpacity onPress={() => setShowFullReply(!showFullReply)}>

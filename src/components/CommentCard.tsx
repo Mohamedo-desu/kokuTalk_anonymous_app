@@ -1,6 +1,7 @@
 import { PAGE_SIZE } from '@/constants/appDetails'
 import useIsAnonymous from '@/hooks/useIsAnonymous'
 import { fetchCommentReplies } from '@/services/commentActions'
+import { moderateContent } from '@/services/openAi/userAiActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { COMMENTPROPS, REPLYPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
@@ -233,11 +234,13 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 	const renderBodyDisplay = () => (
 		<TouchableOpacity style={styles.body} activeOpacity={0.7}>
 			<Text style={[styles.commentText, { color: theme.colors.typography }]}>
-				{showFullComment
-					? comment_text
-					: comment_text.length > COMMENT_LENGTH
-						? comment_text.slice(0, COMMENT_LENGTH) + '...'
-						: comment_text}
+				{moderateContent(
+					showFullComment
+						? comment_text
+						: comment_text.length > COMMENT_LENGTH
+							? comment_text.slice(0, COMMENT_LENGTH) + '...'
+							: comment_text,
+				)}
 			</Text>
 			{comment_text.length > COMMENT_LENGTH && (
 				<TouchableOpacity onPress={() => setShowFullComment(!showFullComment)}>

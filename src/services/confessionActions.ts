@@ -239,6 +239,8 @@ export const updateSharedConfessions = async () => {
 
 		confessionsToShare = JSON.parse(confessionsToShare)
 
+		await deleteStoredValues([CONFESSION_STORED_KEYS.CONFESSIONS_TO_SHARE])
+
 		const batch = writeBatch(db)
 
 		confessionsToShare.forEach((confessionId: string) => {
@@ -247,8 +249,6 @@ export const updateSharedConfessions = async () => {
 		})
 
 		await batch.commit()
-
-		await deleteStoredValues([CONFESSION_STORED_KEYS.CONFESSIONS_TO_SHARE])
 	} catch (error: any) {
 		throw new Error(error.message || 'An error occurred while updating shared confessions')
 	}

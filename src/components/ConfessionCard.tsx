@@ -1,4 +1,5 @@
 import useIsAnonymous from '@/hooks/useIsAnonymous'
+import { moderateContent } from '@/services/openAi/userAiActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { CONFESSIONPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
@@ -7,6 +8,7 @@ import {
 	deleteConfession,
 	disLikeConfession,
 	favoriteConfession,
+	generateRandomColor,
 	likeConfession,
 	reportConfession,
 	shareConfession,
@@ -36,11 +38,13 @@ const ConfessionCard = ({
 	item,
 	numberOfLines,
 	isDetailsScreen = false,
+	isPreview,
 	index,
 }: {
 	item: CONFESSIONPROPS
 	numberOfLines: number
 	isDetailsScreen?: boolean
+	isPreview?: boolean
 	index?: number
 }): JSX.Element => {
 	const isAnonymous = useIsAnonymous()
@@ -70,17 +74,20 @@ const ConfessionCard = ({
 
 	const animatedAddCommentHeight = useSharedValue(0)
 	const toggleCommentCard = useCallback(() => {
+		if (isPreview) return
 		animatedAddCommentHeight.value = animatedAddCommentHeight.value > 0 ? 0 : moderateScale(85)
 	}, [animatedAddCommentHeight])
 
 	// CONFESSION FUNCTIONS
 	const navigateToDetails = useCallback(() => {
+		if (isPreview) return
 		router.navigate({
 			pathname: '/(main)/confession_details',
 			params: { id },
 		})
 	}, [id])
 	const handleLikeConfession = useCallback(async () => {
+		if (isPreview) return
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
@@ -94,6 +101,7 @@ const ConfessionCard = ({
 		})
 	}, [isAnonymous, likes, dislikes, id])
 	const handleDislikeConfession = useCallback(async () => {
+		if (isPreview) return
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
@@ -108,6 +116,7 @@ const ConfessionCard = ({
 		})
 	}, [isAnonymous, likes, dislikes, id])
 	const handleAddComment = useCallback(async () => {
+		if (isPreview) return
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
@@ -122,12 +131,14 @@ const ConfessionCard = ({
 		})
 	}, [newComment, id])
 	const handleFavorite = useCallback(async () => {
+		if (isPreview) return
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
 		await favoriteConfession({ id, isFavorite, setIsFavorite, itemFavorites: item.favorites })
 	}, [isAnonymous, isFavorite, id])
 	const handleShareConfession = useCallback(async () => {
+		if (isPreview) return
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
@@ -145,6 +156,7 @@ const ConfessionCard = ({
 		})
 	}, [isAnonymous, id])
 	const handleDeleteConfession = useCallback(async () => {
+		if (isPreview) return
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
@@ -157,6 +169,7 @@ const ConfessionCard = ({
 		setDeleting(false)
 	}, [isAnonymous, id])
 	const handleReportConfession = useCallback(async () => {
+		if (isPreview) return
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
@@ -351,10 +364,7 @@ const ConfessionCard = ({
 			activeOpacity={isDetailsScreen ? 1 : 0.7}>
 			<TouchableOpacity activeOpacity={1} onPress={() => undefined} style={styles.tagsContainer}>
 				{confession_types?.map((type) => (
-					<TouchableOpacity
-						activeOpacity={0.8}
-						key={type}
-						style={[styles.confessionTypeCon, { backgroundColor: theme.colors.primary[500] }]}>
+					<TouchableOpacity activeOpacity={0.8} key={type} style={[styles.confessionTypeCon]}>
 						<Text style={[styles.confessionTypeText, { color: theme.colors.white }]}>#{type}</Text>
 					</TouchableOpacity>
 				))}
@@ -362,11 +372,13 @@ const ConfessionCard = ({
 			{isDetailsScreen ? (
 				<>
 					<Text style={[styles.confessionText, { color: theme.colors.typography }]}>
-						{showFullReply
-							? confession_text
-							: confession_text.length > CONFESSION_LENGTH
-								? confession_text.slice(0, CONFESSION_LENGTH) + '...'
-								: confession_text}
+						{moderateContent(
+							showFullReply
+								? confession_text
+								: confession_text.length > CONFESSION_LENGTH
+									? confession_text.slice(0, CONFESSION_LENGTH) + '...'
+									: confession_text,
+						)}
 					</Text>
 					{confession_text.length > CONFESSION_LENGTH && (
 						<TouchableOpacity onPress={() => setShowFullReply(!showFullReply)}>
@@ -380,7 +392,7 @@ const ConfessionCard = ({
 				<Text
 					style={[styles.confessionText, { color: theme.colors.typography }]}
 					numberOfLines={numberOfLines}>
-					{confession_text}
+					{moderateContent(confession_text)}
 				</Text>
 			)}
 		</TouchableOpacity>
@@ -495,11 +507,12 @@ const stylesheet = createStyleSheet({
 		marginVertical: moderateScale(10),
 	},
 	confessionTypeCon: {
+		backgroundColor: generateRandomColor(),
 		alignSelf: 'flex-start',
 		paddingHorizontal: moderateScale(10),
 		borderRadius: moderateScale(20),
 		marginBottom: moderateScale(10),
-		opacity: 0.7,
+		opacity: 0.9,
 	},
 	confessionTypeText: {
 		fontFamily: 'Italic',

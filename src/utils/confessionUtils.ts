@@ -6,6 +6,12 @@ import { Share } from 'react-native'
 import { Toast } from 'react-native-toast-notifications'
 import { getStoredValues, saveSecurely } from './storageUtils'
 
+export const generateRandomColor = () => {
+	const colorsArray = ['#FF5733', '#3357FF', '#FF33A1', '#A133FF', '#FFA533', '#5733FF', '#FF3357']
+	const randomIndex = Math.floor(Math.random() * colorsArray.length)
+	return colorsArray[randomIndex]
+}
+
 export const likeConfession = async ({
 	id,
 	likes,

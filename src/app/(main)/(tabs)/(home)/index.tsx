@@ -10,7 +10,16 @@ import { getStoredValues, saveSecurely } from '@/utils/storageUtils'
 import { FlashList } from '@shopify/flash-list'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useCallback, useEffect, useState } from 'react'
-import { ActivityIndicator, RefreshControl, ScrollView, Text, View } from 'react-native'
+import {
+	ActivityIndicator,
+	KeyboardAvoidingView,
+	Platform,
+	RefreshControl,
+	ScrollView,
+	Text,
+	View,
+} from 'react-native'
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { moderateScale } from 'react-native-size-matters'
@@ -185,62 +194,76 @@ const HomePage = () => {
 			start={{ x: 0, y: 0 }}
 			end={{ x: 0, y: 0 }}
 			style={styles.container}>
-			{loading && confessions.length === 0 ? (
-				<ScrollView
-					style={{ flex: 1 }}
-					contentContainerStyle={[
-						styles.scrollViewContent,
-						{ paddingBottom: safeAreaInsets.bottom + moderateScale(80) },
-					]}>
-					{Array(5)
-						.fill(null)
-						.map((_, index) => (
-							<Skeleton
-								key={index}
-								width={DEVICE_WIDTH - moderateScale(25)}
-								height={moderateScale(150)}
-								style={styles.skeleton}
-							/>
-						))}
-				</ScrollView>
-			) : (
-				<AnimatedFlatlist
-					data={confessions}
-					renderItem={renderConfessionCard}
-					refreshControl={
-						<RefreshControl
-							onRefresh={() => loadMoreConfessions({ prepend: true })}
-							refreshing={refreshing}
-							tintColor={theme.colors.primary[500]}
-							colors={[theme.colors.primary[500], theme.colors.primary[400]]}
-							style={{ backgroundColor: theme.colors.gray[300] }}
+			<KeyboardAvoidingView
+				style={{ flex: 1 }}
+				behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+				keyboardVerticalOffset={moderateScale(100)}>
+				<KeyboardAwareScrollView
+					contentContainerStyle={{ flexGrow: 1 }}
+					scrollEnabled={true}
+					enableOnAndroid={true}
+					enableAutomaticScroll={true}
+					keyboardOpeningTime={0}
+					extraScrollHeight={moderateScale(60)}
+					keyboardShouldPersistTaps="handled">
+					{loading && confessions.length === 0 ? (
+						<ScrollView
+							style={{ flex: 1 }}
+							contentContainerStyle={[
+								styles.scrollViewContent,
+								{ paddingBottom: safeAreaInsets.bottom + moderateScale(80) },
+							]}>
+							{Array(5)
+								.fill(null)
+								.map((_, index) => (
+									<Skeleton
+										key={index}
+										width={DEVICE_WIDTH - moderateScale(25)}
+										height={moderateScale(150)}
+										style={styles.skeleton}
+									/>
+								))}
+						</ScrollView>
+					) : (
+						<AnimatedFlatlist
+							data={confessions}
+							renderItem={renderConfessionCard}
+							refreshControl={
+								<RefreshControl
+									onRefresh={() => loadMoreConfessions({ prepend: true })}
+									refreshing={refreshing}
+									tintColor={theme.colors.primary[500]}
+									colors={[theme.colors.primary[500], theme.colors.primary[400]]}
+									style={{ backgroundColor: theme.colors.gray[300] }}
+								/>
+							}
+							keyboardShouldPersistTaps="handled"
+							keyExtractor={(item: CONFESSIONPROPS) => item.id}
+							contentContainerStyle={{
+								paddingBottom: safeAreaInsets.bottom + moderateScale(80),
+								paddingTop: moderateScale(10),
+							}}
+							estimatedItemSize={200}
+							indicatorStyle={theme.colors.typography}
+							onScrollEndDrag={() => loadMoreConfessions({ prepend: false })}
+							ListFooterComponent={() =>
+								fetchingMore && (
+									<View style={{ padding: safeAreaInsets.bottom }}>
+										<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
+									</View>
+								)
+							}
+							ListEmptyComponent={ListEmptyComponent}
+							viewabilityConfig={{
+								itemVisiblePercentThreshold: 100,
+								minimumViewTime: 5000,
+								waitForInteraction: false,
+							}}
+							onViewableItemsChanged={onViewableItemsChanged}
 						/>
-					}
-					keyboardShouldPersistTaps="handled"
-					keyExtractor={(item: CONFESSIONPROPS) => item.id}
-					contentContainerStyle={{
-						paddingBottom: safeAreaInsets.bottom + moderateScale(300),
-						paddingTop: moderateScale(10),
-					}}
-					estimatedItemSize={200}
-					indicatorStyle={theme.colors.typography}
-					onScrollEndDrag={() => loadMoreConfessions({ prepend: false })}
-					ListFooterComponent={() =>
-						fetchingMore && (
-							<View style={{ padding: safeAreaInsets.bottom }}>
-								<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
-							</View>
-						)
-					}
-					ListEmptyComponent={ListEmptyComponent}
-					viewabilityConfig={{
-						itemVisiblePercentThreshold: 100,
-						minimumViewTime: 5000,
-						waitForInteraction: false,
-					}}
-					onViewableItemsChanged={onViewableItemsChanged}
-				/>
-			)}
+					)}
+				</KeyboardAwareScrollView>
+			</KeyboardAvoidingView>
 		</LinearGradient>
 	)
 }

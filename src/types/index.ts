@@ -18,14 +18,7 @@ export interface CONFESSIONPROPS {
 	shares: string[]
 	views: string[]
 	favorites: string[]
-	user: {
-		id: string
-		display_name: string
-		user_name: string
-		photo_url: string
-		gender: string
-		age: string
-	}
+	user: User
 	reports: string[]
 }
 
@@ -47,7 +40,6 @@ export interface User {
 	id: string
 	display_name: string
 	email: string
-	user_name: string
 	photo_url: string
 	gender: string
 	age: string

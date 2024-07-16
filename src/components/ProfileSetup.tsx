@@ -1,5 +1,6 @@
 import { FEMALE_AVATARS, MALE_AVATARS } from '@/constants/userAvatars'
 import { signUpFirebase } from '@/services/authActions'
+import { generateDisplayName } from '@/services/openAi/userAiActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { User } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
@@ -18,8 +19,7 @@ const ProfileSetup = forwardRef(
 
 		const updateUser = useAuthStoreSelectors.use.updateUser()
 
-		const { photo_url, age, gender, display_name, user_name, password, email } =
-			useAuthStoreSelectors.use.currentUser()
+		const { photo_url, age, gender, password, email } = useAuthStoreSelectors.use.currentUser()
 
 		const PROFILE_AVATARS = useMemo(() => {
 			return gender === 'male' ? MALE_AVATARS : FEMALE_AVATARS
@@ -35,14 +35,14 @@ const ProfileSetup = forwardRef(
 		const handleSignUp = async () => {
 			try {
 				setLoading(true)
+				const generatedName = await generateDisplayName()
 				const body: User = {
 					id: '',
 					age,
 					email,
 					gender,
 					photo_url,
-					user_name,
-					display_name,
+					display_name: generatedName,
 					replies: [],
 					comments: [],
 					confessions: [],

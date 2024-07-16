@@ -11,7 +11,15 @@ import { FlashList } from '@shopify/flash-list'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useLocalSearchParams } from 'expo-router'
 import React, { useCallback, useEffect, useState } from 'react'
-import { ActivityIndicator, RefreshControl, Text, View } from 'react-native'
+import {
+	ActivityIndicator,
+	KeyboardAvoidingView,
+	Platform,
+	RefreshControl,
+	Text,
+	View,
+} from 'react-native'
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import Animated, {
 	useAnimatedScrollHandler,
 	useAnimatedStyle,
@@ -118,7 +126,7 @@ const ConfessionDetails = () => {
 				)}
 			</View>
 		)
-	}, [theme.colors.gray[400]])
+	}, [theme.colors.gray[400], commentsLoading, isNetwork])
 	const loadMoreConfessions = async ({ prepend }: { prepend: boolean }) => {
 		try {
 			if (noMoreDocuments) return
@@ -198,81 +206,94 @@ const ConfessionDetails = () => {
 			start={{ x: 0, y: 0 }}
 			end={{ x: 0, y: 0 }}
 			style={styles.container}>
-			{loading ? (
-				<View style={{ alignItems: 'center', flex: 1 }}>
-					<Skeleton
-						width={DEVICE_WIDTH - moderateScale(25)}
-						height={moderateScale(200)}
-						style={[styles.skeleton, { marginBottom: moderateScale(10) }]}
-					/>
-					{Array(4)
-						.fill(null)
-						.map((_, index) => (
+			<KeyboardAvoidingView
+				style={{ flex: 1 }}
+				behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+				keyboardVerticalOffset={moderateScale(100)}>
+				<KeyboardAwareScrollView
+					contentContainerStyle={{ flexGrow: 1 }}
+					scrollEnabled={true}
+					enableOnAndroid={true}
+					enableAutomaticScroll={true}
+					keyboardOpeningTime={0}
+					extraScrollHeight={moderateScale(60)}
+					keyboardShouldPersistTaps="handled">
+					{loading ? (
+						<View style={{ alignItems: 'center', flex: 1 }}>
 							<Skeleton
-								key={index}
 								width={DEVICE_WIDTH - moderateScale(25)}
-								height={moderateScale(80)}
-								style={styles.skeleton}
+								height={moderateScale(200)}
+								style={[styles.skeleton, { marginBottom: moderateScale(10) }]}
 							/>
-						))}
-				</View>
-			) : (
-				<>
-					<AnimatedFlatlist
-						data={comments}
-						renderItem={renderCommentCard}
-						refreshControl={
-							<RefreshControl
-								onRefresh={() => loadMoreConfessions({ prepend: true })}
-								refreshing={refreshing}
-								tintColor={theme.colors.primary[500]}
-								colors={[theme.colors.primary[500], theme.colors.primary[400]]}
-								style={{ backgroundColor: theme.colors.gray[300] }}
+							{Array(4)
+								.fill(null)
+								.map((_, index) => (
+									<Skeleton
+										key={index}
+										width={DEVICE_WIDTH - moderateScale(25)}
+										height={moderateScale(80)}
+										style={styles.skeleton}
+									/>
+								))}
+						</View>
+					) : (
+						<>
+							<AnimatedFlatlist
+								data={comments}
+								renderItem={renderCommentCard}
+								refreshControl={
+									<RefreshControl
+										onRefresh={() => loadMoreConfessions({ prepend: true })}
+										refreshing={refreshing}
+										tintColor={theme.colors.primary[500]}
+										colors={[theme.colors.primary[500], theme.colors.primary[400]]}
+										style={{ backgroundColor: theme.colors.gray[300] }}
+									/>
+								}
+								keyExtractor={(item: COMMENTPROPS) => item.id}
+								contentContainerStyle={{
+									paddingBottom: safeAreaInsets.bottom + moderateScale(80),
+									paddingTop: moderateScale(5),
+								}}
+								estimatedItemSize={200}
+								indicatorStyle={theme.colors.typography}
+								onScrollEndDrag={() => loadMoreConfessions({ prepend: false })}
+								ListHeaderComponent={
+									confession && (
+										<>
+											<ConfessionCard item={confession} numberOfLines={0} isDetailsScreen={true} />
+											<View style={{ marginVertical: moderateScale(5) }} />
+										</>
+									)
+								}
+								ListFooterComponent={() =>
+									fetchingMore && (
+										<View style={{ padding: safeAreaInsets.bottom }}>
+											<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
+										</View>
+									)
+								}
+								ListEmptyComponent={ListEmptyComponent}
+								onScroll={scrollHandler}
 							/>
-						}
-						keyboardShouldPersistTaps="handled"
-						keyExtractor={(item: COMMENTPROPS) => item.id}
-						contentContainerStyle={{
-							paddingBottom: safeAreaInsets.bottom + moderateScale(300),
-							paddingTop: moderateScale(5),
-						}}
-						estimatedItemSize={200}
-						indicatorStyle={theme.colors.typography}
-						onScrollEndDrag={() => loadMoreConfessions({ prepend: false })}
-						ListHeaderComponent={
-							confession && (
-								<>
-									<ConfessionCard item={confession} numberOfLines={0} isDetailsScreen={true} />
-									<View style={{ marginVertical: moderateScale(5) }} />
-								</>
-							)
-						}
-						ListFooterComponent={() =>
-							fetchingMore && (
-								<View style={{ padding: safeAreaInsets.bottom }}>
-									<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
-								</View>
-							)
-						}
-						ListEmptyComponent={ListEmptyComponent}
-						onScroll={scrollHandler}
-					/>
 
-					{confession?.user && (
-						<AnimatedHeader
-							item={{
-								confession_text: confession.confession_text,
-								upVotes: confession.likes.length - confession.dislikes.length,
-								commentCount: confession.comments.length,
-								viewsCount: confession.views.length,
-								sharesCount: confession.shares.length,
-								favCount: confession.favorites.length,
-							}}
-							style={rnStyles}
-						/>
+							{confession?.user && (
+								<AnimatedHeader
+									item={{
+										confession_text: confession.confession_text,
+										upVotes: confession.likes.length - confession.dislikes.length,
+										commentCount: confession.comments.length,
+										viewsCount: confession.views.length,
+										sharesCount: confession.shares.length,
+										favCount: confession.favorites.length,
+									}}
+									style={rnStyles}
+								/>
+							)}
+						</>
 					)}
-				</>
-			)}
+				</KeyboardAwareScrollView>
+			</KeyboardAvoidingView>
 		</LinearGradient>
 	)
 }
