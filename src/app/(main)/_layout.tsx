@@ -2,7 +2,6 @@ import DrawerContent from '@/components/DrawerContent'
 import GradientCommentHeader from '@/components/GradientCommentHeader'
 import useNetworkState from '@/hooks/useNetworkState'
 import useScheduleAll from '@/hooks/useScheduleAll'
-import useUpdates from '@/hooks/useUpdates'
 import { Stack } from 'expo-router'
 import { Drawer } from 'expo-router/drawer'
 
@@ -14,7 +13,7 @@ import { Drawer } from 'expo-router/drawer'
 const MainLayout = (): JSX.Element => {
 	useNetworkState()
 	useScheduleAll()
-	useUpdates()
+	//useUpdates()
 
 	return (
 		<Drawer

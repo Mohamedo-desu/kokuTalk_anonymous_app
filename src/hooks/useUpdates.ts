@@ -1,30 +1,40 @@
 import * as Updates from 'expo-updates'
 import { useEffect } from 'react'
-import { Alert } from 'react-native'
+import { Alert, Platform } from 'react-native'
 
 export default function useUpdates() {
-	const { isUpdateAvailable } = Updates.useUpdates()
-
 	useEffect(() => {
-		if (isUpdateAvailable) {
-			Updates.fetchUpdateAsync()
-				.then(() => {
-					Alert.alert('Minor fixes are available !', ' Would you like to Restart now?', [
+		const checkForUpdates = async () => {
+			try {
+				const { isAvailable } = await Updates.checkForUpdateAsync()
+
+				if (isAvailable) {
+					Alert.alert('Minor fixes available', 'Would you like to update now?', [
 						{
 							text: 'Cancel',
 							style: 'cancel',
 						},
 						{
 							text: 'OK',
-							onPress: () => Updates.reloadAsync(),
+							onPress: async () => {
+								await Updates.fetchUpdateAsync()
+								if (Platform.OS === 'web') {
+									window.location.reload()
+								} else {
+									Updates.reloadAsync()
+								}
+							},
 						},
 					])
-				})
-				.catch(() => {
-					Alert.alert('Update error', 'An error occurred while checking for updates.')
-				})
+				}
+			} catch (error) {
+				console.error('Error checking for updates:', error)
+				Alert.alert('Update Error', 'An error occurred while checking for updates.')
+			}
 		}
-	}, [isUpdateAvailable])
+
+		checkForUpdates()
+	}, [])
 
 	return null
 }

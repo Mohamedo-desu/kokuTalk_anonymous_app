@@ -10,6 +10,7 @@ import {
 	KeyboardAvoidingView,
 	Modal,
 	Platform,
+	ScrollView,
 	Text,
 	TextInput,
 	TouchableOpacity,
@@ -216,7 +217,7 @@ const AddConfession = () => {
 					setShowPreviewModal(false)
 				}}
 				animationType="slide">
-				<View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+				<ScrollView style={{ flex: 1, backgroundColor: theme.colors.background }}>
 					<View style={styles.modalHeader}>
 						<Ionicons
 							name="close-circle-sharp"
@@ -251,7 +252,7 @@ const AddConfession = () => {
 						isPreview={true}
 						numberOfLines={0}
 					/>
-				</View>
+				</ScrollView>
 			</Modal>
 			<Loader visible={loading} text="Confessing..." />
 		</LinearGradient>

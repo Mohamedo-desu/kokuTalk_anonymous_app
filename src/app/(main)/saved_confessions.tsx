@@ -32,7 +32,7 @@ const SavedConfessions = () => {
 			return null
 		}
 
-		return <ConfessionCard item={item} />
+		return <ConfessionCard item={item} isDetailsScreen={false} numberOfLines={5} />
 	}, [])
 
 	const ListEmptyComponent = useCallback(() => {

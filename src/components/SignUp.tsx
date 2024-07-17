@@ -134,6 +134,25 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 									</Text>
 								</TouchableOpacity>
 							</View>
+							<View style={styles.privacyContainer}>
+								<TouchableOpacity activeOpacity={0.7} onPress={goToSignIn}>
+									<Text style={[styles.text, { color: theme.colors.primary[300] }]}>
+										By continuing, you acknowledge that you have read and agree to our{' '}
+										<Text
+											style={[styles.linkText, { color: theme.colors.primary[400] }]}
+											onPress={() => {}}>
+											Terms & Conditions
+										</Text>{' '}
+										and{' '}
+										<Text
+											style={[styles.linkText, { color: theme.colors.primary[400] }]}
+											onPress={() => {}}>
+											Privacy Policy
+										</Text>
+										.
+									</Text>
+								</TouchableOpacity>
+							</View>
 						</View>
 					)}
 				</Formik>
@@ -174,5 +193,19 @@ const stylesheet = createStyleSheet({
 	signInText: {
 		fontFamily: 'Regular',
 		fontSize: moderateScale(13),
+	},
+	privacyContainer: {
+		position: 'absolute',
+		bottom: '10%',
+		left: '5%',
+		right: '5%',
+		alignItems: 'center',
+	},
+	text: {
+		fontSize: 14,
+		textAlign: 'center',
+	},
+	linkText: {
+		fontWeight: 'bold',
 	},
 })

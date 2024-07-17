@@ -1,7 +1,8 @@
 import { useSettingsStoreSelectors } from '@/store/settingsStore'
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
+import { StatusBar } from 'expo-status-bar'
 import React, { PropsWithChildren, useEffect } from 'react'
-import { StatusBar, useColorScheme } from 'react-native'
+import { useColorScheme } from 'react-native'
 import { UnistylesRuntime } from 'react-native-unistyles'
 
 const CustomThemeProvider = ({ children }: PropsWithChildren) => {
@@ -16,13 +17,13 @@ const CustomThemeProvider = ({ children }: PropsWithChildren) => {
 
 	const isDarkTheme = theme === 'system' ? colorScheme === 'dark' : theme === 'dark'
 	const currentTheme = isDarkTheme ? DarkTheme : DefaultTheme
-	const statusBarStyle = isDarkTheme ? 'light-content' : 'dark-content'
+	const statusBarStyle = isDarkTheme ? 'light' : 'dark'
 
 	return (
 		<ThemeProvider value={currentTheme}>
 			<>
 				{children}
-				<StatusBar barStyle={statusBarStyle} animated />
+				<StatusBar style={statusBarStyle} animated />
 			</>
 		</ThemeProvider>
 	)

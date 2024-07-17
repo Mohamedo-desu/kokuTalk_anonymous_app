@@ -178,6 +178,7 @@ const stylesheet = createStyleSheet({
 	},
 	formikContainer: {
 		flex: 1,
+		flexGrow: 1,
 		justifyContent: 'center',
 		alignItems: 'center',
 		paddingHorizontal: moderateScale(15),
