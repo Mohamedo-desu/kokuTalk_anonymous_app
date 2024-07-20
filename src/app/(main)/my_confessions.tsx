@@ -32,7 +32,7 @@ const MyConfessions = () => {
 			return null
 		}
 
-		return <ConfessionCard item={item} isDetailsScreen={false} numberOfLines={5} />
+		return <ConfessionCard item={item} isDetailsScreen={false} numberOfLines={3} />
 	}, [])
 
 	const ListEmptyComponent = useCallback(() => {
@@ -156,7 +156,7 @@ const MyConfessions = () => {
 					renderItem={renderConfessionCard}
 					keyExtractor={(item: CONFESSIONPROPS) => item.id}
 					contentContainerStyle={{
-						paddingBottom: safeAreaInsets.bottom + moderateScale(300),
+						paddingBottom: safeAreaInsets.bottom + moderateScale(85),
 						paddingTop: moderateScale(10),
 					}}
 					keyboardShouldPersistTaps="handled"

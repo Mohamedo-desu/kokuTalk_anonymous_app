@@ -48,7 +48,7 @@ const HomePage = () => {
 				return null
 			}
 
-			return <ConfessionCard item={item} index={index} numberOfLines={2} />
+			return <ConfessionCard item={item} index={index} numberOfLines={3} />
 		},
 		[],
 	)

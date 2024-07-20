@@ -4,7 +4,7 @@ import { useAuthStoreSelectors } from '@/store/authStore'
 import { REPLYPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
 import { shortenNumber } from '@/utils/generalUtils'
-import { deleteReply, disLikeReply, likeReply, reportReply } from '@/utils/ReplyUtils'
+import { deleteReply, disLikeReply, likeReply } from '@/utils/ReplyUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { Feather } from '@expo/vector-icons'
 import { useCallback, useState } from 'react'
@@ -12,8 +12,9 @@ import { ActivityIndicator, Image, Text, TouchableOpacity, View } from 'react-na
 import Animated from 'react-native-reanimated'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
-import AnimatedMenu from './AnimatedMenu'
 import GuestModal from './GuestModal'
+import MenuOptions from './MenuOptions'
+import ReportModal from './ReportModal'
 
 /**
  * Renders a Reply card component
@@ -35,6 +36,8 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 	const { display_name, gender, age, photo_url } = item.user
 
 	const [guestModalVisible, setGuestModalVisible] = useState(false)
+	const [reportModalVisible, setReportModalVisible] = useState(false)
+
 	const [deleting, setDeleting] = useState(false)
 	const [reporting, setReporting] = useState(false)
 
@@ -90,13 +93,7 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 			return setGuestModalVisible(true)
 		}
 		if (reporting) return
-		setReporting(true)
-		await reportReply({
-			replyId: id,
-			report_reason: 'unknown',
-			reported_by: userId,
-		})
-		setReporting(false)
+		setReportModalVisible(true)
 	}, [isAnonymous, id])
 	// REPLY FUNCTIONS END
 
@@ -204,18 +201,18 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 			{deleting || reporting ? (
 				<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
 			) : isOwner ? (
-				<AnimatedMenu
-					options={[
+				<MenuOptions
+					menuItems={[
 						{
 							title: 'Delete',
 							onPress: handleDeleteReply,
-							icon: 'trash-outline',
+							icon: 'trash-can-outline',
 						},
 					]}
 				/>
 			) : (
-				<AnimatedMenu
-					options={[
+				<MenuOptions
+					menuItems={[
 						{
 							title: 'Report',
 							onPress: handleReportReply,
@@ -241,6 +238,17 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 			</Animated.View>
 
 			<GuestModal visible={guestModalVisible} onPress={() => setGuestModalVisible(false)} />
+
+			{reportModalVisible && (
+				<ReportModal
+					visible={reportModalVisible}
+					onClose={() => setReportModalVisible(false)}
+					handleReport={handleReportReply}
+					reply_id={id}
+					setReporting={setReporting}
+					reportType="reply"
+				/>
+			)}
 		</>
 	)
 }

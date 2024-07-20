@@ -43,10 +43,13 @@ export interface User {
 	photo_url: string
 	gender: string
 	age: string
+	pushTokens: string[]
 	confessions: CONFESSIONPROPS[]
 	comments: COMMENTPROPS[]
 	replies: string[]
 	favorites: CONFESSIONPROPS[]
+	created_at: string
+	updated_at: string
 }
 
 export interface COMMENTPROPS {
@@ -76,7 +79,7 @@ export interface REPLYPROPS {
 
 export interface REPORTPROPS {
 	confession_id: string
-	report_reason: string
+	report_reason: (string | { other: string })[]
 	reported_by: string
 	created_at: string
 }

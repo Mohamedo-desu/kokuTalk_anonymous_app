@@ -4,7 +4,6 @@ import { DEVICE_WIDTH } from '@/utils'
 import React, { memo, useCallback, useRef } from 'react'
 import { FlatList } from 'react-native'
 import Animated from 'react-native-reanimated'
-import { useStyles } from 'react-native-unistyles'
 
 const PAGES = [
 	{
@@ -18,7 +17,6 @@ const PAGES = [
 ]
 
 const Auth = memo(() => {
-	const { theme } = useStyles()
 	const flatListRef = useRef<FlatList<(typeof PAGES)[number]>>(null)
 
 	const renderItem = useCallback(({ item }: { item: (typeof PAGES)[number] }) => {
@@ -35,18 +33,10 @@ const Auth = memo(() => {
 			pagingEnabled
 			showsHorizontalScrollIndicator={false}
 			scrollEnabled={false}
-			alwaysBounceHorizontal
-			automaticallyAdjustKeyboardInsets
-			centerContent
-			directionalLockEnabled
-			endFillColor={theme.colors.primary[400]}
-			initialNumToRender={2}
-			keyboardDismissMode="on-drag"
 			keyboardShouldPersistTaps="handled"
 			style={{ flex: 1 }}
 			contentContainerStyle={{ flexGrow: 1 }}
-			snapToAlignment="center"
-			decelerationRate="normal"
+			decelerationRate="fast"
 			scrollEventThrottle={16}
 			snapToInterval={DEVICE_WIDTH}
 		/>

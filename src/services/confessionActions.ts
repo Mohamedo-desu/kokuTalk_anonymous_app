@@ -1,6 +1,6 @@
 import { CONFESSION_STORED_KEYS } from '@/constants/appDetails'
 import { useAuthStoreSelectors } from '@/store/authStore'
-import { ADDCONFESSIONPROPS, COMMENTPROPS, CONFESSIONPROPS } from '@/types'
+import { ADDCONFESSIONPROPS, COMMENTPROPS, CONFESSIONPROPS, REPORTPROPS } from '@/types'
 import { db } from '@/utils/firebase'
 import { deleteStoredValues, getStoredValues } from '@/utils/storageUtils'
 import {
@@ -469,7 +469,7 @@ export const reportAConfession = async ({
 	reported_by,
 }: {
 	confessionId: string
-	report_reason: string
+	report_reason: REPORTPROPS['report_reason']
 	reported_by: string
 }) => {
 	try {

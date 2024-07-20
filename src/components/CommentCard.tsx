@@ -5,7 +5,7 @@ import { moderateContent } from '@/services/openAi/userAiActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { COMMENTPROPS, REPLYPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
-import { deleteComment, disLikeComment, likeComment, reportComment } from '@/utils/commentUtils'
+import { deleteComment, disLikeComment, likeComment } from '@/utils/commentUtils'
 import { shortenNumber } from '@/utils/generalUtils'
 import { addReply } from '@/utils/ReplyUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
@@ -17,9 +17,10 @@ import { moderateScale } from 'react-native-size-matters'
 import { Toast } from 'react-native-toast-notifications'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 import AddCommentCard from './AddCommentCard'
-import AnimatedMenu from './AnimatedMenu'
 import GuestModal from './GuestModal'
+import MenuOptions from './MenuOptions'
 import ReplyCard from './ReplyCard'
+import ReportModal from './ReportModal'
 import Skeleton from './Skeleton'
 
 /**
@@ -42,6 +43,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 	const { display_name, gender, age, photo_url } = item.user
 
 	const [guestModalVisible, setGuestModalVisible] = useState(false)
+	const [reportModalVisible, setReportModalVisible] = useState(false)
 
 	const [likes, setLikes] = useState(item.likes)
 	const [dislikes, setdisLikes] = useState(item.dislikes)
@@ -132,13 +134,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 			return setGuestModalVisible(true)
 		}
 		if (reporting) return
-		setReporting(true)
-		await reportComment({
-			commentId: id,
-			report_reason: 'unknown',
-			reported_by: userId,
-		})
-		setReporting(false)
+		setReportModalVisible(true)
 	}, [isAnonymous, id])
 	// COMMENT FUNCTIONS END
 
@@ -271,18 +267,18 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 			{deleting || reporting ? (
 				<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
 			) : isOwner ? (
-				<AnimatedMenu
-					options={[
+				<MenuOptions
+					menuItems={[
 						{
 							title: 'Delete',
 							onPress: handleDeleteComment,
-							icon: 'trash-outline',
+							icon: 'trash-can-outline',
 						},
 					]}
 				/>
 			) : (
-				<AnimatedMenu
-					options={[
+				<MenuOptions
+					menuItems={[
 						{
 							title: 'Report',
 							onPress: handleReportComment,
@@ -394,6 +390,16 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 			/>
 
 			<GuestModal visible={guestModalVisible} onPress={() => setGuestModalVisible(false)} />
+			{reportModalVisible && (
+				<ReportModal
+					visible={reportModalVisible}
+					onClose={() => setReportModalVisible(false)}
+					handleReport={handleReportComment}
+					comment_id={id}
+					setReporting={setReporting}
+					reportType="comment"
+				/>
+			)}
 		</>
 	)
 }

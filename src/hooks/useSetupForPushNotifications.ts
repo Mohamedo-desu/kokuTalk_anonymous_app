@@ -1,23 +1,29 @@
 import { useAuthStoreSelectors } from '@/store/authStore'
-import { saveSecurely } from '@/utils/storageUtils'
+import { getStoredValues } from '@/utils/storageUtils'
 
+import { uploadPushToken } from '@/services/userActions'
 import Constants from 'expo-constants'
 import * as Notifications from 'expo-notifications'
 import { useEffect } from 'react'
 import { Platform } from 'react-native'
 import { useStyles } from 'react-native-unistyles'
+import useIsAnonymous from './useIsAnonymous'
 
 function handleRegistrationError(errorMessage: string) {
-	alert(errorMessage)
-	throw new Error(errorMessage)
+	console.error(errorMessage)
 }
 
 const useSetupForPushNotifications = () => {
 	const { theme } = useStyles()
+	const isAnonymous = useIsAnonymous()
 
 	const user = useAuthStoreSelectors.use.currentUser()
 
 	async function registerForPushNotificationsAsync() {
+		const { pushTokenString } = await getStoredValues(['pushTokenString'])
+
+		if (isAnonymous || pushTokenString) return
+
 		if (Platform.OS === 'android') {
 			Notifications.setNotificationChannelAsync('default', {
 				name: 'default',
@@ -49,8 +55,7 @@ const useSetupForPushNotifications = () => {
 				})
 			).data
 
-			saveSecurely([{ key: 'pushTokenString', value: pushTokenString }])
-			return null
+			return uploadPushToken(pushTokenString, user.pushTokens, user.id)
 		} catch (e: unknown) {
 			handleRegistrationError(`${e}`)
 		}
@@ -58,7 +63,7 @@ const useSetupForPushNotifications = () => {
 
 	useEffect(() => {
 		registerForPushNotificationsAsync()
-	}, [user])
+	}, [user, isAnonymous])
 }
 
 export default useSetupForPushNotifications

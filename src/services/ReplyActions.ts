@@ -1,6 +1,6 @@
 import { REPLY_STORED_KEYS } from '@/constants/appDetails'
 import { useAuthStoreSelectors } from '@/store/authStore'
-import { REPLYPROPS } from '@/types'
+import { REPLYPROPS, REPORTPROPS } from '@/types'
 import { db } from '@/utils/firebase'
 import { deleteStoredValues, getStoredValues } from '@/utils/storageUtils'
 import {
@@ -160,7 +160,7 @@ export const reportAReply = async ({
 	reported_by,
 }: {
 	replyId: string
-	report_reason: string
+	report_reason: REPORTPROPS['report_reason']
 	reported_by: string
 }) => {
 	try {

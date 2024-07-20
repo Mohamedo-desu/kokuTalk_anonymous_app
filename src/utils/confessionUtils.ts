@@ -1,6 +1,7 @@
 import { CONFESSION_STORED_KEYS } from '@/constants/appDetails'
 import { deleteAConfession, reportAConfession } from '@/services/confessionActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
+import { REPORTPROPS } from '@/types'
 import { Dispatch, SetStateAction } from 'react'
 import { Share } from 'react-native'
 import { Toast } from 'react-native-toast-notifications'
@@ -312,7 +313,7 @@ export const reportConfession = async ({
 	reported_by,
 }: {
 	confessionId: string
-	report_reason: string
+	report_reason: REPORTPROPS['report_reason']
 	reported_by: string
 }) => {
 	try {

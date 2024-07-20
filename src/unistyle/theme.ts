@@ -1,6 +1,6 @@
-const colors = {
+export const Colors = {
 	primary: {
-		500: '#c95353',
+		500: '#5753C9',
 		400: '#6E7FF3',
 		300: '#3D4E81',
 	},
@@ -31,13 +31,13 @@ export const lightTheme = {
 			100: '#F5F5F5',
 			50: '#fafafa',
 		},
-		...colors,
+		...Colors,
 	},
 	components: {
 		screen: {
 			flex: 1,
 			flexGrow: 1,
-			backgroundColor: colors.white,
+			backgroundColor: Colors.white,
 		},
 	},
 
@@ -56,13 +56,13 @@ export const darkTheme = {
 			100: '#1B1B1B',
 			50: '#1b1a1a',
 		},
-		...colors,
+		...Colors,
 	},
 	components: {
 		screen: {
 			flex: 1,
 			flexGrow: 1,
-			backgroundColor: colors.black,
+			backgroundColor: Colors.black,
 		},
 	},
 

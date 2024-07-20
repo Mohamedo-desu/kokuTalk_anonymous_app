@@ -1,6 +1,7 @@
 import { REPLY_STORED_KEYS } from '@/constants/appDetails'
 import { deleteAReply, reportAReply, uploadReply } from '@/services/ReplyActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
+import { REPORTPROPS } from '@/types'
 import { Dispatch, SetStateAction } from 'react'
 import { Toast } from 'react-native-toast-notifications'
 import { getStoredValues, saveSecurely } from './storageUtils'
@@ -200,7 +201,7 @@ export const reportReply = async ({
 	reported_by,
 }: {
 	replyId: string
-	report_reason: string
+	report_reason: REPORTPROPS['report_reason']
 	reported_by: string
 }) => {
 	try {

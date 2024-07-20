@@ -10,7 +10,6 @@ import {
 	favoriteConfession,
 	generateRandomColor,
 	likeConfession,
-	reportConfession,
 	shareConfession,
 } from '@/utils/confessionUtils'
 import { shortenNumber } from '@/utils/generalUtils'
@@ -18,13 +17,22 @@ import { formatRelativeTime } from '@/utils/timeUtils'
 import { Feather, Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { useCallback, useState } from 'react'
-import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import {
+	ActivityIndicator,
+	Alert,
+	Image,
+	ScrollView,
+	Text,
+	TouchableOpacity,
+	View,
+} from 'react-native'
 import Animated, { useSharedValue } from 'react-native-reanimated'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 import AddCommentCard from './AddCommentCard'
-import AnimatedMenu from './AnimatedMenu'
 import GuestModal from './GuestModal'
+import MenuOptions from './MenuOptions'
+import ReportModal from './ReportModal'
 
 /**
  * Renders a confession card component
@@ -58,6 +66,7 @@ const ConfessionCard = ({
 	const { display_name, gender, age, photo_url } = item.user
 
 	const [guestModalVisible, setGuestModalVisible] = useState(false)
+	const [reportModalVisible, setReportModalVisible] = useState(false)
 
 	const [likes, setLikes] = useState(item.likes)
 	const [dislikes, setdisLikes] = useState(item.dislikes)
@@ -160,27 +169,34 @@ const ConfessionCard = ({
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
-		if (deleting) return
-		setDeleting(true)
-		await deleteConfession({
-			confessionId: id,
-			confessedUserId: item.confessed_by,
-		})
-		setDeleting(false)
+		Alert.alert('Delete Confession', 'Are you sure you want to delete this confession?', [
+			{
+				text: 'Cancel',
+				style: 'cancel',
+			},
+			{
+				text: 'Delete',
+				style: 'destructive',
+				onPress: async () => {
+					if (deleting) return
+					setDeleting(true)
+					await deleteConfession({
+						confessionId: id,
+						confessedUserId: item.confessed_by,
+					})
+					setDeleting(false)
+				},
+			},
+		])
 	}, [isAnonymous, id])
 	const handleReportConfession = useCallback(async () => {
 		if (isPreview) return
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
+
+		setReportModalVisible(true)
 		if (reporting) return
-		setReporting(true)
-		await reportConfession({
-			confessionId: id,
-			report_reason: 'unknown',
-			reported_by: userId,
-		})
-		setReporting(false)
 	}, [isAnonymous, id])
 	// CONFESSION FUNCTIONS END
 
@@ -416,18 +432,18 @@ const ConfessionCard = ({
 			{deleting || reporting ? (
 				<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
 			) : isOwner ? (
-				<AnimatedMenu
-					options={[
+				<MenuOptions
+					menuItems={[
 						{
 							title: 'Delete',
 							onPress: handleDeleteConfession,
-							icon: 'trash-outline',
+							icon: 'trash-can-outline',
 						},
 					]}
 				/>
 			) : (
-				<AnimatedMenu
-					options={[
+				<MenuOptions
+					menuItems={[
 						{
 							title: 'Report',
 							onPress: handleReportConfession,
@@ -458,6 +474,16 @@ const ConfessionCard = ({
 			/>
 
 			<GuestModal visible={guestModalVisible} onPress={() => setGuestModalVisible(false)} />
+			{reportModalVisible && (
+				<ReportModal
+					visible={reportModalVisible}
+					onClose={() => setReportModalVisible(false)}
+					handleReport={handleReportConfession}
+					confession_id={id}
+					setReporting={setReporting}
+					reportType="confession"
+				/>
+			)}
 		</>
 	)
 }
