@@ -211,10 +211,12 @@ export const shareConfession = async ({
 			storedValues[CONFESSION_STORED_KEYS.CONFESSIONS_TO_SHARE] || '[]',
 		)
 
-		const message = `KokuTalk | Confess Anonymously\n\n${messageBody}\n\nConfessed by: ${confesser.display_name} (${confesser.gender}, ${confesser.age} years old)\n\nOpen this confession in KokuTalk: kokutalk://confession_details/${id}`
+		const message = `${messageBody}\n\nConfessed by: ${confesser.display_name} (${confesser.gender}, ${confesser.age} years old)\n\nOpen this confession in KokuTalk: kokutalk://confession_details/${id}`
 
 		const result = await Share.share({
+			title: 'KokuTalk | Confess Anonymously',
 			message: message,
+			url: `kokutalk://confession_details/${id}`,
 		})
 
 		if (result.action === Share.sharedAction) {

@@ -1,5 +1,6 @@
 import useIsAnonymous from '@/hooks/useIsAnonymous'
 import { moderateContent } from '@/services/openAi/userAiActions'
+import { blockUser } from '@/services/userActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { CONFESSIONPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
@@ -57,12 +58,12 @@ const ConfessionCard = ({
 }): JSX.Element => {
 	const isAnonymous = useIsAnonymous()
 
-	const userId = useAuthStoreSelectors.getState().currentUser.id
+	const { id: userId, blocked_users } = useAuthStoreSelectors.getState().currentUser
 
 	const isOwner = item.user?.id === userId
 
 	const { theme, styles } = useStyles(stylesheet)
-	const { id, confession_text, confession_types, created_at } = item
+	const { id, confession_text, confession_types, created_at, confessed_by } = item
 	const { display_name, gender, age, photo_url } = item.user
 
 	const [guestModalVisible, setGuestModalVisible] = useState(false)
@@ -77,6 +78,7 @@ const ConfessionCard = ({
 	const [loading, setLoading] = useState(false)
 	const [deleting, setDeleting] = useState(false)
 	const [reporting, setReporting] = useState(false)
+	const [blocking, setBlocking] = useState(false)
 
 	const [toggleDetails, setToggleDetails] = useState(false)
 	const [showFullReply, setShowFullReply] = useState(false)
@@ -108,7 +110,7 @@ const ConfessionCard = ({
 			setLikes,
 			setdisLikes,
 		})
-	}, [isAnonymous, likes, dislikes, id])
+	}, [isAnonymous, isPreview, likes, dislikes])
 	const handleDislikeConfession = useCallback(async () => {
 		if (isPreview) return
 		if (isAnonymous) {
@@ -123,7 +125,7 @@ const ConfessionCard = ({
 			setLikes,
 			setdisLikes,
 		})
-	}, [isAnonymous, likes, dislikes, id])
+	}, [isAnonymous, isPreview, likes, dislikes])
 	const handleAddComment = useCallback(async () => {
 		if (isPreview) return
 		if (isAnonymous) {
@@ -138,14 +140,14 @@ const ConfessionCard = ({
 			setLoading,
 			setNewComment,
 		})
-	}, [newComment, id])
+	}, [newComment, id, isAnonymous, isPreview, loading])
 	const handleFavorite = useCallback(async () => {
 		if (isPreview) return
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
 		await favoriteConfession({ id, isFavorite, setIsFavorite, itemFavorites: item.favorites })
-	}, [isAnonymous, isFavorite, id])
+	}, [isAnonymous, isPreview, isFavorite])
 	const handleShareConfession = useCallback(async () => {
 		if (isPreview) return
 		if (isAnonymous) {
@@ -163,7 +165,7 @@ const ConfessionCard = ({
 				photo_url,
 			},
 		})
-	}, [isAnonymous, id])
+	}, [isAnonymous, isPreview])
 	const handleDeleteConfession = useCallback(async () => {
 		if (isPreview) return
 		if (isAnonymous) {
@@ -188,7 +190,7 @@ const ConfessionCard = ({
 				},
 			},
 		])
-	}, [isAnonymous, id])
+	}, [isAnonymous, isPreview])
 	const handleReportConfession = useCallback(async () => {
 		if (isPreview) return
 		if (isAnonymous) {
@@ -197,7 +199,28 @@ const ConfessionCard = ({
 
 		setReportModalVisible(true)
 		if (reporting) return
-	}, [isAnonymous, id])
+	}, [isAnonymous, isPreview])
+	const handleBlockUser = useCallback(async () => {
+		if (isPreview) return
+		if (isAnonymous) {
+			return setGuestModalVisible(true)
+		}
+		if (blocking) return
+		if (blocked_users?.includes(confessed_by)) return
+		setBlocking(true)
+		try {
+			await blockUser({ uid: userId, blockUserId: confessed_by })
+			setBlocking(false)
+			Alert.alert(
+				'User Blocked',
+				'You will no longer see this user or their confessions, comments, or replies.',
+				[{ text: 'OK' }],
+			)
+		} catch (error) {
+			console.error('Error blocking user:', error)
+		}
+	}, [isAnonymous, isPreview, blocking, userId, confessed_by])
+
 	// CONFESSION FUNCTIONS END
 
 	// CONFESSION COMPONENTS
@@ -429,7 +452,7 @@ const ConfessionCard = ({
 					</Text>
 				</View>
 			</View>
-			{deleting || reporting ? (
+			{deleting || reporting || blocking ? (
 				<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
 			) : isOwner ? (
 				<MenuOptions
@@ -448,6 +471,11 @@ const ConfessionCard = ({
 							title: 'Report',
 							onPress: handleReportConfession,
 							icon: 'flag-outline',
+						},
+						{
+							title: 'Block',
+							onPress: handleBlockUser,
+							icon: 'account-cancel-outline',
 						},
 					]}
 				/>

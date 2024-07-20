@@ -28,3 +28,10 @@ export const removePushToken = async (uid: string) => {
 
 	await deleteStoredValues(['pushTokenString'])
 }
+
+export const blockUser = async ({ uid, blockUserId }: { uid: string; blockUserId: string }) => {
+	await updateDoc(doc(db, 'users', uid), {
+		blocked_users: arrayUnion(blockUserId),
+		updated_at: new Date().toISOString(),
+	})
+}

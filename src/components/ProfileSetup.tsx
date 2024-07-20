@@ -47,6 +47,8 @@ const ProfileSetup = forwardRef(
 					comments: [],
 					confessions: [],
 					favorites: [],
+					pushTokens: [],
+					blocked_users: [],
 				}
 
 				const user = await signUpFirebase({ email, password, body })

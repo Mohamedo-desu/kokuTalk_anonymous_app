@@ -44,6 +44,7 @@ export interface User {
 	gender: string
 	age: string
 	pushTokens: string[]
+	blocked_users: string[]
 	confessions: CONFESSIONPROPS[]
 	comments: COMMENTPROPS[]
 	replies: string[]

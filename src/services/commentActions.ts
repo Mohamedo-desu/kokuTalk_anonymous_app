@@ -1,6 +1,6 @@
 import { COMMENT_STORED_KEYS } from '@/constants/appDetails'
 import { useAuthStoreSelectors } from '@/store/authStore'
-import { COMMENTPROPS, CONFESSIONPROPS, REPLYPROPS, REPORTPROPS } from '@/types'
+import { COMMENTPROPS, REPLYPROPS, REPORTPROPS } from '@/types'
 import { db } from '@/utils/firebase'
 import { deleteStoredValues, getStoredValues } from '@/utils/storageUtils'
 import {
@@ -140,6 +140,8 @@ export const fetchCommentReplies = async ({
 			return []
 		}
 
+		const { id: userId, blocked_users } = useAuthStoreSelectors.getState().currentUser
+
 		const repliesRef = collection(db, 'replies')
 
 		let q
@@ -165,30 +167,35 @@ export const fetchCommentReplies = async ({
 
 		if (querySnapshot.empty) {
 			setNoMoreDocuments(true)
-
 			return []
 		}
 
 		const replies = await Promise.all(
-			querySnapshot.docs.map(async (confessDoc) => {
-				const reply = confessDoc.data() as REPLYPROPS
+			querySnapshot.docs.map(async (replyDoc) => {
+				const reply = replyDoc.data() as REPLYPROPS
 
 				if (reply.replied_by) {
 					const userDoc = await getUserDataFromFirestore(reply.replied_by)
-
-					reply.user = userDoc as CONFESSIONPROPS['user']
+					reply.user = userDoc as REPLYPROPS['user']
 				}
 
 				return reply
 			}) as Promise<REPLYPROPS>[],
 		)
 
+		if (!userId) {
+			return replies
+		}
+
+		const filteredReplies = replies.filter((reply) => {
+			return !blocked_users?.includes(reply.replied_by) && !reply.reports?.includes(userId)
+		})
+
 		setLastDocumentFetched(querySnapshot.docs[querySnapshot.docs.length - 1])
 
-		return replies
-	} catch (error) {
+		return filteredReplies
+	} catch (error: any) {
 		console.log(error)
-
 		throw new Error('An error occurred while fetching the replies')
 	}
 }

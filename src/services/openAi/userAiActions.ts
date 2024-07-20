@@ -5,25 +5,9 @@ const OPEN_AI_API_KEY = Constants?.expoConfig?.extra?.OPEN_AI_API_KEY
 
 export const generateDisplayName = async () => {
 	try {
-		const response = await axios.post(
-			'https://api.openai.com/v1/engines/davinci-codex/completions',
-			{
-				prompt: 'Generate a unique and creative display name:',
-				max_tokens: 10,
-			},
-			{
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${OPEN_AI_API_KEY}`,
-				},
-			},
-		)
-
-		const displayName = response.data.choices[0].text.trim()
-		return displayName
+		return 'user' + Math.floor(Math.random() * 1000000000)
 	} catch (error) {
 		console.error('Error generating display name:', error)
-		return 'User' + Math.floor(Math.random() * 1000000)
 	}
 }
 export const moderateContent = (text: string) => {

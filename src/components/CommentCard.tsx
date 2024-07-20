@@ -2,6 +2,7 @@ import { PAGE_SIZE } from '@/constants/appDetails'
 import useIsAnonymous from '@/hooks/useIsAnonymous'
 import { fetchCommentReplies } from '@/services/commentActions'
 import { moderateContent } from '@/services/openAi/userAiActions'
+import { blockUser } from '@/services/userActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { COMMENTPROPS, REPLYPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
@@ -11,7 +12,7 @@ import { addReply } from '@/utils/ReplyUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { Feather, MaterialIcons } from '@expo/vector-icons'
 import { useCallback, useEffect, useState } from 'react'
-import { ActivityIndicator, Image, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Alert, Image, Text, TouchableOpacity, View } from 'react-native'
 import Animated, { useSharedValue } from 'react-native-reanimated'
 import { moderateScale } from 'react-native-size-matters'
 import { Toast } from 'react-native-toast-notifications'
@@ -34,12 +35,12 @@ const COMMENT_LENGTH = Math.floor(DEVICE_WIDTH / 2)
 const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): JSX.Element => {
 	const isAnonymous = useIsAnonymous()
 
-	const userId = useAuthStoreSelectors.getState().currentUser.id
+	const { id: userId, blocked_users } = useAuthStoreSelectors.getState().currentUser
 
 	const isOwner = item.user?.id === userId
 
 	const { theme, styles } = useStyles(stylesheet)
-	const { id, comment_text, created_at, confession_id } = item
+	const { id, comment_text, created_at, confession_id, commented_by } = item
 	const { display_name, gender, age, photo_url } = item.user
 
 	const [guestModalVisible, setGuestModalVisible] = useState(false)
@@ -54,6 +55,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 	const [loading, setLoading] = useState(false)
 	const [deleting, setDeleting] = useState(false)
 	const [reporting, setReporting] = useState(false)
+	const [blocking, setBlocking] = useState(false)
 	const [newReply, setNewReply] = useState('')
 
 	const [toggleDetails, setToggleDetails] = useState(false)
@@ -136,6 +138,25 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 		if (reporting) return
 		setReportModalVisible(true)
 	}, [isAnonymous, id])
+	const handleBlockUser = useCallback(async () => {
+		if (isAnonymous) {
+			return setGuestModalVisible(true)
+		}
+		if (blocking) return
+		if (blocked_users?.includes(commented_by)) return
+		setBlocking(true)
+		try {
+			await blockUser({ uid: userId, blockUserId: commented_by })
+			setBlocking(false)
+			Alert.alert(
+				'User Blocked',
+				'You will no longer see this user or their confessions, comments, or replies.',
+				[{ text: 'OK' }],
+			)
+		} catch (error) {
+			console.error('Error blocking user:', error)
+		}
+	}, [isAnonymous, blocking, userId, commented_by])
 	// COMMENT FUNCTIONS END
 
 	// COMMENT COMPONENTS
@@ -264,7 +285,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 				</View>
 			</View>
 
-			{deleting || reporting ? (
+			{deleting || reporting || blocking ? (
 				<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
 			) : isOwner ? (
 				<MenuOptions
@@ -283,6 +304,11 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 							title: 'Report',
 							onPress: handleReportComment,
 							icon: 'flag-outline',
+						},
+						{
+							title: 'Block',
+							onPress: handleBlockUser,
+							icon: 'account-cancel-outline',
 						},
 					]}
 				/>

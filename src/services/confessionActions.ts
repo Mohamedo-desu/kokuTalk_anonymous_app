@@ -35,7 +35,7 @@ export const fetchConfessions = async ({
 	setNoMoreDocuments: Dispatch<SetStateAction<boolean>>
 }) => {
 	try {
-		const userId = useAuthStoreSelectors.getState().currentUser.id
+		const { id: userId, blocked_users } = useAuthStoreSelectors.getState().currentUser
 
 		const confessionsRef = collection(db, 'confessions')
 
@@ -64,7 +64,6 @@ export const fetchConfessions = async ({
 
 				if (confession.confessed_by) {
 					const userDoc = await getUserDataFromFirestore(confession.confessed_by)
-
 					confession.user = userDoc as CONFESSIONPROPS['user']
 				}
 
@@ -76,10 +75,16 @@ export const fetchConfessions = async ({
 			return confessions
 		}
 
+		const filteredConfessions = confessions.filter((confession) => {
+			return (
+				!blocked_users?.includes(confession.confessed_by) && !confession.reports?.includes(userId)
+			)
+		})
+
 		const seenConfessions: CONFESSIONPROPS[] = []
 		const unseenConfessions: CONFESSIONPROPS[] = []
 
-		confessions.forEach((confession) => {
+		filteredConfessions.forEach((confession) => {
 			if (confession.views && confession.views.includes(userId)) {
 				seenConfessions.push(confession)
 			} else {
@@ -356,6 +361,8 @@ export const fetchConfessionComments = async ({
 			return []
 		}
 
+		const { id: userId, blocked_users } = useAuthStoreSelectors.getState().currentUser
+
 		const commentsRef = collection(db, 'comments')
 
 		let q
@@ -381,30 +388,35 @@ export const fetchConfessionComments = async ({
 
 		if (querySnapshot.empty) {
 			setNoMoreDocuments(true)
-
 			return []
 		}
 
 		const comments = await Promise.all(
-			querySnapshot.docs.map(async (confessDoc) => {
-				const comment = confessDoc.data() as COMMENTPROPS
+			querySnapshot.docs.map(async (commentDoc) => {
+				const comment = commentDoc.data() as COMMENTPROPS
 
 				if (comment.commented_by) {
 					const userDoc = await getUserDataFromFirestore(comment.commented_by)
-
-					comment.user = userDoc as CONFESSIONPROPS['user']
+					comment.user = userDoc as COMMENTPROPS['user']
 				}
 
 				return comment
 			}) as Promise<COMMENTPROPS>[],
 		)
 
+		if (!userId) {
+			return comments
+		}
+
+		const filteredComments = comments.filter((comment) => {
+			return !blocked_users?.includes(comment.commented_by) && !comment.reports?.includes(userId)
+		})
+
 		setLastDocumentFetched(querySnapshot.docs[querySnapshot.docs.length - 1])
 
-		return comments
-	} catch (error) {
+		return filteredComments
+	} catch (error: any) {
 		console.log(error)
-
 		throw new Error('An error occurred while fetching the comments')
 	}
 }
