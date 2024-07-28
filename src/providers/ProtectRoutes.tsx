@@ -1,11 +1,8 @@
 import { useAuthStoreSelectors } from '@/store/authStore'
-import { router, usePathname } from 'expo-router'
+import { router } from 'expo-router'
 import { PropsWithChildren, useEffect } from 'react'
 
 const ProtectRoutes = ({ children }: PropsWithChildren) => {
-	const pathName = usePathname()
-
-	// Selectors
 	const isAuthenticated = useAuthStoreSelectors.use.isAuthenticated()
 	const didTryAutoLogin = useAuthStoreSelectors.use.didTryAutoLogin()
 	const isAnonymous = useAuthStoreSelectors.use.isAnonymous()
@@ -26,7 +23,7 @@ const ProtectRoutes = ({ children }: PropsWithChildren) => {
 		}
 
 		router.replace(getRoute())
-	}, [isAuthenticated, didTryAutoLogin, isAnonymous, pathName])
+	}, [isAuthenticated, didTryAutoLogin, isAnonymous])
 
 	return <>{children}</>
 }
