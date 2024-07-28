@@ -1,19 +1,21 @@
 import useIsAnonymous from '@/hooks/useIsAnonymous'
 import { moderateContent } from '@/services/openAi/userAiActions'
+import { blockUser } from '@/services/userActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { REPLYPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
 import { shortenNumber } from '@/utils/generalUtils'
-import { deleteReply, disLikeReply, likeReply, reportReply } from '@/utils/ReplyUtils'
+import { deleteReply, disLikeReply, likeReply } from '@/utils/ReplyUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { Feather } from '@expo/vector-icons'
 import { useCallback, useState } from 'react'
-import { ActivityIndicator, Image, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Alert, Image, Text, TouchableOpacity, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
-import AnimatedMenu from './AnimatedMenu'
 import GuestModal from './GuestModal'
+import MenuOptions from './MenuOptions'
+import ReportModal from './ReportModal'
 
 /**
  * Renders a Reply card component
@@ -26,17 +28,20 @@ const REPLY_LENGTH = Math.floor(DEVICE_WIDTH / 2)
 const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.Element => {
 	const isAnonymous = useIsAnonymous()
 
-	const userId = useAuthStoreSelectors.getState().currentUser.id
+	const { id: userId, blocked_users } = useAuthStoreSelectors.getState().currentUser
 
 	const isOwner = item.user?.id === userId
 
 	const { theme, styles } = useStyles(stylesheet)
-	const { id, reply_text, created_at } = item
-	const { display_name, gender, age, photo_url } = item.user
+	const { id, reply_text, created_at, replied_by } = item
+	const { display_name, gender, age, photo_url, pushTokens } = item.user
 
 	const [guestModalVisible, setGuestModalVisible] = useState(false)
+	const [reportModalVisible, setReportModalVisible] = useState(false)
+
 	const [deleting, setDeleting] = useState(false)
 	const [reporting, setReporting] = useState(false)
+	const [blocking, setBlocking] = useState(false)
 
 	const [likes, setLikes] = useState(item.likes)
 	const [dislikes, setdisLikes] = useState(item.dislikes)
@@ -53,6 +58,7 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 			id,
 			likes,
 			dislikes,
+			pushTokens,
 			itemLikes: item.likes,
 			setLikes,
 			setdisLikes,
@@ -90,14 +96,27 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 			return setGuestModalVisible(true)
 		}
 		if (reporting) return
-		setReporting(true)
-		await reportReply({
-			replyId: id,
-			report_reason: 'unknown',
-			reported_by: userId,
-		})
-		setReporting(false)
+		setReportModalVisible(true)
 	}, [isAnonymous, id])
+	const handleBlockUser = useCallback(async () => {
+		if (isAnonymous) {
+			return setGuestModalVisible(true)
+		}
+		if (blocking) return
+		if (blocked_users?.includes(replied_by)) return
+		setBlocking(true)
+		try {
+			await blockUser({ uid: userId, blockUserId: replied_by })
+			setBlocking(false)
+			Alert.alert(
+				'User Blocked',
+				'You will no longer see this user or their confessions, comments, or replies.',
+				[{ text: 'OK' }],
+			)
+		} catch (error) {
+			console.error('Error blocking user:', error)
+		}
+	}, [isAnonymous, blocking, userId, replied_by])
 	// REPLY FUNCTIONS END
 
 	// REPLY COMPONENTS
@@ -201,25 +220,30 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 					</Text>
 				</View>
 			</View>
-			{deleting || reporting ? (
+			{deleting || reporting || blocking ? (
 				<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
 			) : isOwner ? (
-				<AnimatedMenu
-					options={[
+				<MenuOptions
+					menuItems={[
 						{
 							title: 'Delete',
 							onPress: handleDeleteReply,
-							icon: 'trash-outline',
+							icon: 'trash-can-outline',
 						},
 					]}
 				/>
 			) : (
-				<AnimatedMenu
-					options={[
+				<MenuOptions
+					menuItems={[
 						{
 							title: 'Report',
 							onPress: handleReportReply,
 							icon: 'flag-outline',
+						},
+						{
+							title: 'Block',
+							onPress: handleBlockUser,
+							icon: 'account-cancel-outline',
 						},
 					]}
 				/>
@@ -241,6 +265,17 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 			</Animated.View>
 
 			<GuestModal visible={guestModalVisible} onPress={() => setGuestModalVisible(false)} />
+
+			{reportModalVisible && (
+				<ReportModal
+					visible={reportModalVisible}
+					onClose={() => setReportModalVisible(false)}
+					handleReport={handleReportReply}
+					reply_id={id}
+					setReporting={setReporting}
+					reportType="reply"
+				/>
+			)}
 		</>
 	)
 }

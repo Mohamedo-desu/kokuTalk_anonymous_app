@@ -11,7 +11,7 @@ import React, { ForwardedRef, forwardRef, useEffect, useState } from 'react'
 import { FlatList, Text, TouchableOpacity, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { moderateScale } from 'react-native-size-matters'
-import { Toast } from 'react-native-toast-notifications'
+import Toast from 'react-native-toast-message'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
 const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
@@ -45,8 +45,9 @@ const SignInPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 			setLoading(false)
 		} catch (error) {
 			setLoading(false)
-			Toast.show(`${error}`, {
+			Toast.show({
 				type: 'danger',
+				text1: `${error}`,
 			})
 		}
 	}

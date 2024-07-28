@@ -217,7 +217,12 @@ const AddConfession = () => {
 					setShowPreviewModal(false)
 				}}
 				animationType="slide">
-				<ScrollView style={{ flex: 1, backgroundColor: theme.colors.background }}>
+				<ScrollView
+					style={{ flex: 1, backgroundColor: theme.colors.background }}
+					contentContainerStyle={{
+						paddingBottom: insets.bottom + moderateScale(85),
+						paddingTop: moderateScale(10),
+					}}>
 					<View style={styles.modalHeader}>
 						<Ionicons
 							name="close-circle-sharp"

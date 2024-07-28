@@ -1,6 +1,6 @@
-import { CONFESSION_STORED_KEYS } from '@/constants/appDetails'
+import { CONFESSION_STORED_KEYS, NOTIFICATION_TYPES } from '@/constants/appDetails'
 import { useAuthStoreSelectors } from '@/store/authStore'
-import { ADDCONFESSIONPROPS, COMMENTPROPS, CONFESSIONPROPS } from '@/types'
+import { ADDCONFESSIONPROPS, COMMENTPROPS, CONFESSIONPROPS, REPORTPROPS } from '@/types'
 import { db } from '@/utils/firebase'
 import { deleteStoredValues, getStoredValues } from '@/utils/storageUtils'
 import {
@@ -22,6 +22,7 @@ import {
 } from 'firebase/firestore'
 import { Dispatch, SetStateAction } from 'react'
 import { getUserDataFromFirestore } from './authActions'
+import { sendNotification, sendPushNotifications } from './userActions'
 
 export const fetchConfessions = async ({
 	fetchLimit,
@@ -35,7 +36,7 @@ export const fetchConfessions = async ({
 	setNoMoreDocuments: Dispatch<SetStateAction<boolean>>
 }) => {
 	try {
-		const userId = useAuthStoreSelectors.getState().currentUser.id
+		const { id: userId, blocked_users } = useAuthStoreSelectors.getState().currentUser
 
 		const confessionsRef = collection(db, 'confessions')
 
@@ -64,7 +65,6 @@ export const fetchConfessions = async ({
 
 				if (confession.confessed_by) {
 					const userDoc = await getUserDataFromFirestore(confession.confessed_by)
-
 					confession.user = userDoc as CONFESSIONPROPS['user']
 				}
 
@@ -76,10 +76,16 @@ export const fetchConfessions = async ({
 			return confessions
 		}
 
+		const filteredConfessions = confessions.filter((confession) => {
+			return (
+				!blocked_users?.includes(confession.confessed_by) && !confession.reports?.includes(userId)
+			)
+		})
+
 		const seenConfessions: CONFESSIONPROPS[] = []
 		const unseenConfessions: CONFESSIONPROPS[] = []
 
-		confessions.forEach((confession) => {
+		filteredConfessions.forEach((confession) => {
 			if (confession.views && confession.views.includes(userId)) {
 				seenConfessions.push(confession)
 			} else {
@@ -154,30 +160,39 @@ export const updateUnseenConfessions = async () => {
 }
 export const updateConfessionLikesAndDislikes = async () => {
 	try {
-		const userId = useAuthStoreSelectors.getState().currentUser.id
+		const {
+			id: userId,
+			pushTokens: currentUserPushTokens,
+			display_name,
+		} = useAuthStoreSelectors.getState().currentUser
 
 		if (!userId) {
 			return
 		}
 
-		const storedValues = await Promise.all([
-			getStoredValues([CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE]),
-			getStoredValues([CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE]),
-			getStoredValues([CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE]),
-			getStoredValues([CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE]),
-		])
+		const storedKeys = [
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE,
+			CONFESSION_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY,
+		]
 
-		const [
-			{ [CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE]: confessionsToLike },
-			{ [CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE]: confessionsTodisLike },
-			{ [CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE]: confessionsToUnlike },
-			{ [CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE]: confessionsToUndislike },
-		] = storedValues
+		const storedValues = await getStoredValues(storedKeys)
+
+		const {
+			[CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE]: confessionsToLike,
+			[CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE]: confessionsTodisLike,
+			[CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE]: confessionsToUnlike,
+			[CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE]: confessionsToUndislike,
+			[CONFESSION_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY]: pushTokensToNotify,
+		} = storedValues
 
 		const toLike = confessionsToLike ? JSON.parse(confessionsToLike) : []
 		const toDislike = confessionsTodisLike ? JSON.parse(confessionsTodisLike) : []
 		const toUnlike = confessionsToUnlike ? JSON.parse(confessionsToUnlike) : []
 		const toUndislike = confessionsToUndislike ? JSON.parse(confessionsToUndislike) : []
+		const tokensToNotify = pushTokensToNotify ? JSON.parse(pushTokensToNotify) : []
 
 		if (
 			toLike.length === 0 &&
@@ -190,22 +205,43 @@ export const updateConfessionLikesAndDislikes = async () => {
 
 		const confessionsRef = collection(db, 'confessions')
 
-		await deleteStoredValues([
-			CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE,
-			CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE,
-			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE,
-			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE,
-		])
+		await deleteStoredValues(storedKeys)
 
 		const batch = writeBatch(db)
 
 		const updateConfessions = (confessions: string[], dislikes: boolean, remove: boolean) => {
-			confessions.forEach((postId: string) => {
+			confessions.forEach(async (postId: string) => {
 				const confessionRef = doc(confessionsRef, postId)
 				batch.update(confessionRef, {
 					[dislikes ? 'dislikes' : 'likes']: remove ? arrayRemove(userId) : arrayUnion(userId),
 					[dislikes ? 'likes' : 'dislikes']: arrayRemove(userId),
 				})
+
+				if (!remove && !dislikes) {
+					const tokenObj = tokensToNotify.find((tokenObj: any) => tokenObj.confessionId === postId)
+					if (tokenObj?.pushTokens) {
+						tokenObj.pushTokens.forEach((pushToken: string) => {
+							if (!currentUserPushTokens.includes(pushToken)) {
+								sendPushNotifications(
+									pushToken,
+									'Your confession got a new like!',
+									`${display_name} liked your post.`,
+									`/confession_details?id=${postId}`,
+								)
+							}
+						})
+					}
+					if (tokenObj?.userId !== userId) {
+						await sendNotification({
+							url: `/confession_details?id=${postId}`,
+							title: 'Your confession got a new like!',
+							body: `${display_name} liked your post.`,
+							from: userId,
+							to: tokenObj.userId,
+							type: NOTIFICATION_TYPES.USER,
+						})
+					}
+				}
 			})
 		}
 
@@ -356,6 +392,8 @@ export const fetchConfessionComments = async ({
 			return []
 		}
 
+		const { id: userId, blocked_users } = useAuthStoreSelectors.getState().currentUser
+
 		const commentsRef = collection(db, 'comments')
 
 		let q
@@ -381,30 +419,35 @@ export const fetchConfessionComments = async ({
 
 		if (querySnapshot.empty) {
 			setNoMoreDocuments(true)
-
 			return []
 		}
 
 		const comments = await Promise.all(
-			querySnapshot.docs.map(async (confessDoc) => {
-				const comment = confessDoc.data() as COMMENTPROPS
+			querySnapshot.docs.map(async (commentDoc) => {
+				const comment = commentDoc.data() as COMMENTPROPS
 
 				if (comment.commented_by) {
 					const userDoc = await getUserDataFromFirestore(comment.commented_by)
-
-					comment.user = userDoc as CONFESSIONPROPS['user']
+					comment.user = userDoc as COMMENTPROPS['user']
 				}
 
 				return comment
 			}) as Promise<COMMENTPROPS>[],
 		)
 
+		if (!userId) {
+			return comments
+		}
+
+		const filteredComments = comments.filter((comment) => {
+			return !blocked_users?.includes(comment.commented_by) && !comment.reports?.includes(userId)
+		})
+
 		setLastDocumentFetched(querySnapshot.docs[querySnapshot.docs.length - 1])
 
-		return comments
-	} catch (error) {
+		return filteredComments
+	} catch (error: any) {
 		console.log(error)
-
 		throw new Error('An error occurred while fetching the comments')
 	}
 }
@@ -469,7 +512,7 @@ export const reportAConfession = async ({
 	reported_by,
 }: {
 	confessionId: string
-	report_reason: string
+	report_reason: REPORTPROPS['report_reason']
 	reported_by: string
 }) => {
 	try {

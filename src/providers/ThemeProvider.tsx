@@ -1,8 +1,17 @@
 import { useSettingsStoreSelectors } from '@/store/settingsStore'
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
-import { StatusBar } from 'expo-status-bar'
+import { Colors } from '@/unistyle/theme'
+import {
+	DarkTheme as NavigationDarkTheme,
+	DefaultTheme as NavigationDefaultTheme,
+	ThemeProvider,
+} from '@react-navigation/native'
 import React, { PropsWithChildren, useEffect } from 'react'
 import { useColorScheme } from 'react-native'
+import {
+	MD3DarkTheme as PaperDarkTheme,
+	DefaultTheme as PaperDefaultTheme,
+	Provider as PaperProvider,
+} from 'react-native-paper'
 import { UnistylesRuntime } from 'react-native-unistyles'
 
 const CustomThemeProvider = ({ children }: PropsWithChildren) => {
@@ -16,15 +25,21 @@ const CustomThemeProvider = ({ children }: PropsWithChildren) => {
 	}, [theme, colorScheme])
 
 	const isDarkTheme = theme === 'system' ? colorScheme === 'dark' : theme === 'dark'
-	const currentTheme = isDarkTheme ? DarkTheme : DefaultTheme
-	const statusBarStyle = isDarkTheme ? 'light' : 'dark'
+	const navigationTheme = isDarkTheme ? NavigationDarkTheme : NavigationDefaultTheme
+	const paperTheme = isDarkTheme ? PaperDarkTheme : PaperDefaultTheme
+
+	const combinedTheme = {
+		...navigationTheme,
+		colors: {
+			...navigationTheme.colors,
+			...paperTheme.colors,
+			primary: Colors.primary[500],
+		},
+	}
 
 	return (
-		<ThemeProvider value={currentTheme}>
-			<>
-				{children}
-				<StatusBar style={statusBarStyle} animated />
-			</>
+		<ThemeProvider value={combinedTheme}>
+			<PaperProvider theme={combinedTheme}>{children}</PaperProvider>
 		</ThemeProvider>
 	)
 }

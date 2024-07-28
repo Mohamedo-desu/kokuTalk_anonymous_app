@@ -1,5 +1,6 @@
 import { PLACE_HOLDER } from '@/constants/placeHolders'
 import useIsAnonymous from '@/hooks/useIsAnonymous'
+import { removePushToken } from '@/services/userActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { auth } from '@/utils/firebase'
 import { deleteStoredValues } from '@/utils/storageUtils'
@@ -8,13 +9,13 @@ import { DrawerContentComponentProps } from '@react-navigation/drawer'
 import { LinearGradient } from 'expo-linear-gradient'
 import { router } from 'expo-router'
 import { useState } from 'react'
-import { Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { moderateScale } from 'react-native-size-matters'
-import { Toast } from 'react-native-toast-notifications'
+
+import Toast from 'react-native-toast-message'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 import Loader from './Loader'
-import SelectAvatarModal from './SelectAvatarModal'
 
 /**
  * Renders the content of the drawer
@@ -26,26 +27,39 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 	const insets = useSafeAreaInsets()
 	const isAnonymous = useIsAnonymous()
 
-	const [avatarModalVisible, setAvatarModalVisible] = useState(false)
-
-	const { photo_url, display_name, age, gender } = useAuthStoreSelectors.use.currentUser()
+	const { id, photo_url, display_name, age, gender } = useAuthStoreSelectors.use.currentUser()
 	const [loading, setLoading] = useState(false)
 
 	const logOut = useAuthStoreSelectors.use.logOut()
 
 	const handleLogOut = async () => {
 		try {
-			setLoading(true)
 			if (!isAnonymous) {
-				await auth.signOut()
+				Alert.alert('Log Out', 'Are you sure you want to log out?', [
+					{
+						text: 'Cancel',
+						style: 'cancel',
+					},
+					{
+						text: 'Yes',
+						onPress: async () => {
+							setLoading(true)
+							await removePushToken(id)
+							await auth.signOut()
+							setLoading(false)
+							logOut()
+						},
+					},
+				])
+			} else {
+				await deleteStoredValues(['isAnonymous'])
+				logOut()
 			}
-			await deleteStoredValues(['isAnonymous'])
-			logOut()
-			setLoading(false)
 		} catch (error) {
 			setLoading(false)
-			Toast.show(`${error}`, {
+			Toast.show({
 				type: 'danger',
+				text1: `${error}`,
 			})
 		}
 	}
@@ -61,13 +75,13 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 						styles.header,
 						{ paddingTop: insets.top, backgroundColor: theme.colors.primary[500] },
 					]}>
-					<TouchableOpacity disabled={isAnonymous} onPress={() => setAvatarModalVisible(true)}>
+					<View>
 						<Image
 							source={{ uri: photo_url || PLACE_HOLDER }}
 							style={styles.profileImage}
 							resizeMode="cover"
 						/>
-					</TouchableOpacity>
+					</View>
 					<Text style={styles.display_name}>{display_name || 'Anonymous'}</Text>
 					{age && gender && (
 						<Text style={styles.ageGender}>
@@ -95,7 +109,7 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 								styles.drawerItemLabel,
 								{ color: isAnonymous ? theme.colors.gray[500] : theme.colors.white },
 							]}>
-							My Confessions
+							My confessions
 						</Text>
 					</TouchableOpacity>
 					<TouchableOpacity
@@ -117,7 +131,29 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 								styles.drawerItemLabel,
 								{ color: isAnonymous ? theme.colors.gray[500] : theme.colors.white },
 							]}>
-							Saved Confessions
+							Saved confessions
+						</Text>
+					</TouchableOpacity>
+					<TouchableOpacity
+						disabled={isAnonymous}
+						activeOpacity={0.8}
+						style={styles.drawerItem}
+						onPress={() => router.navigate('/(main)/manage_settings')}>
+						<View style={styles.drawerIconContainer}>
+							<MaterialCommunityIcons
+								name="account-cog"
+								style={[
+									styles.drawerItemIcon,
+									{ color: isAnonymous ? theme.colors.gray[500] : theme.colors.white },
+								]}
+							/>
+						</View>
+						<Text
+							style={[
+								styles.drawerItemLabel,
+								{ color: isAnonymous ? theme.colors.gray[500] : theme.colors.white },
+							]}>
+							Manage settings
 						</Text>
 					</TouchableOpacity>
 					<TouchableOpacity disabled={isAnonymous} activeOpacity={0.8} style={styles.drawerItem}>
@@ -160,11 +196,8 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 					</View>
 				</View>
 			</LinearGradient>
-			<SelectAvatarModal
-				visible={avatarModalVisible}
-				onClose={() => setAvatarModalVisible(false)}
-			/>
-			<Loader visible={loading} text="Logging out..." />
+
+			<Loader visible={loading} text={isAnonymous ? '' : 'Logging out...'} />
 		</ScrollView>
 	)
 }
@@ -178,8 +211,7 @@ const stylesheet = createStyleSheet({
 	},
 	header: {
 		alignSelf: 'center',
-		paddingVertical: moderateScale(20),
-		gap: moderateScale(2),
+		paddingVertical: moderateScale(10),
 		alignItems: 'center',
 		width: '100%',
 	},
@@ -190,12 +222,12 @@ const stylesheet = createStyleSheet({
 	},
 	display_name: {
 		fontFamily: 'Medium',
-		fontSize: moderateScale(18),
+		fontSize: moderateScale(15),
 		color: 'rgba(255,255,255,.4)',
 	},
 	ageGender: {
 		fontFamily: 'Medium',
-		fontSize: moderateScale(16),
+		fontSize: moderateScale(15),
 		color: 'rgba(255,255,255,.4)',
 	},
 	content: {
@@ -211,11 +243,11 @@ const stylesheet = createStyleSheet({
 		width: moderateScale(40),
 	},
 	drawerItemIcon: {
-		fontSize: moderateScale(26),
+		fontSize: moderateScale(20),
 	},
 	drawerItemLabel: {
-		fontFamily: 'Medium',
-		fontSize: moderateScale(17),
+		fontFamily: 'Regular',
+		fontSize: moderateScale(16),
 		textAlign: 'left',
 		alignSelf: 'flex-start',
 	},

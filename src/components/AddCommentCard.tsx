@@ -80,7 +80,7 @@ export default AddCommentCard
 const stylesheet = createStyleSheet({
 	comment: {
 		justifyContent: 'space-between',
-		marginTop: moderateScale(3),
+		marginVertical: moderateScale(3),
 		marginHorizontal: moderateScale(10),
 		borderRadius: moderateScale(10),
 		overflow: 'hidden',

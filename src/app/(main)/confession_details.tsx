@@ -28,13 +28,15 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { moderateScale } from 'react-native-size-matters'
-import { Toast } from 'react-native-toast-notifications'
+import Toast from 'react-native-toast-message'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
 const AnimatedFlatlist = Animated.createAnimatedComponent(FlashList)
 
 const ConfessionDetails = () => {
 	const { id }: Partial<{ id: string }> = useLocalSearchParams()
+	console.log('id', id)
+
 	const { theme, styles } = useStyles(stylesheet)
 	const [confession, setConfession] = useState<CONFESSIONPROPS>()
 	const [comments, setComments] = useState<COMMENTPROPS[]>([])
@@ -173,8 +175,9 @@ const ConfessionDetails = () => {
 			} else {
 				setFetchingMore(false)
 			}
-			Toast.show(`${error}`, {
+			Toast.show({
 				type: 'danger',
+				text1: `${error}`,
 			})
 		}
 	}

@@ -9,7 +9,7 @@ export default function useUpdates() {
 				const { isAvailable } = await Updates.checkForUpdateAsync()
 
 				if (isAvailable) {
-					Alert.alert('Minor fixes available', 'Would you like to update now?', [
+					Alert.alert('Minor updates', 'Would you like to restart now to update ?', [
 						{
 							text: 'Cancel',
 							style: 'cancel',

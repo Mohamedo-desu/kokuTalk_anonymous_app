@@ -26,7 +26,15 @@ export const signUpFirebase = async ({
 		)
 		const { uid } = authResult.user
 
-		const userDoc = await addUserDataToFirestore({ id: uid, body: { ...body, id: uid } })
+		const userDoc = await addUserDataToFirestore({
+			id: uid,
+			body: {
+				...body,
+				id: uid,
+				created_at: new Date().toISOString(),
+				updated_at: new Date().toISOString(),
+			},
+		})
 		await updateProfile(authResult.user, {
 			displayName: display_name,
 			photoURL: photo_url,
@@ -96,8 +104,8 @@ export const getUserDataFromFirestore = async (uid: string) => {
 
 export const addUserDataToFirestore = async ({ id, body }: { id: string; body: User }) => {
 	try {
-		await setDoc(doc(db, 'users', id), { ...body })
-		return { ...body }
+		await setDoc(doc(db, 'users', id), body)
+		return body
 	} catch (error) {
 		throw new Error('Error adding user data')
 	}

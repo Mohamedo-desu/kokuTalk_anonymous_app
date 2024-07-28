@@ -1,7 +1,6 @@
+import { BlurView } from 'expo-blur'
 import React from 'react'
 import { ActivityIndicator, Modal, Text, View } from 'react-native'
-
-import { BlurView } from 'expo-blur'
 import { moderateScale, moderateVerticalScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
