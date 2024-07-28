@@ -1,9 +1,16 @@
 export interface NOTIFICATIONPROPS {
 	id: string
-	date: string
-	avatar: string
+	created_at: string
+	updated_at: string
+	from: string
+	to: string
 	title: string
 	body: string
+	isCleared: boolean
+	isNew: boolean
+	url: string
+	type: string
+	avatar: string
 }
 
 export interface CONFESSIONPROPS {
@@ -43,10 +50,14 @@ export interface User {
 	photo_url: string
 	gender: string
 	age: string
+	pushTokens: string[]
+	blocked_users: string[]
 	confessions: CONFESSIONPROPS[]
 	comments: COMMENTPROPS[]
 	replies: string[]
 	favorites: CONFESSIONPROPS[]
+	created_at: string
+	updated_at: string
 }
 
 export interface COMMENTPROPS {
@@ -76,7 +87,7 @@ export interface REPLYPROPS {
 
 export interface REPORTPROPS {
 	confession_id: string
-	report_reason: string
+	report_reason: (string | { other: string })[]
 	reported_by: string
 	created_at: string
 }

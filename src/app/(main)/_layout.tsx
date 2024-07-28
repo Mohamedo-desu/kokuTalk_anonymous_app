@@ -1,58 +1,70 @@
 import DrawerContent from '@/components/DrawerContent'
 import GradientCommentHeader from '@/components/GradientCommentHeader'
 import useNetworkState from '@/hooks/useNetworkState'
+import { useNotificationObserver } from '@/hooks/useNotificationObserver'
 import useScheduleAll from '@/hooks/useScheduleAll'
-import { Stack } from 'expo-router'
+import useSetupForPushNotifications from '@/hooks/useSetupForPushNotifications'
 import { Drawer } from 'expo-router/drawer'
+import 'react-native-gesture-handler'
+import 'react-native-reanimated'
 
 /**
  * MainLayout component.
  *
  * @returns JSX.Element The rendered MainLayout component.
  */
+
 const MainLayout = (): JSX.Element => {
+	useNotificationObserver()
 	useNetworkState()
 	useScheduleAll()
+	useSetupForPushNotifications()
 	//useUpdates()
 
 	return (
 		<Drawer
-			screenOptions={{ headerShown: false, drawerType: 'slide', swipeEnabled: true }}
+			screenOptions={{
+				headerShown: false,
+				drawerType: 'slide',
+				swipeEnabled: true,
+			}}
+			initialRouteName="(tabs)"
 			backBehavior="history"
 			drawerContent={(props) => <DrawerContent {...props} />}>
-			<Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-			<Stack.Screen
+			<Drawer.Screen name="(tabs)" options={{ headerShown: false }} />
+			<Drawer.Screen
 				name="confession_details"
 				options={{
 					headerShown: true,
 					header: () => <GradientCommentHeader title="Comments" />,
-					animation: 'slide_from_right',
-					animationTypeForReplace: 'pop',
-					presentation: 'modal',
 				}}
 			/>
-			<Stack.Screen
+			<Drawer.Screen
 				name="my_confessions"
 				options={{
 					headerShown: true,
-					header: () => <GradientCommentHeader title={'My Confessions'} />,
+					header: () => <GradientCommentHeader title="My Confessions" />,
 				}}
 			/>
-			<Stack.Screen
+			<Drawer.Screen
 				name="saved_confessions"
 				options={{
 					headerShown: true,
-					header: () => <GradientCommentHeader title={'Saved Confessions'} />,
+					header: () => <GradientCommentHeader title="Saved Confessions" />,
 				}}
 			/>
-			<Stack.Screen
+			<Drawer.Screen
 				name="add_confession"
 				options={{
 					headerShown: true,
-					header: () => <GradientCommentHeader title={'Add Confession'} />,
-					presentation: 'modal',
-					animation: 'slide_from_bottom',
-					animationTypeForReplace: 'push',
+					header: () => <GradientCommentHeader title="Add Confession" />,
+				}}
+			/>
+			<Drawer.Screen
+				name="manage_settings"
+				options={{
+					headerShown: true,
+					header: () => <GradientCommentHeader title="Settings" />,
 				}}
 			/>
 		</Drawer>

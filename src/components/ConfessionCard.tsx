@@ -1,5 +1,6 @@
 import useIsAnonymous from '@/hooks/useIsAnonymous'
 import { moderateContent } from '@/services/openAi/userAiActions'
+import { blockUser } from '@/services/userActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { CONFESSIONPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
@@ -10,7 +11,6 @@ import {
 	favoriteConfession,
 	generateRandomColor,
 	likeConfession,
-	reportConfession,
 	shareConfession,
 } from '@/utils/confessionUtils'
 import { shortenNumber } from '@/utils/generalUtils'
@@ -18,13 +18,22 @@ import { formatRelativeTime } from '@/utils/timeUtils'
 import { Feather, Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
 import { useCallback, useState } from 'react'
-import { ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import {
+	ActivityIndicator,
+	Alert,
+	Image,
+	ScrollView,
+	Text,
+	TouchableOpacity,
+	View,
+} from 'react-native'
 import Animated, { useSharedValue } from 'react-native-reanimated'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 import AddCommentCard from './AddCommentCard'
-import AnimatedMenu from './AnimatedMenu'
 import GuestModal from './GuestModal'
+import MenuOptions from './MenuOptions'
+import ReportModal from './ReportModal'
 
 /**
  * Renders a confession card component
@@ -49,15 +58,16 @@ const ConfessionCard = ({
 }): JSX.Element => {
 	const isAnonymous = useIsAnonymous()
 
-	const userId = useAuthStoreSelectors.getState().currentUser.id
+	const { id: userId, blocked_users } = useAuthStoreSelectors.getState().currentUser
 
 	const isOwner = item.user?.id === userId
 
 	const { theme, styles } = useStyles(stylesheet)
-	const { id, confession_text, confession_types, created_at } = item
-	const { display_name, gender, age, photo_url } = item.user
+	const { id, confession_text, confession_types, created_at, confessed_by } = item
+	const { display_name, gender, age, photo_url, pushTokens, id: otherUserId } = item.user
 
 	const [guestModalVisible, setGuestModalVisible] = useState(false)
+	const [reportModalVisible, setReportModalVisible] = useState(false)
 
 	const [likes, setLikes] = useState(item.likes)
 	const [dislikes, setdisLikes] = useState(item.dislikes)
@@ -68,6 +78,7 @@ const ConfessionCard = ({
 	const [loading, setLoading] = useState(false)
 	const [deleting, setDeleting] = useState(false)
 	const [reporting, setReporting] = useState(false)
+	const [blocking, setBlocking] = useState(false)
 
 	const [toggleDetails, setToggleDetails] = useState(false)
 	const [showFullReply, setShowFullReply] = useState(false)
@@ -95,11 +106,13 @@ const ConfessionCard = ({
 			id,
 			likes,
 			dislikes,
-			itemLikes: item.likes,
-			setLikes,
+			pushTokens,
+			otherUserId,
 			setdisLikes,
+			setLikes,
+			itemLikes: item.likes,
 		})
-	}, [isAnonymous, likes, dislikes, id])
+	}, [isAnonymous, isPreview, likes, dislikes])
 	const handleDislikeConfession = useCallback(async () => {
 		if (isPreview) return
 		if (isAnonymous) {
@@ -114,7 +127,7 @@ const ConfessionCard = ({
 			setLikes,
 			setdisLikes,
 		})
-	}, [isAnonymous, likes, dislikes, id])
+	}, [isAnonymous, isPreview, likes, dislikes])
 	const handleAddComment = useCallback(async () => {
 		if (isPreview) return
 		if (isAnonymous) {
@@ -129,14 +142,14 @@ const ConfessionCard = ({
 			setLoading,
 			setNewComment,
 		})
-	}, [newComment, id])
+	}, [newComment, id, isAnonymous, isPreview, loading])
 	const handleFavorite = useCallback(async () => {
 		if (isPreview) return
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
 		await favoriteConfession({ id, isFavorite, setIsFavorite, itemFavorites: item.favorites })
-	}, [isAnonymous, isFavorite, id])
+	}, [isAnonymous, isPreview, isFavorite])
 	const handleShareConfession = useCallback(async () => {
 		if (isPreview) return
 		if (isAnonymous) {
@@ -154,34 +167,62 @@ const ConfessionCard = ({
 				photo_url,
 			},
 		})
-	}, [isAnonymous, id])
+	}, [isAnonymous, isPreview])
 	const handleDeleteConfession = useCallback(async () => {
 		if (isPreview) return
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
-		if (deleting) return
-		setDeleting(true)
-		await deleteConfession({
-			confessionId: id,
-			confessedUserId: item.confessed_by,
-		})
-		setDeleting(false)
-	}, [isAnonymous, id])
+		Alert.alert('Delete Confession', 'Are you sure you want to delete this confession?', [
+			{
+				text: 'Cancel',
+				style: 'cancel',
+			},
+			{
+				text: 'Delete',
+				style: 'destructive',
+				onPress: async () => {
+					if (deleting) return
+					setDeleting(true)
+					await deleteConfession({
+						confessionId: id,
+						confessedUserId: item.confessed_by,
+					})
+					setDeleting(false)
+				},
+			},
+		])
+	}, [isAnonymous, isPreview])
 	const handleReportConfession = useCallback(async () => {
 		if (isPreview) return
 		if (isAnonymous) {
 			return setGuestModalVisible(true)
 		}
+
+		setReportModalVisible(true)
 		if (reporting) return
-		setReporting(true)
-		await reportConfession({
-			confessionId: id,
-			report_reason: 'unknown',
-			reported_by: userId,
-		})
-		setReporting(false)
-	}, [isAnonymous, id])
+	}, [isAnonymous, isPreview])
+	const handleBlockUser = useCallback(async () => {
+		if (isPreview) return
+		if (isAnonymous) {
+			return setGuestModalVisible(true)
+		}
+		if (blocking) return
+		if (blocked_users?.includes(confessed_by)) return
+		setBlocking(true)
+		try {
+			await blockUser({ uid: userId, blockUserId: confessed_by })
+			setBlocking(false)
+			Alert.alert(
+				'User Blocked',
+				'You will no longer see this user or their confessions, comments, or replies.',
+				[{ text: 'OK' }],
+			)
+		} catch (error) {
+			console.error('Error blocking user:', error)
+		}
+	}, [isAnonymous, isPreview, blocking, userId, confessed_by])
+
 	// CONFESSION FUNCTIONS END
 
 	// CONFESSION COMPONENTS
@@ -413,25 +454,30 @@ const ConfessionCard = ({
 					</Text>
 				</View>
 			</View>
-			{deleting || reporting ? (
+			{deleting || reporting || blocking ? (
 				<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
 			) : isOwner ? (
-				<AnimatedMenu
-					options={[
+				<MenuOptions
+					menuItems={[
 						{
 							title: 'Delete',
 							onPress: handleDeleteConfession,
-							icon: 'trash-outline',
+							icon: 'trash-can-outline',
 						},
 					]}
 				/>
 			) : (
-				<AnimatedMenu
-					options={[
+				<MenuOptions
+					menuItems={[
 						{
 							title: 'Report',
 							onPress: handleReportConfession,
 							icon: 'flag-outline',
+						},
+						{
+							title: 'Block',
+							onPress: handleBlockUser,
+							icon: 'account-cancel-outline',
 						},
 					]}
 				/>
@@ -458,6 +504,16 @@ const ConfessionCard = ({
 			/>
 
 			<GuestModal visible={guestModalVisible} onPress={() => setGuestModalVisible(false)} />
+			{reportModalVisible && (
+				<ReportModal
+					visible={reportModalVisible}
+					onClose={() => setReportModalVisible(false)}
+					handleReport={handleReportConfession}
+					confession_id={id}
+					setReporting={setReporting}
+					reportType="confession"
+				/>
+			)}
 		</>
 	)
 }

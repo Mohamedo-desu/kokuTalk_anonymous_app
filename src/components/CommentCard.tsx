@@ -2,24 +2,26 @@ import { PAGE_SIZE } from '@/constants/appDetails'
 import useIsAnonymous from '@/hooks/useIsAnonymous'
 import { fetchCommentReplies } from '@/services/commentActions'
 import { moderateContent } from '@/services/openAi/userAiActions'
+import { blockUser } from '@/services/userActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { COMMENTPROPS, REPLYPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
-import { deleteComment, disLikeComment, likeComment, reportComment } from '@/utils/commentUtils'
+import { deleteComment, disLikeComment, likeComment } from '@/utils/commentUtils'
 import { shortenNumber } from '@/utils/generalUtils'
 import { addReply } from '@/utils/ReplyUtils'
 import { formatRelativeTime } from '@/utils/timeUtils'
 import { Feather, MaterialIcons } from '@expo/vector-icons'
 import { useCallback, useEffect, useState } from 'react'
-import { ActivityIndicator, Image, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Alert, Image, Text, TouchableOpacity, View } from 'react-native'
 import Animated, { useSharedValue } from 'react-native-reanimated'
 import { moderateScale } from 'react-native-size-matters'
-import { Toast } from 'react-native-toast-notifications'
+import Toast from 'react-native-toast-message'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 import AddCommentCard from './AddCommentCard'
-import AnimatedMenu from './AnimatedMenu'
 import GuestModal from './GuestModal'
+import MenuOptions from './MenuOptions'
 import ReplyCard from './ReplyCard'
+import ReportModal from './ReportModal'
 import Skeleton from './Skeleton'
 
 /**
@@ -33,15 +35,16 @@ const COMMENT_LENGTH = Math.floor(DEVICE_WIDTH / 2)
 const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): JSX.Element => {
 	const isAnonymous = useIsAnonymous()
 
-	const userId = useAuthStoreSelectors.getState().currentUser.id
+	const { id: userId, blocked_users } = useAuthStoreSelectors.getState().currentUser
 
 	const isOwner = item.user?.id === userId
 
 	const { theme, styles } = useStyles(stylesheet)
-	const { id, comment_text, created_at, confession_id } = item
-	const { display_name, gender, age, photo_url } = item.user
+	const { id, comment_text, created_at, confession_id, commented_by } = item
+	const { display_name, gender, age, photo_url, pushTokens } = item.user
 
 	const [guestModalVisible, setGuestModalVisible] = useState(false)
+	const [reportModalVisible, setReportModalVisible] = useState(false)
 
 	const [likes, setLikes] = useState(item.likes)
 	const [dislikes, setdisLikes] = useState(item.dislikes)
@@ -52,6 +55,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 	const [loading, setLoading] = useState(false)
 	const [deleting, setDeleting] = useState(false)
 	const [reporting, setReporting] = useState(false)
+	const [blocking, setBlocking] = useState(false)
 	const [newReply, setNewReply] = useState('')
 
 	const [toggleDetails, setToggleDetails] = useState(false)
@@ -78,6 +82,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 			id,
 			likes,
 			dislikes,
+			pushTokens,
 			itemLikes: item.likes,
 			setLikes,
 			setdisLikes,
@@ -132,14 +137,27 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 			return setGuestModalVisible(true)
 		}
 		if (reporting) return
-		setReporting(true)
-		await reportComment({
-			commentId: id,
-			report_reason: 'unknown',
-			reported_by: userId,
-		})
-		setReporting(false)
+		setReportModalVisible(true)
 	}, [isAnonymous, id])
+	const handleBlockUser = useCallback(async () => {
+		if (isAnonymous) {
+			return setGuestModalVisible(true)
+		}
+		if (blocking) return
+		if (blocked_users?.includes(commented_by)) return
+		setBlocking(true)
+		try {
+			await blockUser({ uid: userId, blockUserId: commented_by })
+			setBlocking(false)
+			Alert.alert(
+				'User Blocked',
+				'You will no longer see this user or their confessions, comments, or replies.',
+				[{ text: 'OK' }],
+			)
+		} catch (error) {
+			console.error('Error blocking user:', error)
+		}
+	}, [isAnonymous, blocking, userId, commented_by])
 	// COMMENT FUNCTIONS END
 
 	// COMMENT COMPONENTS
@@ -268,25 +286,30 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 				</View>
 			</View>
 
-			{deleting || reporting ? (
+			{deleting || reporting || blocking ? (
 				<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
 			) : isOwner ? (
-				<AnimatedMenu
-					options={[
+				<MenuOptions
+					menuItems={[
 						{
 							title: 'Delete',
 							onPress: handleDeleteComment,
-							icon: 'trash-outline',
+							icon: 'trash-can-outline',
 						},
 					]}
 				/>
 			) : (
-				<AnimatedMenu
-					options={[
+				<MenuOptions
+					menuItems={[
 						{
 							title: 'Report',
 							onPress: handleReportComment,
 							icon: 'flag-outline',
+						},
+						{
+							title: 'Block',
+							onPress: handleBlockUser,
+							icon: 'account-cancel-outline',
 						},
 					]}
 				/>
@@ -296,7 +319,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 	const renderReplies = () => {
 		return fetchingFirstComment ? (
 			<Skeleton
-				width={moderateScale(330)}
+				width={moderateScale(300)}
 				height={moderateScale(50)}
 				style={[styles.skeleton, { marginBottom: moderateScale(10) }]}
 			/>
@@ -358,8 +381,9 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 				setFetchingMore(false)
 			} catch (error) {
 				setFetchingMore(false)
-				Toast.show(`${error}`, {
+				Toast.show({
 					type: 'danger',
+					text1: `${error}`,
 				})
 			}
 		},
@@ -394,6 +418,16 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 			/>
 
 			<GuestModal visible={guestModalVisible} onPress={() => setGuestModalVisible(false)} />
+			{reportModalVisible && (
+				<ReportModal
+					visible={reportModalVisible}
+					onClose={() => setReportModalVisible(false)}
+					handleReport={handleReportComment}
+					comment_id={id}
+					setReporting={setReporting}
+					reportType="comment"
+				/>
+			)}
 		</>
 	)
 }
@@ -409,6 +443,7 @@ const stylesheet = createStyleSheet({
 		paddingVertical: moderateScale(10),
 		marginHorizontal: moderateScale(10),
 		borderRadius: moderateScale(10),
+		overflow: 'hidden',
 	},
 	header: {
 		flexDirection: 'row',

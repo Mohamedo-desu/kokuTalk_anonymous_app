@@ -1,25 +1,33 @@
-import { MALE_AVATARS } from '@/constants/userAvatars'
-import { NOTIFICATION } from '@/types'
+import { NOTIFICATIONPROPS } from '@/types'
 import { formatRelativeTime } from '@/utils/timeUtils'
+import { router } from 'expo-router'
 import React from 'react'
-import { Image, Text, View } from 'react-native'
+import { Image, Text, TouchableOpacity, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
-const NotificationCard = ({ item, index }: { item: NOTIFICATION; index: number }): JSX.Element => {
+const NotificationCard = ({
+	item,
+	index,
+}: {
+	item: NOTIFICATIONPROPS
+	index: number
+}): JSX.Element => {
 	const { theme, styles } = useStyles(stylesheet)
-
+	const { avatar, title, body, created_at, url } = item
 	return (
-		<View style={[styles.notificationContainer, { backgroundColor: theme.colors.gray[100] }]}>
-			<Image source={{ uri: MALE_AVATARS[index] }} style={styles.avatar} resizeMode="cover" />
+		<TouchableOpacity
+			onPress={() => router.navigate(url)}
+			style={[styles.notificationContainer, { backgroundColor: theme.colors.gray[100] }]}>
+			<Image source={{ uri: avatar }} style={styles.avatar} resizeMode="cover" />
 			<View style={styles.textContainer}>
-				<Text style={[styles.title, { color: theme.colors.typography }]}>{item.title}</Text>
-				<Text style={[styles.body, { color: theme.colors.typography }]}>{item.body}</Text>
+				<Text style={[styles.title, { color: theme.colors.typography }]}>{title}</Text>
+				<Text style={[styles.body, { color: theme.colors.typography }]}>{body}</Text>
 				<Text style={[styles.date, { color: theme.colors.gray[500] }]}>
-					{formatRelativeTime(item.date)}
+					{formatRelativeTime(created_at)}
 				</Text>
 			</View>
-		</View>
+		</TouchableOpacity>
 	)
 }
 

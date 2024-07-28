@@ -1,9 +1,10 @@
 import { CONFESSION_STORED_KEYS } from '@/constants/appDetails'
 import { deleteAConfession, reportAConfession } from '@/services/confessionActions'
 import { useAuthStoreSelectors } from '@/store/authStore'
+import { REPORTPROPS } from '@/types'
 import { Dispatch, SetStateAction } from 'react'
 import { Share } from 'react-native'
-import { Toast } from 'react-native-toast-notifications'
+import Toast from 'react-native-toast-message'
 import { getStoredValues, saveSecurely } from './storageUtils'
 
 export const generateRandomColor = () => {
@@ -17,12 +18,16 @@ export const likeConfession = async ({
 	likes,
 	dislikes,
 	setLikes,
+	pushTokens,
+	otherUserId,
 	setdisLikes,
 	itemLikes,
 }: {
 	id: string
 	likes: string[]
 	dislikes: string[]
+	otherUserId: string
+	pushTokens: string[]
 	setLikes: Dispatch<SetStateAction<string[]>>
 	setdisLikes: Dispatch<SetStateAction<string[]>>
 	itemLikes: string[]
@@ -42,6 +47,7 @@ export const likeConfession = async ({
 			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE,
 			CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE,
 			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE,
+			CONFESSION_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY,
 		])
 
 		let confessionsToDislike = JSON.parse(
@@ -56,6 +62,9 @@ export const likeConfession = async ({
 		let confessionsToUnlike = JSON.parse(
 			storedValues[CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE] || '[]',
 		)
+		let pushTokensToNotify = JSON.parse(
+			storedValues[CONFESSION_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY] || '[]',
+		)
 
 		confessionsToDislike = confessionsToDislike.filter(
 			(confessionId: string) => confessionId !== id,
@@ -63,10 +72,15 @@ export const likeConfession = async ({
 		confessionsToUndislike = confessionsToUndislike.filter(
 			(confessionId: string) => confessionId !== id,
 		)
+		pushTokensToNotify = pushTokensToNotify.filter((tokenObj: any) => tokenObj.confessionId !== id)
 
 		if (updatedLikes.includes(userId)) {
 			if (!itemLikes.includes(userId)) {
 				confessionsToLike = [...confessionsToLike, id]
+				pushTokensToNotify = [
+					...pushTokensToNotify,
+					{ confessionId: id, userId: otherUserId, pushTokens },
+				]
 			}
 			confessionsToUnlike = confessionsToUnlike.filter(
 				(confessionId: string) => confessionId !== id,
@@ -92,16 +106,22 @@ export const likeConfession = async ({
 				key: CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE,
 				value: JSON.stringify(confessionsToUndislike),
 			},
+			{
+				key: CONFESSION_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY,
+				value: JSON.stringify(pushTokensToNotify),
+			},
 		])
 
 		setLikes(updatedLikes)
 		setdisLikes(updatedDislikes)
 	} catch (error) {
-		Toast.show(`${error}`, {
+		Toast.show({
 			type: 'danger',
+			text1: `${error}`,
 		})
 	}
 }
+
 export const disLikeConfession = async ({
 	id,
 	likes,
@@ -131,6 +151,7 @@ export const disLikeConfession = async ({
 			CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE,
 			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE,
 			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE,
+			CONFESSION_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY,
 		])
 
 		let confessionsTodisLike = JSON.parse(
@@ -145,9 +166,13 @@ export const disLikeConfession = async ({
 		let confessionsToUnlike = JSON.parse(
 			storedValues[CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE] || '[]',
 		)
+		let pushTokensToNotify = JSON.parse(
+			storedValues[CONFESSION_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY] || '[]',
+		)
 
 		confessionsToLike = confessionsToLike.filter((postId: string) => postId !== id)
 		confessionsToUnlike = confessionsToUnlike.filter((postId: string) => postId !== id)
+		pushTokensToNotify = pushTokensToNotify.filter((tokenObj: any) => tokenObj.confessionId !== id)
 
 		if (updatedDislikes.includes(userId)) {
 			if (!itemDisLikes.includes(userId)) {
@@ -175,13 +200,18 @@ export const disLikeConfession = async ({
 				key: CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE,
 				value: JSON.stringify(confessionsToUndislike),
 			},
+			{
+				key: CONFESSION_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY,
+				value: JSON.stringify(pushTokensToNotify),
+			},
 		])
 
 		setLikes(updatedLikes)
 		setdisLikes(updatedDislikes)
 	} catch (error) {
-		Toast.show(`${error}`, {
+		Toast.show({
 			type: 'danger',
+			text1: `${error}`,
 		})
 	}
 }
@@ -210,10 +240,12 @@ export const shareConfession = async ({
 			storedValues[CONFESSION_STORED_KEYS.CONFESSIONS_TO_SHARE] || '[]',
 		)
 
-		const message = `KokuTalk | Confess Anonymously\n\n${messageBody}\n\nConfessed by: ${confesser.display_name} (${confesser.gender}, ${confesser.age} years old)\n\nOpen this confession in KokuTalk: kokutalk://confession_details/${id}`
+		const message = `${messageBody}\n\nConfessed by: ${confesser.display_name} (${confesser.gender}, ${confesser.age} years old)\n\nOpen this confession in KokuTalk: kokutalk://confession_details/${id}`
 
 		const result = await Share.share({
+			title: 'KokuTalk | Confess Anonymously',
 			message: message,
+			url: `kokutalk://confession_details/${id}`,
 		})
 
 		if (result.action === Share.sharedAction) {
@@ -229,8 +261,9 @@ export const shareConfession = async ({
 			])
 		}
 	} catch (error: unknown) {
-		Toast.show(`${error}`, {
+		Toast.show({
 			type: 'danger',
+			text1: `${error}`,
 		})
 	}
 }
@@ -282,8 +315,9 @@ export const favoriteConfession = async ({
 		])
 		setIsFavorite(!isFavorite)
 	} catch (error) {
-		Toast.show(`${error}`, {
+		Toast.show({
 			type: 'danger',
+			text1: `${error}`,
 		})
 	}
 }
@@ -301,8 +335,9 @@ export const deleteConfession = async ({
 			confessedUserId,
 		})
 	} catch (error: unknown) {
-		Toast.show(`${error}`, {
+		Toast.show({
 			type: 'danger',
+			text1: `${error}`,
 		})
 	}
 }
@@ -312,7 +347,7 @@ export const reportConfession = async ({
 	reported_by,
 }: {
 	confessionId: string
-	report_reason: string
+	report_reason: REPORTPROPS['report_reason']
 	reported_by: string
 }) => {
 	try {
@@ -322,8 +357,9 @@ export const reportConfession = async ({
 			reported_by,
 		})
 	} catch (error: unknown) {
-		Toast.show(`${error}`, {
+		Toast.show({
 			type: 'danger',
+			text1: `${error}`,
 		})
 	}
 }

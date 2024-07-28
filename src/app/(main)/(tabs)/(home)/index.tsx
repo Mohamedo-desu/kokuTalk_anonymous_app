@@ -20,13 +20,10 @@ import {
 	View,
 } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { moderateScale } from 'react-native-size-matters'
-import { Toast } from 'react-native-toast-notifications'
+import Toast from 'react-native-toast-message'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
-
-const AnimatedFlatlist = Animated.createAnimatedComponent(FlashList)
 
 const HomePage = () => {
 	const { theme, styles } = useStyles(stylesheet)
@@ -48,7 +45,7 @@ const HomePage = () => {
 				return null
 			}
 
-			return <ConfessionCard item={item} index={index} numberOfLines={2} />
+			return <ConfessionCard item={item} index={index} numberOfLines={3} />
 		},
 		[],
 	)
@@ -63,15 +60,12 @@ const HomePage = () => {
 				</Text>
 			</View>
 		)
-	}, [theme.colors.gray[400]])
+	}, [theme.colors.gray[200], isNetwork])
 
 	useEffect(() => {
-		;(async () => {
+		const fetchInitialConfessions = async () => {
 			try {
-				if (!loading) {
-					setLoading(true)
-				}
-
+				setLoading(true)
 				const newConfessions = await fetchConfessions({
 					fetchLimit: PAGE_SIZE,
 					lastDocumentFetched,
@@ -79,18 +73,7 @@ const HomePage = () => {
 					setNoMoreDocuments,
 				})
 
-				setConfessions((prev) => {
-					const combinedConfessions = [...prev, ...newConfessions]
-					const uniqueConfessionIds = Array.from(
-						new Set(combinedConfessions.map((confession) => confession.id)),
-					).filter((id) => id !== undefined)
-					const uniqueConfessions = uniqueConfessionIds
-						.map((id) => combinedConfessions.find((confession) => confession.id === id))
-						.filter((confession) => confession !== undefined)
-
-					return uniqueConfessions
-				})
-
+				setConfessions(newConfessions)
 				setLoading(false)
 			} catch (error) {
 				setLoading(false)
@@ -98,23 +81,21 @@ const HomePage = () => {
 					type: 'danger',
 				})
 			}
-		})()
+		}
+
+		fetchInitialConfessions()
 	}, [isNetwork])
 
-	const loadMoreConfessions = async ({ prepend }: { prepend: boolean }) => {
+	const loadMoreConfessions = async (prepend = false) => {
+		if (noMoreDocuments || fetchingMore || refreshing) return
+
+		if (prepend) {
+			setRefreshing(true)
+		} else {
+			setFetchingMore(true)
+		}
+
 		try {
-			if (noMoreDocuments) {
-				return
-			}
-
-			if (prepend) {
-				if (refreshing) return
-				setRefreshing(true)
-			} else {
-				if (fetchingMore) return
-				setFetchingMore(true)
-			}
-
 			const newConfessions = await fetchConfessions({
 				fetchLimit: PAGE_SIZE,
 				lastDocumentFetched,
@@ -138,6 +119,7 @@ const HomePage = () => {
 					return uniqueConfessions
 				})
 			}
+
 			if (prepend) {
 				setRefreshing(false)
 			} else {
@@ -149,8 +131,9 @@ const HomePage = () => {
 			} else {
 				setFetchingMore(false)
 			}
-			Toast.show(`${error}`, {
+			Toast.show({
 				type: 'danger',
+				text1: `${error}`,
 			})
 		}
 	}
@@ -182,8 +165,9 @@ const HomePage = () => {
 				},
 			])
 		} catch (error) {
-			Toast.show(`${error}`, {
+			Toast.show({
 				type: 'danger',
+				text1: `${error}`,
 			})
 		}
 	}
@@ -204,8 +188,7 @@ const HomePage = () => {
 					enableOnAndroid={true}
 					enableAutomaticScroll={true}
 					keyboardOpeningTime={0}
-					extraScrollHeight={moderateScale(60)}
-					keyboardShouldPersistTaps="handled">
+					extraScrollHeight={moderateScale(60)}>
 					{loading && confessions.length === 0 ? (
 						<ScrollView
 							style={{ flex: 1 }}
@@ -225,42 +208,43 @@ const HomePage = () => {
 								))}
 						</ScrollView>
 					) : (
-						<AnimatedFlatlist
-							data={confessions}
-							renderItem={renderConfessionCard}
-							refreshControl={
-								<RefreshControl
-									onRefresh={() => loadMoreConfessions({ prepend: true })}
-									refreshing={refreshing}
-									tintColor={theme.colors.primary[500]}
-									colors={[theme.colors.primary[500], theme.colors.primary[400]]}
-									style={{ backgroundColor: theme.colors.gray[300] }}
-								/>
-							}
-							keyboardShouldPersistTaps="handled"
-							keyExtractor={(item: CONFESSIONPROPS) => item.id}
-							contentContainerStyle={{
-								paddingBottom: safeAreaInsets.bottom + moderateScale(80),
-								paddingTop: moderateScale(10),
-							}}
-							estimatedItemSize={200}
-							indicatorStyle={theme.colors.typography}
-							onScrollEndDrag={() => loadMoreConfessions({ prepend: false })}
-							ListFooterComponent={() =>
-								fetchingMore && (
-									<View style={{ padding: safeAreaInsets.bottom }}>
-										<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
-									</View>
-								)
-							}
-							ListEmptyComponent={ListEmptyComponent}
-							viewabilityConfig={{
-								itemVisiblePercentThreshold: 100,
-								minimumViewTime: 5000,
-								waitForInteraction: false,
-							}}
-							onViewableItemsChanged={onViewableItemsChanged}
-						/>
+						<>
+							<FlashList
+								data={confessions}
+								renderItem={renderConfessionCard}
+								refreshControl={
+									<RefreshControl
+										onRefresh={() => loadMoreConfessions(true)}
+										refreshing={refreshing}
+										tintColor={theme.colors.primary[500]}
+										colors={[theme.colors.primary[500], theme.colors.primary[400]]}
+										style={{ backgroundColor: theme.colors.gray[300] }}
+									/>
+								}
+								keyboardShouldPersistTaps="handled"
+								keyExtractor={(item: CONFESSIONPROPS) => item.id}
+								contentContainerStyle={{
+									paddingBottom: safeAreaInsets.bottom + moderateScale(80),
+									paddingTop: moderateScale(10),
+								}}
+								estimatedItemSize={200}
+								indicatorStyle={theme.colors.typography}
+								onEndReached={() => loadMoreConfessions()}
+								onEndReachedThreshold={0.5}
+								ListEmptyComponent={ListEmptyComponent}
+								viewabilityConfig={{
+									itemVisiblePercentThreshold: 100,
+									minimumViewTime: 5000,
+									waitForInteraction: false,
+								}}
+								onViewableItemsChanged={onViewableItemsChanged}
+							/>
+							{fetchingMore && (
+								<View style={{ paddingBottom: safeAreaInsets.bottom + moderateScale(85) }}>
+									<ActivityIndicator size={'small'} color={theme.colors.primary[500]} />
+								</View>
+							)}
+						</>
 					)}
 				</KeyboardAwareScrollView>
 			</KeyboardAvoidingView>
