@@ -1,7 +1,6 @@
 import GradientHeader from '@/components/GradientHeader'
 import TabBar from '@/components/TabBar'
 import { appName } from '@/constants/appDetails'
-
 import { Tabs } from 'expo-router'
 import React from 'react'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'

@@ -1,9 +1,16 @@
 export interface NOTIFICATIONPROPS {
 	id: string
-	date: string
-	avatar: string
+	created_at: string
+	updated_at: string
+	from: string
+	to: string
 	title: string
 	body: string
+	isCleared: boolean
+	isNew: boolean
+	url: string
+	type: string
+	avatar: string
 }
 
 export interface CONFESSIONPROPS {

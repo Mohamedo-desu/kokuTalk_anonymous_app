@@ -64,7 +64,7 @@ const ConfessionCard = ({
 
 	const { theme, styles } = useStyles(stylesheet)
 	const { id, confession_text, confession_types, created_at, confessed_by } = item
-	const { display_name, gender, age, photo_url } = item.user
+	const { display_name, gender, age, photo_url, pushTokens, id: otherUserId } = item.user
 
 	const [guestModalVisible, setGuestModalVisible] = useState(false)
 	const [reportModalVisible, setReportModalVisible] = useState(false)
@@ -106,9 +106,11 @@ const ConfessionCard = ({
 			id,
 			likes,
 			dislikes,
-			itemLikes: item.likes,
-			setLikes,
+			pushTokens,
+			otherUserId,
 			setdisLikes,
+			setLikes,
+			itemLikes: item.likes,
 		})
 	}, [isAnonymous, isPreview, likes, dislikes])
 	const handleDislikeConfession = useCallback(async () => {

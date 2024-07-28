@@ -15,7 +15,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, Image, Text, TouchableOpacity, View } from 'react-native'
 import Animated, { useSharedValue } from 'react-native-reanimated'
 import { moderateScale } from 'react-native-size-matters'
-import { Toast } from 'react-native-toast-notifications'
+import Toast from 'react-native-toast-message'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 import AddCommentCard from './AddCommentCard'
 import GuestModal from './GuestModal'
@@ -41,7 +41,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 
 	const { theme, styles } = useStyles(stylesheet)
 	const { id, comment_text, created_at, confession_id, commented_by } = item
-	const { display_name, gender, age, photo_url } = item.user
+	const { display_name, gender, age, photo_url, pushTokens } = item.user
 
 	const [guestModalVisible, setGuestModalVisible] = useState(false)
 	const [reportModalVisible, setReportModalVisible] = useState(false)
@@ -82,6 +82,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 			id,
 			likes,
 			dislikes,
+			pushTokens,
 			itemLikes: item.likes,
 			setLikes,
 			setdisLikes,
@@ -318,7 +319,7 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 	const renderReplies = () => {
 		return fetchingFirstComment ? (
 			<Skeleton
-				width={moderateScale(330)}
+				width={moderateScale(300)}
 				height={moderateScale(50)}
 				style={[styles.skeleton, { marginBottom: moderateScale(10) }]}
 			/>
@@ -380,8 +381,9 @@ const commentCard = ({ item, index }: { item: COMMENTPROPS; index?: number }): J
 				setFetchingMore(false)
 			} catch (error) {
 				setFetchingMore(false)
-				Toast.show(`${error}`, {
+				Toast.show({
 					type: 'danger',
+					text1: `${error}`,
 				})
 			}
 		},
@@ -441,6 +443,7 @@ const stylesheet = createStyleSheet({
 		paddingVertical: moderateScale(10),
 		marginHorizontal: moderateScale(10),
 		borderRadius: moderateScale(10),
+		overflow: 'hidden',
 	},
 	header: {
 		flexDirection: 'row',

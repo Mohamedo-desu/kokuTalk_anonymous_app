@@ -34,7 +34,7 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 
 	const { theme, styles } = useStyles(stylesheet)
 	const { id, reply_text, created_at, replied_by } = item
-	const { display_name, gender, age, photo_url } = item.user
+	const { display_name, gender, age, photo_url, pushTokens } = item.user
 
 	const [guestModalVisible, setGuestModalVisible] = useState(false)
 	const [reportModalVisible, setReportModalVisible] = useState(false)
@@ -58,6 +58,7 @@ const ReplyCard = ({ item, index }: { item: REPLYPROPS; index?: number }): JSX.E
 			id,
 			likes,
 			dislikes,
+			pushTokens,
 			itemLikes: item.likes,
 			setLikes,
 			setdisLikes,

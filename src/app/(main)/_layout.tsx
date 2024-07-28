@@ -1,6 +1,7 @@
 import DrawerContent from '@/components/DrawerContent'
 import GradientCommentHeader from '@/components/GradientCommentHeader'
 import useNetworkState from '@/hooks/useNetworkState'
+import { useNotificationObserver } from '@/hooks/useNotificationObserver'
 import useScheduleAll from '@/hooks/useScheduleAll'
 import useSetupForPushNotifications from '@/hooks/useSetupForPushNotifications'
 import { Drawer } from 'expo-router/drawer'
@@ -12,7 +13,9 @@ import 'react-native-reanimated'
  *
  * @returns JSX.Element The rendered MainLayout component.
  */
+
 const MainLayout = (): JSX.Element => {
+	useNotificationObserver()
 	useNetworkState()
 	useScheduleAll()
 	useSetupForPushNotifications()

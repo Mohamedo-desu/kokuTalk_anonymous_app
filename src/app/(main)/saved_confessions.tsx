@@ -11,7 +11,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, RefreshControl, ScrollView, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { moderateScale } from 'react-native-size-matters'
-import { Toast } from 'react-native-toast-notifications'
+import Toast from 'react-native-toast-message'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
 const SavedConfessions = () => {
@@ -64,8 +64,9 @@ const SavedConfessions = () => {
 				setLoading(false)
 			} catch (error) {
 				setLoading(false)
-				Toast.show(`${error}`, {
+				Toast.show({
 					type: 'danger',
+					text1: `${error}`,
 				})
 			}
 		})()
@@ -119,8 +120,9 @@ const SavedConfessions = () => {
 				} else {
 					setFetchingMore(false)
 				}
-				Toast.show(`${error}`, {
+				Toast.show({
 					type: 'danger',
+					text1: `${error}`,
 				})
 			}
 		},

@@ -3,7 +3,7 @@ import { deleteAComment, reportAComment, uploadComment } from '@/services/commen
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { REPORTPROPS } from '@/types'
 import { Dispatch, SetStateAction } from 'react'
-import { Toast } from 'react-native-toast-notifications'
+import Toast from 'react-native-toast-message'
 import { getStoredValues, saveSecurely } from './storageUtils'
 
 export const addComment = async ({
@@ -43,13 +43,11 @@ export const addComment = async ({
 		setNewComment('')
 
 		setLoading(false)
-		Toast.show('success', {
-			type: 'success',
-		})
 	} catch (error) {
 		setLoading(false)
-		Toast.show(`${error}`, {
+		Toast.show({
 			type: 'danger',
+			text1: `${error}`,
 		})
 	}
 }
@@ -59,11 +57,13 @@ export const likeComment = async ({
 	likes,
 	dislikes,
 	setLikes,
+	pushTokens,
 	setdisLikes,
 	itemLikes,
 }: {
 	id: string
 	likes: string[]
+	pushTokens: string[]
 	dislikes: string[]
 	setLikes: Dispatch<SetStateAction<string[]>>
 	setdisLikes: Dispatch<SetStateAction<string[]>>
@@ -81,20 +81,32 @@ export const likeComment = async ({
 
 		const storedValues = await getStoredValues([
 			COMMENT_STORED_KEYS.COMMENTS_TO_DISLIKE,
+			COMMENT_STORED_KEYS.COMMENTS_TO_UNDISLIKE,
 			COMMENT_STORED_KEYS.COMMENTS_TO_LIKE,
+			COMMENT_STORED_KEYS.COMMENTS_TO_UNLIKE,
+			COMMENT_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY,
 		])
 
-		let commentsTodisLike = JSON.parse(storedValues.commentsTodisLike || '[]')
-		let commentsToUndislike = JSON.parse(storedValues.commentsToUndislike || '[]')
-		let commentsToLike = JSON.parse(storedValues.commentsToLike || '[]')
-		let commentsToUnlike = JSON.parse(storedValues.commentsToUnlike || '[]')
+		let commentsTodisLike = JSON.parse(
+			storedValues[COMMENT_STORED_KEYS.COMMENTS_TO_DISLIKE] || '[]',
+		)
+		let commentsToUndislike = JSON.parse(
+			storedValues[COMMENT_STORED_KEYS.COMMENTS_TO_UNDISLIKE] || '[]',
+		)
+		let commentsToLike = JSON.parse(storedValues[COMMENT_STORED_KEYS.COMMENTS_TO_LIKE] || '[]')
+		let commentsToUnlike = JSON.parse(storedValues[COMMENT_STORED_KEYS.COMMENTS_TO_UNLIKE] || '[]')
+		let pushTokensToNotify = JSON.parse(
+			storedValues[COMMENT_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY] || '[]',
+		)
 
 		commentsTodisLike = commentsTodisLike.filter((postId: string) => postId !== id)
 		commentsToUndislike = commentsToUndislike.filter((postId: string) => postId !== id)
+		pushTokensToNotify = pushTokensToNotify.filter((tokenObj: any) => tokenObj.commentId !== id)
 
 		if (updatedLikes.includes(userId)) {
 			if (!itemLikes.includes(userId)) {
 				commentsToLike = [...commentsToLike, id]
+				pushTokensToNotify = [...pushTokensToNotify, { commentId: id, pushTokens }]
 			}
 			commentsToUnlike = commentsToUnlike.filter((postId: string) => postId !== id)
 		} else {
@@ -112,13 +124,18 @@ export const likeComment = async ({
 				key: COMMENT_STORED_KEYS.COMMENTS_TO_UNDISLIKE,
 				value: JSON.stringify(commentsToUndislike),
 			},
+			{
+				key: COMMENT_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY,
+				value: JSON.stringify(pushTokensToNotify),
+			},
 		])
 
 		setLikes(updatedLikes)
 		setdisLikes(updatedDislikes)
 	} catch (error) {
-		Toast.show(`${error}`, {
+		Toast.show({
 			type: 'danger',
+			text1: `${error}`,
 		})
 	}
 }
@@ -148,15 +165,27 @@ export const disLikeComment = async ({
 
 		const storedValues = await getStoredValues([
 			COMMENT_STORED_KEYS.COMMENTS_TO_DISLIKE,
+			COMMENT_STORED_KEYS.COMMENTS_TO_UNDISLIKE,
 			COMMENT_STORED_KEYS.COMMENTS_TO_LIKE,
+			COMMENT_STORED_KEYS.COMMENTS_TO_UNLIKE,
+			COMMENT_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY,
 		])
-		let commentsTodisLike = JSON.parse(storedValues.commentsTodisLike || '[]')
-		let commentsToUndislike = JSON.parse(storedValues.commentsToUndislike || '[]')
-		let commentsToLike = JSON.parse(storedValues.commentsToLike || '[]')
-		let commentsToUnlike = JSON.parse(storedValues.commentsToUnlike || '[]')
+
+		let commentsTodisLike = JSON.parse(
+			storedValues[COMMENT_STORED_KEYS.COMMENTS_TO_DISLIKE] || '[]',
+		)
+		let commentsToUndislike = JSON.parse(
+			storedValues[COMMENT_STORED_KEYS.COMMENTS_TO_UNDISLIKE] || '[]',
+		)
+		let commentsToLike = JSON.parse(storedValues[COMMENT_STORED_KEYS.COMMENTS_TO_LIKE] || '[]')
+		let commentsToUnlike = JSON.parse(storedValues[COMMENT_STORED_KEYS.COMMENTS_TO_UNLIKE] || '[]')
+		let pushTokensToNotify = JSON.parse(
+			storedValues[COMMENT_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY] || '[]',
+		)
 
 		commentsToLike = commentsToLike.filter((postId: string) => postId !== id)
 		commentsToUnlike = commentsToUnlike.filter((postId: string) => postId !== id)
+		pushTokensToNotify.filter((tokenObj: any) => tokenObj.commentId !== id)
 
 		if (updatedDislikes.includes(userId)) {
 			if (!itemDisLikes.includes(userId)) {
@@ -178,13 +207,18 @@ export const disLikeComment = async ({
 				key: COMMENT_STORED_KEYS.COMMENTS_TO_UNDISLIKE,
 				value: JSON.stringify(commentsToUndislike),
 			},
+			{
+				key: COMMENT_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY,
+				value: JSON.stringify(pushTokensToNotify),
+			},
 		])
 
 		setLikes(updatedLikes)
 		setdisLikes(updatedDislikes)
 	} catch (error) {
-		Toast.show(`${error}`, {
+		Toast.show({
 			type: 'danger',
+			text1: `${error}`,
 		})
 	}
 }
@@ -204,8 +238,9 @@ export const deleteComment = async ({
 			commentedById,
 		})
 	} catch (error: unknown) {
-		Toast.show(`${error}`, {
+		Toast.show({
 			type: 'danger',
+			text1: `${error}`,
 		})
 	}
 }
@@ -226,8 +261,9 @@ export const reportComment = async ({
 			reported_by,
 		})
 	} catch (error: unknown) {
-		Toast.show(`${error}`, {
+		Toast.show({
 			type: 'danger',
+			text1: `${error}`,
 		})
 	}
 }

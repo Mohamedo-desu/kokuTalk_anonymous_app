@@ -12,7 +12,8 @@ import { useState } from 'react'
 import { Alert, Image, ScrollView, Text, TouchableOpacity, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { moderateScale } from 'react-native-size-matters'
-import { Toast } from 'react-native-toast-notifications'
+
+import Toast from 'react-native-toast-message'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 import Loader from './Loader'
 
@@ -56,8 +57,9 @@ const DrawerContent = (props: DrawerContentComponentProps): JSX.Element => {
 			}
 		} catch (error) {
 			setLoading(false)
-			Toast.show(`${error}`, {
+			Toast.show({
 				type: 'danger',
+				text1: `${error}`,
 			})
 		}
 	}

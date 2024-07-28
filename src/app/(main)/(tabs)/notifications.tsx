@@ -1,30 +1,39 @@
 import NotificationCard from '@/components/NotificationCard'
 import Skeleton from '@/components/Skeleton'
-import { APP_NOTIFICATIONS } from '@/dummyData/notifications'
-import { NOTIFICATION } from '@/types'
+import { PAGE_SIZE } from '@/constants/appDetails'
+import useNetworkState from '@/hooks/useNetworkState'
+import { fetchNotifications } from '@/services/userActions'
+import { NOTIFICATIONPROPS } from '@/types'
 import { DEVICE_WIDTH } from '@/utils'
 import { groupNotifications } from '@/utils/NotificationUtils'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { LinearGradient } from 'expo-linear-gradient'
 import React, { useCallback, useEffect, useState } from 'react'
-import { ScrollView, SectionList, Text, View } from 'react-native'
+import { RefreshControl, ScrollView, SectionList, Text, View } from 'react-native'
+
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { moderateScale } from 'react-native-size-matters'
+import Toast from 'react-native-toast-message'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
 dayjs.extend(relativeTime)
 
 const Notifications = () => {
 	const { theme, styles } = useStyles(stylesheet)
-	const [sections, setSections] = useState<{ title: string; data: NOTIFICATION[] }[]>([])
+	const [sections, setSections] = useState<{ title: string; data: NOTIFICATIONPROPS[] }[]>([])
 
 	const [loading, setLoading] = useState(true)
+	const [lastDocumentFetched, setLastDocumentFetched] = useState(null)
+	const [noMoreDocuments, setNoMoreDocuments] = useState(false)
+
+	const [refreshing, setRefreshing] = useState(false)
 
 	const insets = useSafeAreaInsets()
+	const isNetwork = useNetworkState()
 
 	const renderNotificationCard = useCallback(
-		({ item, index }: { item: (typeof APP_NOTIFICATIONS)[0]; index: number }) => {
+		({ item, index }: { item: NOTIFICATIONPROPS; index: number }) => {
 			if (!item) {
 				return null
 			}
@@ -49,25 +58,59 @@ const Notifications = () => {
 		[theme.colors.typography, theme.colors.background],
 	)
 
-	const ListEmptyComponent = useCallback(() => {
-		return (
-			<View style={styles.emptyContainer}>
-				<Text style={[styles.emptyText, { color: theme.colors.gray[400] }]}>
-					You have no notifications yet! Please check back later!
-				</Text>
-			</View>
-		)
-	}, [theme.colors.gray[400]])
+	const loadMoreNotifications = async () => {
+		try {
+			if (noMoreDocuments) return
+
+			if (refreshing) return
+			setRefreshing(true)
+
+			const newNotifications = await fetchNotifications({
+				fetchLimit: PAGE_SIZE,
+				lastDocumentFetched,
+				setLastDocumentFetched,
+				setNoMoreDocuments,
+			})
+
+			const existingNotifications: NOTIFICATIONPROPS[] = sections.flatMap((section) => section.data)
+
+			const allNotifications: NOTIFICATIONPROPS[] = [...existingNotifications, ...newNotifications]
+
+			const groupedNotifications = groupNotifications(allNotifications)
+
+			setSections(groupedNotifications)
+
+			setRefreshing(false)
+		} catch (error) {
+			setRefreshing(false)
+			Toast.show({
+				type: 'danger',
+				text1: `${error}`,
+			})
+		}
+	}
 
 	useEffect(() => {
-		// TODO: fetch notifications from server or local database
-		const timeOut = setTimeout(() => {
-			setSections(groupNotifications([]))
-			setLoading(false)
-		}, 2000)
-
-		return () => clearTimeout(timeOut)
-	}, [])
+		;(async () => {
+			try {
+				if (!loading) setLoading(true)
+				setLastDocumentFetched(null)
+				const newNotifications = await fetchNotifications({
+					fetchLimit: PAGE_SIZE,
+					lastDocumentFetched,
+					setLastDocumentFetched,
+					setNoMoreDocuments,
+				})
+				setSections(groupNotifications(newNotifications))
+				setLoading(false)
+			} catch (error) {
+				setLoading(false)
+				Toast.show(`${error}`, {
+					type: 'danger',
+				})
+			}
+		})()
+	}, [isNetwork])
 
 	return (
 		<LinearGradient
@@ -93,24 +136,29 @@ const Notifications = () => {
 							/>
 						))}
 				</ScrollView>
-			) : sections[0].data.length > 0 &&
-			  sections[1].data.length > 0 &&
-			  sections[2].data.length > 0 ? (
+			) : (
 				<SectionList
 					style={[styles.sectionList, { backgroundColor: theme.colors.background }]}
 					contentContainerStyle={[
 						styles.sectionListContent,
 						{ paddingBottom: insets.bottom + moderateScale(80) },
 					]}
+					refreshControl={
+						<RefreshControl
+							onRefresh={() => loadMoreNotifications()}
+							refreshing={refreshing}
+							tintColor={theme.colors.primary[500]}
+							colors={[theme.colors.primary[500], theme.colors.primary[400]]}
+							style={{ backgroundColor: theme.colors.gray[300] }}
+						/>
+					}
 					sections={sections}
-					keyExtractor={(item) => item.id}
+					keyExtractor={(item) => item.created_at}
 					renderItem={renderNotificationCard}
 					renderSectionHeader={renderSectionHeader}
 					indicatorStyle={theme.colors.typography}
 					stickySectionHeadersEnabled
 				/>
-			) : (
-				<ListEmptyComponent />
 			)}
 		</LinearGradient>
 	)

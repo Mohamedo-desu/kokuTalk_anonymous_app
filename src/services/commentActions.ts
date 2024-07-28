@@ -21,10 +21,12 @@ import {
 } from 'firebase/firestore'
 import { Dispatch, SetStateAction } from 'react'
 import { getUserDataFromFirestore } from './authActions'
+import { sendPushNotifications } from './userActions'
 
 export const updateCommentLikesAndDislikes = async () => {
 	try {
-		const userId = useAuthStoreSelectors.getState().currentUser?.id
+		const { id: userId, pushTokens: currentUserPushTokens } =
+			useAuthStoreSelectors.getState().currentUser
 
 		if (!userId) {
 			return
@@ -35,6 +37,7 @@ export const updateCommentLikesAndDislikes = async () => {
 			COMMENT_STORED_KEYS.COMMENTS_TO_DISLIKE,
 			COMMENT_STORED_KEYS.COMMENTS_TO_UNLIKE,
 			COMMENT_STORED_KEYS.COMMENTS_TO_UNDISLIKE,
+			COMMENT_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY,
 		]
 
 		const storedValues = await getStoredValues(storedKeys)
@@ -44,12 +47,14 @@ export const updateCommentLikesAndDislikes = async () => {
 			[COMMENT_STORED_KEYS.COMMENTS_TO_DISLIKE]: commentsToDislike,
 			[COMMENT_STORED_KEYS.COMMENTS_TO_UNLIKE]: commentsToUnlike,
 			[COMMENT_STORED_KEYS.COMMENTS_TO_UNDISLIKE]: commentsToUndislike,
+			[COMMENT_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY]: pushTokensToNotify,
 		} = storedValues
 
 		const toLike = commentsToLike ? JSON.parse(commentsToLike) : []
 		const toDislike = commentsToDislike ? JSON.parse(commentsToDislike) : []
 		const toUnlike = commentsToUnlike ? JSON.parse(commentsToUnlike) : []
 		const toUndislike = commentsToUndislike ? JSON.parse(commentsToUndislike) : []
+		const tokensToNotify = pushTokensToNotify ? JSON.parse(pushTokensToNotify) : []
 
 		if (
 			toLike.length === 0 &&
@@ -62,7 +67,6 @@ export const updateCommentLikesAndDislikes = async () => {
 
 		const commentsRef = collection(db, 'comments')
 
-		// Delete stored values after fetching them
 		await deleteStoredValues(storedKeys)
 
 		const batch = writeBatch(db)
@@ -74,16 +78,29 @@ export const updateCommentLikesAndDislikes = async () => {
 					[dislikes ? 'dislikes' : 'likes']: remove ? arrayRemove(userId) : arrayUnion(userId),
 					[dislikes ? 'likes' : 'dislikes']: arrayRemove(userId),
 				})
+				if (!remove && !dislikes) {
+					const tokenObj = tokensToNotify.find((tokenObj: any) => tokenObj.commentId === commentId)
+					if (tokenObj && tokenObj.pushTokens) {
+						tokenObj.pushTokens.forEach((pushToken: string) => {
+							if (!currentUserPushTokens.includes(pushToken)) {
+								sendPushNotifications(
+									pushToken,
+									'Your comment got a new like!',
+									'Someone liked your comment.',
+									{ commentId },
+								)
+							}
+						})
+					}
+				}
 			})
 		}
 
-		// Update comments with the respective actions
 		updateComments(toLike, false, false)
 		updateComments(toDislike, true, false)
 		updateComments(toUnlike, false, true)
 		updateComments(toUndislike, true, true)
 
-		// Commit the batch operation
 		await batch.commit()
 	} catch (error: any) {
 		console.error('Error updating likes and dislikes:', error)

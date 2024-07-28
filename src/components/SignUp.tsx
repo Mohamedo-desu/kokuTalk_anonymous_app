@@ -23,18 +23,8 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 	const updateUser = useAuthStoreSelectors.use.updateUser()
 	const setAnonymous = useAuthStoreSelectors.use.setAnonymous()
 
-	const handleSignUp = async ({
-		display_name,
-		user_name,
-		email,
-		password,
-	}: {
-		display_name: string
-		user_name: string
-		email: string
-		password: string
-	}) => {
-		updateUser({ display_name, user_name, email, password })
+	const handleSignUp = async ({ email, password }: { email: string; password: string }) => {
+		updateUser({ email, password })
 		router.navigate('/(auth)/modal')
 	}
 
@@ -69,9 +59,7 @@ const SignUpPage = forwardRef((_, ref: ForwardedRef<FlatList<any> | null>) => {
 				}}>
 				<Formik
 					initialValues={{
-						display_name: '',
 						email: '',
-						user_name: '',
 						password: '',
 					}}
 					enableReinitialize

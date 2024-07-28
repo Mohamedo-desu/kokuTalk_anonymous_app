@@ -8,7 +8,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { ForwardedRef, forwardRef, useMemo, useState } from 'react'
 import { FlatList, Image, Text, TouchableOpacity, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
-import { Toast } from 'react-native-toast-notifications'
+
+import Toast from 'react-native-toast-message'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 import Loader from './Loader'
 
@@ -56,8 +57,9 @@ const ProfileSetup = forwardRef(
 				setLoading(false)
 			} catch (error) {
 				setLoading(false)
-				Toast.show(`${error}`, {
+				Toast.show({
 					type: 'danger',
+					text1: `${error}`,
 				})
 			}
 		}

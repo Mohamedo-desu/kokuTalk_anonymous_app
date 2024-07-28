@@ -1,4 +1,4 @@
-import { CONFESSION_STORED_KEYS } from '@/constants/appDetails'
+import { CONFESSION_STORED_KEYS, NOTIFICATION_TYPES } from '@/constants/appDetails'
 import { useAuthStoreSelectors } from '@/store/authStore'
 import { ADDCONFESSIONPROPS, COMMENTPROPS, CONFESSIONPROPS, REPORTPROPS } from '@/types'
 import { db } from '@/utils/firebase'
@@ -22,6 +22,7 @@ import {
 } from 'firebase/firestore'
 import { Dispatch, SetStateAction } from 'react'
 import { getUserDataFromFirestore } from './authActions'
+import { sendNotification, sendPushNotifications } from './userActions'
 
 export const fetchConfessions = async ({
 	fetchLimit,
@@ -159,30 +160,39 @@ export const updateUnseenConfessions = async () => {
 }
 export const updateConfessionLikesAndDislikes = async () => {
 	try {
-		const userId = useAuthStoreSelectors.getState().currentUser.id
+		const {
+			id: userId,
+			pushTokens: currentUserPushTokens,
+			display_name,
+		} = useAuthStoreSelectors.getState().currentUser
 
 		if (!userId) {
 			return
 		}
 
-		const storedValues = await Promise.all([
-			getStoredValues([CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE]),
-			getStoredValues([CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE]),
-			getStoredValues([CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE]),
-			getStoredValues([CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE]),
-		])
+		const storedKeys = [
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE,
+			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE,
+			CONFESSION_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY,
+		]
 
-		const [
-			{ [CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE]: confessionsToLike },
-			{ [CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE]: confessionsTodisLike },
-			{ [CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE]: confessionsToUnlike },
-			{ [CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE]: confessionsToUndislike },
-		] = storedValues
+		const storedValues = await getStoredValues(storedKeys)
+
+		const {
+			[CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE]: confessionsToLike,
+			[CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE]: confessionsTodisLike,
+			[CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE]: confessionsToUnlike,
+			[CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE]: confessionsToUndislike,
+			[CONFESSION_STORED_KEYS.PUSH_TOKENS_TO_NOTIFY]: pushTokensToNotify,
+		} = storedValues
 
 		const toLike = confessionsToLike ? JSON.parse(confessionsToLike) : []
 		const toDislike = confessionsTodisLike ? JSON.parse(confessionsTodisLike) : []
 		const toUnlike = confessionsToUnlike ? JSON.parse(confessionsToUnlike) : []
 		const toUndislike = confessionsToUndislike ? JSON.parse(confessionsToUndislike) : []
+		const tokensToNotify = pushTokensToNotify ? JSON.parse(pushTokensToNotify) : []
 
 		if (
 			toLike.length === 0 &&
@@ -195,22 +205,43 @@ export const updateConfessionLikesAndDislikes = async () => {
 
 		const confessionsRef = collection(db, 'confessions')
 
-		await deleteStoredValues([
-			CONFESSION_STORED_KEYS.CONFESSIONS_TO_LIKE,
-			CONFESSION_STORED_KEYS.CONFESSIONS_TO_DISLIKE,
-			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNLIKE,
-			CONFESSION_STORED_KEYS.CONFESSIONS_TO_UNDISLIKE,
-		])
+		await deleteStoredValues(storedKeys)
 
 		const batch = writeBatch(db)
 
 		const updateConfessions = (confessions: string[], dislikes: boolean, remove: boolean) => {
-			confessions.forEach((postId: string) => {
+			confessions.forEach(async (postId: string) => {
 				const confessionRef = doc(confessionsRef, postId)
 				batch.update(confessionRef, {
 					[dislikes ? 'dislikes' : 'likes']: remove ? arrayRemove(userId) : arrayUnion(userId),
 					[dislikes ? 'likes' : 'dislikes']: arrayRemove(userId),
 				})
+
+				if (!remove && !dislikes) {
+					const tokenObj = tokensToNotify.find((tokenObj: any) => tokenObj.confessionId === postId)
+					if (tokenObj?.pushTokens) {
+						tokenObj.pushTokens.forEach((pushToken: string) => {
+							if (!currentUserPushTokens.includes(pushToken)) {
+								sendPushNotifications(
+									pushToken,
+									'Your confession got a new like!',
+									`${display_name} liked your post.`,
+									`/confession_details?id=${postId}`,
+								)
+							}
+						})
+					}
+					if (tokenObj?.userId !== userId) {
+						await sendNotification({
+							url: `/confession_details?id=${postId}`,
+							title: 'Your confession got a new like!',
+							body: `${display_name} liked your post.`,
+							from: userId,
+							to: tokenObj.userId,
+							type: NOTIFICATION_TYPES.USER,
+						})
+					}
+				}
 			})
 		}
 

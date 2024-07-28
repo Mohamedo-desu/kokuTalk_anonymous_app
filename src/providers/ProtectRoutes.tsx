@@ -1,21 +1,14 @@
 import { useAuthStoreSelectors } from '@/store/authStore'
-import { router, useSegments } from 'expo-router'
-import { PropsWithChildren, useEffect, useState } from 'react'
+import { router, usePathname } from 'expo-router'
+import { PropsWithChildren, useEffect } from 'react'
 
-const AuthProvider = ({ children }: PropsWithChildren) => {
-	const segments = useSegments()
-	const [rootSegment, setRootSegment] = useState<string | undefined>(segments[0])
+const ProtectRoutes = ({ children }: PropsWithChildren) => {
+	const pathName = usePathname()
 
 	// Selectors
 	const isAuthenticated = useAuthStoreSelectors.use.isAuthenticated()
 	const didTryAutoLogin = useAuthStoreSelectors.use.didTryAutoLogin()
 	const isAnonymous = useAuthStoreSelectors.use.isAnonymous()
-
-	useEffect(() => {
-		if (segments[0] !== rootSegment && segments[0]) {
-			setRootSegment(segments[0])
-		}
-	}, [segments, rootSegment])
 
 	useEffect(() => {
 		const getRoute = () => {
@@ -33,9 +26,9 @@ const AuthProvider = ({ children }: PropsWithChildren) => {
 		}
 
 		router.replace(getRoute())
-	}, [isAuthenticated, didTryAutoLogin, isAnonymous, rootSegment])
+	}, [isAuthenticated, didTryAutoLogin, isAnonymous, pathName])
 
 	return <>{children}</>
 }
 
-export default AuthProvider
+export default ProtectRoutes

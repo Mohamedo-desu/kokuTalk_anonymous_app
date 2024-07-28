@@ -7,7 +7,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import React, { useEffect } from 'react'
 import { Text, View } from 'react-native'
 import { moderateScale } from 'react-native-size-matters'
-import { Toast } from 'react-native-toast-notifications'
+import Toast from 'react-native-toast-message'
 import { createStyleSheet, useStyles } from 'react-native-unistyles'
 
 const SplashScreen = () => {
@@ -34,8 +34,9 @@ const SplashScreen = () => {
 							setDidTryAutoLogin()
 						} catch (error) {
 							setDidTryAutoLogin()
-							Toast.show(`${error}`, {
+							Toast.show({
 								type: 'danger',
+								text1: `${error}`,
 							})
 						}
 					} else if (isAnonymous) {
@@ -46,8 +47,9 @@ const SplashScreen = () => {
 				})
 			} catch (error: any) {
 				setDidTryAutoLogin()
-				Toast.show(`${error}`, {
+				Toast.show({
 					type: 'danger',
+					text1: `${error}`,
 				})
 			}
 		}
