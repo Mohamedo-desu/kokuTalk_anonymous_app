@@ -1,5 +1,34 @@
-node_modules/
-ios/
-android/
-assets/
-.expo/
+# Build output
+dist
+build
+.next
+out
+
+# Dependencies
+node_modules
+
+# Configuration files
+metro.config.*
+babel.config.*
+*.config.js
+*.config.ts
+.eslintrc.*
+.prettierrc
+tsconfig.json
+tsconfig.eslint.json
+expo-env.d.ts
+
+
+# Environment files
+.env*
+!.env.example
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

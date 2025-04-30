@@ -1,26 +1,26 @@
-import { useSettingsStoreSelectors } from '@/store/settingsStore'
-import NetInfo from '@react-native-community/netinfo'
-import { useEffect, useState } from 'react'
+import NetInfo from '@react-native-community/netinfo';
+import { useEffect, useState } from 'react';
+import { useSettingsStoreSelectors } from '@/store/settingsStore';
 
 const useNetworkState = () => {
-	const [isConnected, setIsConnected] = useState<boolean | null>(true)
-	const setIsNetwork = useSettingsStoreSelectors.use.setIsNetwork()
+  const [isConnected, setIsConnected] = useState<boolean | null>(true);
+  const setIsNetwork = useSettingsStoreSelectors.use.setIsNetwork();
 
-	useEffect(() => {
-		const getNetInfo = async () => {
-			const netStatus = await NetInfo.fetch()
+  useEffect(() => {
+    const getNetInfo = async () => {
+      const netStatus = await NetInfo.fetch();
 
-			setIsConnected(netStatus.isInternetReachable)
-			setIsNetwork(netStatus.isInternetReachable)
-		}
-		const unSubscribe = NetInfo.addEventListener(getNetInfo)
+      setIsConnected(netStatus.isInternetReachable);
+      setIsNetwork(netStatus.isInternetReachable);
+    };
+    const unSubscribe = NetInfo.addEventListener(getNetInfo);
 
-		return () => {
-			unSubscribe()
-		}
-	}, [])
+    return () => {
+      unSubscribe();
+    };
+  }, []);
 
-	return isConnected
-}
+  return isConnected;
+};
 
-export default useNetworkState
+export default useNetworkState;

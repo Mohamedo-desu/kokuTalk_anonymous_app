@@ -1,65 +1,109 @@
-# KokuTalk 💻
+# Todo Now App
 
-[![GitHub stars](https://img.shields.io/github/stars/Mohamedo-desu/KokuTalk-Anonymous.svg?style=social)](https://github.com/Mohamedo-desu/KokuTalk-Anonymous) [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/YOURUSERNAME)
-
-## Description
-
-KokuTalk is a confession app where users can share their secrets and confessions anonymously. The app utilizes the following technologies and libraries:
-
-- React Native
-- Expo
-- Firebase
-
-![KokuTalk-Anonymous](LINK_TO_IMAGE)
+A modern, feature-rich todo application built with React Native (Expo) and Convex backend. This app helps you manage your tasks efficiently with priority settings, due dates, and task status tracking.
 
 ## Features
 
-- 📌 **Anonymous Confessions**: Share your thoughts and secrets without revealing your identity.
-- 💾 **Secure Storage**: All data is securely stored and protected.
-- 🔍 **Search Functionality**: Easily find confessions by keywords or categories.
-- ⏰ **Real-Time Updates**: Get instant updates on new confessions and interactions.
-- 🔄 **Interactive Community**: Like and comment on confessions to interact with others.
+- **User Authentication**: Secure login and registration using Clerk
+- **Task Management**:
+  - Create, edit, and delete tasks
+  - Mark tasks as completed/in-progress
+  - Set priority flags for important tasks
+  - Set due dates with date and time picker
+- **Task Organization**:
+  - Search functionality to find specific tasks
+  - Filter tasks by status (completed/in-progress)
+  - Sort tasks by priority and due date
+- **User Profile**: View and manage your profile information
+- **Responsive UI**: Beautiful and intuitive interface with animations
+- **Real-time Updates**: Changes sync instantly across devices
 
-## Installation
+## Screenshots
 
-To install and run the KokuTalk-Anonymous app, follow these steps:
+<!-- Add your screenshots here from assets/screenshots directory -->
 
-1. Clone the repository: `git clone https://github.com/Mohamedo-desu/KokuTalk-Anonymous.git`
-2. Navigate to the project directory: `cd REPOSITORY`
-3. Install dependencies: `npm install`
-4. Start the app: `npx expo start`
+| Home Screen                            | Add Task Screen                                | Task Details                                           |
+| -------------------------------------- | ---------------------------------------------- | ------------------------------------------------------ |
+| ![Home](./assets/screenshots/home.png) | ![Add Task](./assets/screenshots/add_task.png) | ![Task Details](./assets/screenshots/task_details.png) |
 
-## Usage
+## Tech Stack
 
-- **Personalization**: Customize your profile settings and preferences.
-- **Data Saving**: Your confessions are saved securely and can be accessed anytime.
-- **Data Sharing**: Share your favorite confessions with friends.
-- **Explore Features**: Discover trending confessions and popular categories.
-- **Notifications**: Receive notifications for new comments, likes, and interactions.
+### Frontend
 
-## Android Build
+- **React Native** with **Expo** - Mobile app framework
+- **TypeScript** - Type-safe JavaScript
+- **Expo Router** - File-based navigation system
+- **React Hook Form** - Form handling with validation
+- **Yup** - Schema validation
+- **React Native Reanimated** - Animations
+- **React Native Unistyles** - Styling system
+- **date-fns** - Date utility library
 
-You can download the Android app from this link:
+### Backend
 
-- https://drive.google.com/file/d/1p4vIhIZwNbG9DTo87tKnUxXXdBmRxkT1/view?usp=sharing
+- **Convex** - Backend-as-a-service for real-time data
+- **Clerk** - Authentication and user management
 
-If you encounter the following error during installation, please follow these additional steps:
-![Error Image](LINK_TO_ERROR_IMAGE)
+## Getting Started
 
-1. Tap on "More Details" to view the error details.
-2. Tap on "Install Anyway" to continue the installation process.
+### Prerequisites
 
-## Contributing
+- Node.js (v14 or higher)
+- npm or Bun package manager
+- Expo CLI
 
-Contributions to KokuTalk-Anonymous are welcome! If you would like to contribute, please follow these steps:
+### Installation
 
-1. Fork the repository
-2. Create a new branch: `git checkout -b feature/my-feature`
-3. Make your changes
-4. Commit your changes: `git commit -am 'Add some feature'`
-5. Push the branch: `git push origin feature/my-feature`
-6. Submit a pull request
+1. Clone the repository
+
+   ```bash
+   git clone <repository-url>
+   cd todo_now_app
+   ```
+
+2. Install dependencies
+
+   ```bash
+   npm install
+   # or
+   bun install
+   ```
+
+3. Start the development server
+   ```bash
+   npx expo start
+   ```
+
+## Available Scripts
+
+- `npm run android` or `bun run android` - Run the app on an Android device/emulator
+- `npm run ios` or `bun run ios` - Run the app on an iOS simulator
+- `npm run update:app` - Update the app with EAS Update
+- `npm run publish:android` - Build Android app for preview
+- `npm run lint` - Lint the code
+- `npm run format` - Format the code with ESLint and Prettier
+
+## Development
+
+The project follows a structured architecture:
+
+- `src/app` - Main application routes
+- `src/components` - Reusable UI components
+- `src/styles` - Styling configuration
+- `src/types` - TypeScript type definitions
+- `src/validations` - Form validation schemas
+- `convex` - Backend API and schema definitions
+
+## Lessons Learned
+
+- Building a real-time application with Convex backend
+- Implementing robust forms with validation using React Hook Form and Yup
+- Creating a performant mobile app with React Native and Expo
+- Using file-based routing for navigation with Expo Router
+- Managing state efficiently across the application
+- Implementing authentication with Clerk
+- Creating smooth animations with React Native Reanimated
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+[MIT License](LICENSE)

@@ -1,93 +1,151 @@
-import 'dotenv/config'
+import { ConfigContext, ExpoConfig } from 'expo/config'
 
-export default {
-	expo: {
-		name: 'KokuTalk',
-		slug: 'kokutalk',
+const EAS_PROJECT_ID = "6cb5993b-e14b-45b4-af0c-6cb0b89a39a0"
+const PROJECT_SLUG = 'share_confessions'
+const OWNER = 'mohamedo-desu'
+
+// App production config
+const APP_NAME = 'Share Confessions'
+const BUNDLE_IDENTIFIER = `com.mohamedodesu.${PROJECT_SLUG}`
+const PACKAGE_NAME = `com.mohamedodesu.${PROJECT_SLUG}`
+const ICON = './assets/icon.png'
+const ADAPTIVE_ICON = './assets/adaptive-icon.png'
+const SCHEME = PROJECT_SLUG
+
+export default ({ config }: ConfigContext): ExpoConfig => {
+	console.log('⚙️ Building app for environment:', process.env.APP_ENV)
+	const { name, bundleIdentifier, icon, adaptiveIcon, packageName, scheme } = getDynamicAppConfig(
+		(process.env.APP_ENV as 'development' | 'preview' | 'production') || 'development',
+	)
+
+	return {
+		...config,
+		name: name,
 		version: '1.0.0',
-		scheme: 'kokutalk',
-		web: {
-			bundler: 'metro',
-			output: 'static',
-			favicon: './assets/favicon.png',
+		slug: PROJECT_SLUG,
+		orientation: 'portrait',
+		userInterfaceStyle: 'automatic',
+		newArchEnabled: true,
+		icon: icon,
+		scheme: scheme,
+		ios: {
+			supportsTablet: true,
+			bundleIdentifier: bundleIdentifier,
+		},
+		android: {
+			adaptiveIcon: {
+				foregroundImage: adaptiveIcon,
+				backgroundColor: '#ffffff',
+			},
+			package: packageName,
+			softwareKeyboardLayoutMode: 'pan',
+			edgeToEdgeEnabled: true,
+		},
+		updates: {
+			url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
+		},
+		runtimeVersion: {
+			policy: 'appVersion',
+		},
+		extra: {
+			eas: {
+				projectId: EAS_PROJECT_ID,
+			},
 		},
 		plugins: [
 			'expo-router',
-			'expo-secure-store',
 			[
-				'expo-updates',
+				'expo-splash-screen',
 				{
-					username: 'mohamedo-desu',
-				},
-			],
-			[
-				'expo-notifications',
-				{
-					icon: './assets/notification-icon.png',
-					color: '#5753C9',
-					sounds: [],
+					image: './assets/splash-icon.png',
+					imageWidth: 80,
+					resizeMode: 'contain',	
+					backgroundColor:'#DDDDF4'
 				},
 			],
 			[
 				'@sentry/react-native/expo',
 				{
-					url: 'https://sentry.io/',
-					organization: process.env.SENTRY_ORG,
-					project: process.env.EXPO_PUBLIC_SENTRY_PROJECT,
+					organization: 'mohamedo-apps-desu',
+					project: PROJECT_SLUG,
+					url: 'https://sentry.io',
 				},
 			],
+			[
+				'expo-font',
+				{
+					fonts: [
+						'./assets/fonts/NotoSans-Bold.ttf',
+						'./assets/fonts/NotoSans-Medium.ttf',
+						'./assets/fonts/NotoSans-Regular.ttf',
+					],
+				},
+			],
+
+			[
+				'expo-notifications',
+				{
+					icon: './assets/notification-icon.png',
+					color: '#5753C9',
+					defaultChannel: 'default',
+					sounds: [],
+					enableBackgroundRemoteNotifications: true,
+				},
+			],
+
+			[
+				'react-native-edge-to-edge',
+				{
+					android: {
+						parentTheme: 'Light',
+						enforceNavigationBarContrast: false,
+					},
+				},
+			],
+			'expo-secure-store',
+			 "expo-web-browser"
 		],
 		experiments: {
+			reactCompiler: false,
 			typedRoutes: true,
-			tsconfigPaths: true,
+			reactCanary: true,
+			remoteBuildCache: {
+				provider: 'eas',
+			},
 		},
-		orientation: 'portrait',
+		owner: OWNER,
+	}
+}
+
+export const getDynamicAppConfig = (environment: 'development' | 'preview' | 'production') => {
+	if (environment === 'production') {
+		return {
+			name: APP_NAME,
+			bundleIdentifier: BUNDLE_IDENTIFIER,
+			packageName: PACKAGE_NAME,
+			icon: ICON,
+			adaptiveIcon: ADAPTIVE_ICON,
+			scheme: SCHEME,
+		}
+	}
+
+	if (environment === 'preview') {
+		return {
+			name: `${APP_NAME}`,
+			bundleIdentifier: `${BUNDLE_IDENTIFIER}.preview`,
+			packageName: `${PACKAGE_NAME}.preview`,
+			icon: './assets/icon.png',
+			adaptiveIcon: './assets/adaptive-icon.png',
+			scheme: `${SCHEME}-prev`,
+		}
+	}
+
+	return {
+		name: `${APP_NAME} Development`,
+		bundleIdentifier: `${BUNDLE_IDENTIFIER}.dev`,
+		packageName: `${PACKAGE_NAME}.dev`,
 		icon: './assets/icon.png',
-		userInterfaceStyle: 'automatic',
-		splash: {
-			image: './assets/splash.png',
-			resizeMode: 'cover',
-			backgroundColor: '#ffffff',
-		},
-		assetBundlePatterns: ['**/*'],
-		ios: {
-			supportsTablet: true,
-			bundleIdentifier: 'com.mohamedodesu.kokutalk',
-		},
-		android: {
-			adaptiveIcon: {
-				foregroundImage: './assets/adaptive-icon.png',
-				backgroundColor: '#ffffff',
-			},
-			package: 'com.mohamedodesu.kokutalk',
-			googleServicesFile: process.env.GOOGLE_SERVICES_JSON,
-		},
-		extra: {
-			router: {
-				origin: false,
-			},
-			eas: {
-				projectId: '911e2d2e-e548-4ba5-94ac-a87712b2bcc9',
-			},
-			SENTRY_AUTH_TOKEN: process.env.SENTRY_AUTH_TOKEN,
-			SENTRY_DSN: process.env.SENTRY_DSN,
-			SENTRY_ORG: process.env.SENTRY_ORG,
-			FIREBASE_API_KEY: process.env.FIREBASE_API_KEY,
-			FIREBASE_AUTH_DOMAIN: process.env.FIREBASE_AUTH_DOMAIN,
-			FIREBASE_DATABASE_URL: process.env.FIREBASE_DATABASE_URL,
-			FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
-			FIREBASE_STORAGE_BUCKET: process.env.FIREBASE_STORAGE_BUCKET,
-			FIREBASE_MESSAGING_SENDER_ID: process.env.FIREBASE_MESSAGING_SENDER_ID,
-			FIREBASE_APP_ID: process.env.FIREBASE_APP_ID,
-			FIREBASE_MEASUREMENT_ID: process.env.FIREBASE_MEASUREMENT_ID,
-			OPEN_AI_API_KEY: process.env.OPEN_AI_API_KEY,
-			GOOGLE_SERVICES_JSON: process.env.GOOGLE_SERVICES_JSON,
-		},
-		runtimeVersion: {
-			policy: 'appVersion',
-		},
-		updates: {
-			url: 'https://u.expo.dev/911e2d2e-e548-4ba5-94ac-a87712b2bcc9',
-		},
-	},
+		adaptiveIcon: './assets/adaptive-icon.png',
+		scheme: `${SCHEME}-dev`,
+	}
 }

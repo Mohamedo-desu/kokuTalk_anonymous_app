@@ -1,82 +1,76 @@
-import { Fonts } from '@/constants/Fonts'
-import useUpdates from '@/hooks/useUpdates'
-import ProtectRoutes from '@/providers/ProtectRoutes'
-import CustomThemeProvider from '@/providers/ThemeProvider'
-import '@/unistyle/unistyles'
-import * as Sentry from '@sentry/react-native'
-import { isRunningInExpoGo } from 'expo'
-import Constants from 'expo-constants'
-import * as Device from 'expo-device'
-import { useFonts } from 'expo-font'
-import * as Notifications from 'expo-notifications'
-import { Slot, SplashScreen, useNavigationContainerRef } from 'expo-router'
-import { useEffect } from 'react'
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import Toast from 'react-native-toast-message'
-import { UnistylesRuntime, useStyles } from 'react-native-unistyles'
+import ClerkAndConvexProvider from '@/components/hocs/ClerkAndConvexProvider';
+import CustomThemeProvider from '@/components/hocs/CustomThemeProvider';
+import InitialLayout from '@/components/hocs/InitialLayout';
+import * as Sentry from '@sentry/react-native';
+import { isRunningInExpoGo } from 'expo';
+import { useNavigationContainerRef } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import * as Updates from 'expo-updates';
+import React, { useEffect } from 'react';
+import { LogBox } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { StyleSheet } from 'react-native-unistyles';
+import sentryConfig from '../../sentry.config';
 
-SplashScreen.preventAutoHideAsync()
+LogBox.ignoreLogs(['Clerk: Clerk has been loaded with development keys.']);
 
-const routingInstrumentation = new Sentry.ReactNavigationInstrumentation()
+const navigationIntegration = Sentry.reactNavigationIntegration({
+  enableTimeToInitialDisplay: !isRunningInExpoGo(),
+});
 
-Sentry.init({
-	dsn: Constants?.expoConfig?.extra?.SENTRY_DSN,
-	tracesSampleRate: 1,
-	_experiments: {
-		profilesSampleRate: 1,
-	},
-	debug: false,
-	enableAutoSessionTracking: true,
-	attachScreenshot: true,
-	attachStacktrace: true,
-	integrations: [
-		new Sentry.ReactNativeTracing({
-			routingInstrumentation,
-			enableNativeFramesTracking: !isRunningInExpoGo(),
-		}),
-	],
-	enableAutoPerformanceTracing: true,
-})
+const manifest = Updates.manifest;
+const metadata = 'metadata' in manifest ? manifest.metadata : undefined;
+const extra = 'extra' in manifest ? manifest.extra : undefined;
+const updateGroup = metadata && 'updateGroup' in metadata ? metadata.updateGroup : undefined;
 
-Notifications.setNotificationHandler({
-	handleNotification: async () => ({
-		shouldShowAlert: true,
-		shouldPlaySound: false,
-		shouldSetBadge: false,
-	}),
-})
+Sentry.init(sentryConfig);
 
-function RootLayout() {
-	const { theme } = useStyles()
-	
-	if (Device.isDevice) {
-      useUpdates();
-    }
+const scope = Sentry.getGlobalScope();
 
-	const ref = useNavigationContainerRef()
-	const [fontsLoaded, fontError] = useFonts(Fonts)
+scope.setTag('expo-update-id', Updates.updateId);
+scope.setTag('expo-is-embedded-update', Updates.isEmbeddedLaunch);
 
-	useEffect(() => {
-		if (ref) {
-			routingInstrumentation.registerNavigationContainer(ref)
-			SplashScreen.hideAsync()
-			UnistylesRuntime.navigationBar.setColor(theme.colors.primary[500])
-			return () => UnistylesRuntime.navigationBar.setColor(undefined)
-		}
-	}, [ref, theme.colors.primary])
+if (typeof updateGroup === 'string') {
+  scope.setTag('expo-update-group-id', updateGroup);
 
-	if (!fontsLoaded || fontError) return null
-
-	return (
-		<GestureHandlerRootView style={{ flex: 1 }}>
-			<CustomThemeProvider>
-				<ProtectRoutes>
-					<Slot />
-				</ProtectRoutes>
-				<Toast />
-			</CustomThemeProvider>
-		</GestureHandlerRootView>
-	)
+  const owner = extra?.expoClient?.owner ?? '[account]';
+  const slug = extra?.expoClient?.slug ?? '[project]';
+  scope.setTag(
+    'expo-update-debug-url',
+    `https://expo.dev/accounts/${owner}/projects/${slug}/updates/${updateGroup}`
+  );
+} else if (Updates.isEmbeddedLaunch) {
+  // This will be `true` if the update is the one embedded in the build, and not one downloaded from the updates server.
+  scope.setTag('expo-update-debug-url', 'not applicable for embedded updates');
 }
 
-export default Sentry.wrap(RootLayout)
+SplashScreen.setOptions({
+  duration: 300,
+  fade: true,
+});
+
+function RootLayout() {
+  const ref = useNavigationContainerRef();
+
+  useEffect(() => {
+    if (ref?.current) {
+      navigationIntegration.registerNavigationContainer(ref);
+    }
+  }, [ref]);
+
+  return (
+    <ClerkAndConvexProvider>
+      <GestureHandlerRootView style={styles.container}>
+        <CustomThemeProvider>
+          <InitialLayout />
+        </CustomThemeProvider>
+      </GestureHandlerRootView>
+    </ClerkAndConvexProvider>
+  );
+}
+
+export default Sentry.wrap(RootLayout);
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+});

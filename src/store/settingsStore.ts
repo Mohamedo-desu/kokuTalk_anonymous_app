@@ -1,25 +1,25 @@
-import { create } from 'zustand'
-import { createSelectors } from './createSelectors'
+import { create } from 'zustand';
+import { createSelectors } from './createSelectors';
 
 export interface SettingsState {
-	theme: string
-	isNetwork: boolean | null
+  theme: string;
+  isNetwork: boolean | null;
 }
 
 interface SettingsActions {
-	setTheme: (theme: SettingsState['theme']) => void
-	setIsNetwork: (theme: SettingsState['isNetwork']) => void
+  setTheme: (theme: SettingsState['theme']) => void;
+  setIsNetwork: (theme: SettingsState['isNetwork']) => void;
 }
 
 const initialState: SettingsState = {
-	theme: 'system',
-	isNetwork: true,
-}
+  theme: 'system',
+  isNetwork: true,
+};
 
-const useSettingsStore = create<SettingsState & SettingsActions>((set) => ({
-	...initialState,
-	setTheme: (theme) => set(() => ({ theme })),
-	setIsNetwork: (isNetwork) => set(() => ({ isNetwork })),
-}))
+const useSettingsStore = create<SettingsState & SettingsActions>(set => ({
+  ...initialState,
+  setTheme: theme => set(() => ({ theme })),
+  setIsNetwork: isNetwork => set(() => ({ isNetwork })),
+}));
 
-export const useSettingsStoreSelectors = createSelectors(useSettingsStore)
+export const useSettingsStoreSelectors = createSelectors(useSettingsStore);
