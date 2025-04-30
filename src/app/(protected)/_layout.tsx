@@ -5,9 +5,7 @@ import React from 'react';
 const ProtectedLayout = () => {
   const { user } = useUser();
 
-  if (!user) {
-    <Redirect href={'/(public)'} />;
-  }
+  if (!user) return <Redirect href={'/(public)'} />;
 
   return <Stack screenOptions={{ headerShown: false }} />;
 };

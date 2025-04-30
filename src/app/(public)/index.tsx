@@ -2,6 +2,7 @@ import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import AuthHeader from '@/components/ui/AuthHeader';
 import PrivacyTerms from '@/components/ui/PrivacyTerms';
+import useNetworkCheck from '@/hooks/useNetworkCheck';
 import { styles } from '@/styles/public/LoginScreen.styles';
 import { LoginFormData, schema } from '@/validations/public/LoginScreen.validation';
 import { useSignIn } from '@clerk/clerk-expo';
@@ -21,6 +22,7 @@ const ForgotPasswordLink = () => (
 
 const LoginScreen = () => {
   const { isLoaded, signIn, setActive } = useSignIn();
+  const { checkNetwork } = useNetworkCheck();
 
   const {
     control,
@@ -40,6 +42,8 @@ const LoginScreen = () => {
   const onSubmit = async (data: LoginFormData) => {
     try {
       if (!isLoaded) return;
+      if (!checkNetwork()) return;
+
       const { email, password } = data;
 
       const signInAttempt = await signIn.create({

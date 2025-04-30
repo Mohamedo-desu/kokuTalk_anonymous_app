@@ -6,7 +6,7 @@ import { StyleSheet } from 'react-native-unistyles';
 export const lightTheme = {
   Colors: {
     typography: '#141414',
-    background: '#ffffff',
+    background: '#DDDDF4',
     gray: {
       500: '#9E9E9E',
       400: '#BDBDBD',

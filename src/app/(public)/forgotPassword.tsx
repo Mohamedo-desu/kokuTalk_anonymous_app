@@ -1,6 +1,7 @@
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import AuthHeader from '@/components/ui/AuthHeader';
+import useNetworkCheck from '@/hooks/useNetworkCheck';
 import { styles } from '@/styles/public/ForgotPasswordScreen.styles';
 import {
   ForgotPasswordFormData,
@@ -16,6 +17,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 
 const ForgotPassword = () => {
   const { isLoaded, signIn } = useSignIn();
+  const { checkNetwork } = useNetworkCheck();
 
   const {
     control,
@@ -34,6 +36,8 @@ const ForgotPassword = () => {
   const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
       if (!isLoaded) return;
+      if (!checkNetwork()) return;
+
       const { email } = data;
       await signIn.create({
         strategy: 'reset_password_email_code',

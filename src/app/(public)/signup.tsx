@@ -2,6 +2,7 @@ import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import AuthHeader from '@/components/ui/AuthHeader';
 import PrivacyTerms from '@/components/ui/PrivacyTerms';
+import useNetworkCheck from '@/hooks/useNetworkCheck';
 import { styles } from '@/styles/public/LoginScreen.styles';
 import { schema, SignUpFormData } from '@/validations/public/SignUpScreen.validation';
 import { useSignUp } from '@clerk/clerk-expo';
@@ -14,6 +15,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 
 export default function SignUpScreen() {
   const { isLoaded, signUp } = useSignUp();
+  const { checkNetwork } = useNetworkCheck();
 
   const {
     control,
@@ -30,6 +32,8 @@ export default function SignUpScreen() {
   const onSubmit = async (data: SignUpFormData) => {
     try {
       if (!isLoaded) return;
+      if (!checkNetwork()) return;
+
       const { username, email, password } = data;
 
       await signUp.create({

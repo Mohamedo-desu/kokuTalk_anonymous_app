@@ -1,6 +1,7 @@
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import AuthHeader from '@/components/ui/AuthHeader';
+import useNetworkCheck from '@/hooks/useNetworkCheck';
 import { styles } from '@/styles/public/VerificationModal.styles';
 import { schema, VerificationFormData } from '@/validations/public/VerificationModal.validation';
 import { useSignUp } from '@clerk/clerk-expo';
@@ -12,6 +13,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 
 const VerificationModal = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
+  const { checkNetwork } = useNetworkCheck();
 
   const {
     control,
@@ -29,6 +31,7 @@ const VerificationModal = () => {
     try {
       const { code } = data;
       if (!isLoaded) return;
+      if (!checkNetwork()) return;
 
       Keyboard.dismiss();
 

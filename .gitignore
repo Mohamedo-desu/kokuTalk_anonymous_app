@@ -29,3 +29,4 @@ google-services.json
  
 
 .env.local
+.env.sentry-build-plugin

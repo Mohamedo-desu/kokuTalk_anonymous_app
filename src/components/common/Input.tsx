@@ -1,9 +1,9 @@
+import { styles } from '@/styles/components/Input.styles';
+import { InputProps } from '@/types/components/Input.types';
 import React, { FC } from 'react';
 import { Controller } from 'react-hook-form';
 import { Text, TextInput, View } from 'react-native';
 import { withUnistyles } from 'react-native-unistyles';
-import { styles } from '@/styles/components/Input.styles';
-import { InputProps } from '@/types/Input.types';
 
 const TextInputUnistyles = withUnistyles(TextInput, theme => ({
   placeholderTextColor: theme.Colors.gray[400],

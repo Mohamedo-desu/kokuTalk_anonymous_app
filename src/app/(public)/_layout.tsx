@@ -5,9 +5,8 @@ import React from 'react';
 const AuthLayout = () => {
   const { isLoaded, isSignedIn } = useAuth();
 
-  if (isSignedIn) return <Redirect href={'/(protected)/(tabs)'} />;
-
   if (!isLoaded) return null;
+  if (isSignedIn) return <Redirect href={'/(protected)/(tabs)'} />;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

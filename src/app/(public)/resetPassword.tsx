@@ -1,17 +1,19 @@
 import Button from '@/components/common/Button';
 import Input from '@/components/common/Input';
 import AuthHeader from '@/components/ui/AuthHeader';
+import useNetworkCheck from '@/hooks/useNetworkCheck';
 import { styles } from '@/styles/public/ResetPasswordScreen.styles';
 import { ResetPasswordFormData, schema } from '@/validations/public/ResetPasswordScreen.validation';
 import { useSignIn } from '@clerk/clerk-expo';
 import { zodResolver } from '@hookform/resolvers/zod';
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { View } from 'react-native';
+import { Alert, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const ResetPasswordScreen = () => {
   const { isLoaded, signIn, setActive } = useSignIn();
+  const { checkNetwork } = useNetworkCheck();
 
   const {
     control,
@@ -34,6 +36,8 @@ const ResetPasswordScreen = () => {
       if (!isLoaded) {
         return null;
       }
+      if (!checkNetwork()) return;
+
       const { newPassword, code } = data;
 
       const result = await signIn?.attemptFirstFactor({
@@ -49,6 +53,7 @@ const ResetPasswordScreen = () => {
       }
     } catch (error) {
       console.log('Reset password error', error);
+      Alert.alert('Error', 'Failed to reset password. Please try again.');
     }
   };
 
