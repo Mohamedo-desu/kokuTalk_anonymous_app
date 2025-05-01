@@ -118,9 +118,64 @@ export const deleteUserData = internalMutation({
       return { success: false };
     }
 
+    // Delete all confessions by this user (and their associations)
+    const confessions = await db
+      .query('confessions')
+      .withIndex('by_user', q => q.eq('userId', user._id))
+      .collect();
+
+    for (const confession of confessions) {
+      // Delete associated file if it exists
+      if (confession.storageId) {
+        await ctx.runMutation(internal.storage.deleteFile, {
+          storageId: confession.storageId,
+        });
+      }
+
+      // Delete all likes for this confession
+      const likes = await db
+        .query('likes')
+        .withIndex('by_confession', q => q.eq('confessionId', confession._id))
+        .collect();
+      for (const like of likes) {
+        await db.delete(like._id);
+      }
+
+      // Delete all comments for this confession
+      const comments = await db
+        .query('comments')
+        .withIndex('by_confession', q => q.eq('confessionId', confession._id))
+        .collect();
+      for (const comment of comments) {
+        await db.delete(comment._id);
+      }
+
+      // Delete the confession
+      await db.delete(confession._id);
+    }
+
+    // Delete all likes by this user
+    const userLikes = await db
+      .query('likes')
+      .withIndex('by_user_confession', q => q.eq('userId', user._id))
+      .collect();
+    for (const like of userLikes) {
+      await db.delete(like._id);
+    }
+
+    // Delete all comments by this user
+    const userComments = await db
+      .query('comments')
+      .filter(q => q.eq(q.field('userId'), user._id))
+      .collect();
+    for (const comment of userComments) {
+      await db.delete(comment._id);
+    }
+
+    // Delete the user
     await db.delete(user._id);
 
-    console.log(`User data deleted for Clerk ID: ${args.clerkId}`);
+    console.log(`User data and all associations deleted for Clerk ID: ${args.clerkId}`);
     return { success: true };
   },
 });

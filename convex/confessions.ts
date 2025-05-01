@@ -181,6 +181,24 @@ export const deleteConfession = mutation({
       });
     }
 
+    // Delete all likes for this confession
+    const likes = await ctx.db
+      .query('likes')
+      .withIndex('by_confession', q => q.eq('confessionId', args.confessionId))
+      .collect();
+    for (const like of likes) {
+      await ctx.db.delete(like._id);
+    }
+
+    // Delete all comments for this confession
+    const comments = await ctx.db
+      .query('comments')
+      .withIndex('by_confession', q => q.eq('confessionId', args.confessionId))
+      .collect();
+    for (const comment of comments) {
+      await ctx.db.delete(comment._id);
+    }
+
     // Delete the confession
     await ctx.db.delete(args.confessionId);
 
@@ -204,41 +222,52 @@ export const updateConfession = mutation({
   },
   handler: async (ctx, args) => {
     const currentUser = await getAuthenticatedUser(ctx);
-
-    if (!currentUser) {
-      throw new ConvexError('You must be logged in to update a confession');
-    }
+    if (!currentUser) throw new ConvexError('You must be logged in to update a confession');
 
     const confession = await ctx.db.get(args.confessionId);
-    if (!confession) {
-      throw new ConvexError('Confession not found');
-    }
+    if (!confession) throw new ConvexError('Confession not found');
+    if (confession.userId !== currentUser._id) throw new ConvexError('Not authorized');
 
-    if (confession.userId !== currentUser._id) {
-      throw new ConvexError('Not authorized to update this confession');
-    }
+    let fileUrl: string | undefined | null = confession.fileUrl;
+    let storageId: Id<'_storage'> | undefined | null = confession.storageId;
+    let fileType: 'image' | 'video' | undefined | null = confession.fileType;
 
-    let fileUrl: string | undefined | null;
-
-    // If there's a new file and an old file exists, delete the old one
-    if (args.storageId && confession.storageId && args.storageId !== confession.storageId) {
+    // CASE 1: File is removed (no new storageId, but confession had a file)
+    if (!args.storageId && confession.storageId) {
       await ctx.runMutation(internal.storage.deleteFile, {
         storageId: confession.storageId,
       });
+      fileUrl = undefined;
+      storageId = undefined;
+      fileType = undefined;
+    }
 
-      // Get the new file URL
+    // CASE 2: File is changed (new storageId, and it's different from the old one)
+    if (args.storageId && args.storageId !== confession.storageId) {
+      if (confession.storageId) {
+        await ctx.runMutation(internal.storage.deleteFile, {
+          storageId: confession.storageId,
+        });
+      }
       fileUrl = await ctx.runMutation(internal.storage.getDownloadUrl, {
         storageId: args.storageId,
       });
-      if (!fileUrl) throw new Error('fileUrl not found');
+      storageId = args.storageId;
+      fileType = args.fileType ?? fileType;
     }
 
-    // Update the confession
+    // CASE 3: File is unchanged (args.storageId === confession.storageId)
+    // If fileType is provided, update it (for edge cases)
+    if (args.storageId === confession.storageId && args.fileType) {
+      fileType = args.fileType;
+    }
+
     await ctx.db.patch(args.confessionId, {
       text: args.text,
       visibility: args.visibility,
-      ...(fileUrl && { fileUrl, fileType: args.fileType }),
-      storageId: args.storageId,
+      fileUrl: fileUrl || undefined,
+      storageId,
+      fileType,
     });
 
     return { success: true };

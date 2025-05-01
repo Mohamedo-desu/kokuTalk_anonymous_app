@@ -102,9 +102,16 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 					},
 				},
 			],
+			[
+				'expo-video',
+				{
+					supportsBackgroundPlayback: true,
+					supportsPictureInPicture: true,
+				},
+  		    ],
 			'expo-secure-store',
 			"expo-web-browser",
-			"expo-video"
+			 
 		],
 		experiments: {
 			reactCompiler: false,

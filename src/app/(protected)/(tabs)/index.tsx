@@ -4,8 +4,9 @@ import RenderConfessionCard from '@/components/common/RenderConfessionCard';
 import { usePaginatedQuery } from 'convex/react';
 import React from 'react';
 
+import { useRouter } from 'expo-router';
 import Animated, { LinearTransition } from 'react-native-reanimated';
-import { StyleSheet } from 'react-native-unistyles';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 import { api } from '../../../../convex/_generated/api';
 
 const HomeScreen = () => {
@@ -22,10 +23,20 @@ const HomeScreen = () => {
     }
   );
 
+  const { theme } = useUnistyles();
+  const router = useRouter();
+
   return (
     <Animated.FlatList
       data={confessions}
-      renderItem={RenderConfessionCard}
+      renderItem={({ item, index }) => (
+        <RenderConfessionCard
+          item={item}
+          themeColors={theme.Colors}
+          index={index}
+          router={router}
+        />
+      )}
       keyExtractor={item => item._id}
       style={styles.flatList}
       keyboardShouldPersistTaps="handled"

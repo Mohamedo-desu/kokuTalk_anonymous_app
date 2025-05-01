@@ -2,35 +2,46 @@ import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
 import { DEVICE_WIDTH } from '@/utils';
 import { stripHtmlTags } from '@/utils/stripHtmlTags';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Feather, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { useMutation } from 'convex/react';
 import { formatDistanceToNowStrict } from 'date-fns';
-import { Image } from 'expo-image';
+import { useEvent } from 'expo';
+import { Image, useImage } from 'expo-image';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import React, { FC, useEffect, useMemo, useState } from 'react';
+import React, { FC, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Share, Text, TouchableOpacity, View } from 'react-native';
 import AnimatedNumbers from 'react-native-animated-numbers';
 import RenderHTML from 'react-native-render-html';
-import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { StyleSheet } from 'react-native-unistyles';
 import { api } from '../../../convex/_generated/api';
 import { Id } from '../../../convex/_generated/dataModel';
 
-const PostCard: FC<any> = ({ item, index, router, isDetails = false, canDelete = false }) => {
+const PostCard: FC<any> = ({
+  item,
+  themeColors,
+  index,
+  router,
+  isDetails = false,
+  canDelete = true,
+}) => {
+  const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   const isVideo = item.fileType === 'video';
   const isImage = item.fileType === 'image';
-  const [likes, setLikes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    setLikes(item.post_likes);
-  }, [item.post_likes]);
+  const imageUrl = useImage(isImage && item.fileUrl ? item.fileUrl : { uri: undefined });
 
-  const player = isVideo
-    ? useVideoPlayer(item.fileUrl, (playerInstance: any) => {
-        playerInstance.loop = false;
-        playerInstance.generateThumbnailsAsync(0);
-      })
-    : null;
+  const player = useVideoPlayer(isVideo && item.fileUrl ? item.fileUrl : null, playerInstance => {
+    playerInstance.loop = false;
+    playerInstance.generateThumbnailsAsync(0);
+  });
+
+  let status = undefined;
+  if (player) {
+    ({ status } = useEvent(player, 'statusChange', { status: player.status }));
+  }
+  const videoLoading = status !== 'readyToPlay';
 
   // Mutations
   const toggleLike = useMutation(api.confessions.toggleLike);
@@ -48,10 +59,10 @@ const PostCard: FC<any> = ({ item, index, router, isDetails = false, canDelete =
   const handleShare = async () => {
     try {
       setLoading(true);
-      const message = item.body ? stripHtmlTags(item.body) : 'Check out this post!';
+      const message = item.text ? stripHtmlTags(item.text) : 'Check out this post!';
       const result = await Share.share({
         message: message.substring(0, 120) + '...',
-        url: item.file,
+        url: item.fileUrl,
       });
 
       if (result.action === Share.sharedAction) {
@@ -66,56 +77,57 @@ const PostCard: FC<any> = ({ item, index, router, isDetails = false, canDelete =
 
   const handleDeletePost = async () => {
     try {
-      if (!canDelete) return;
+      if (!canDelete || deleting) return;
+
       Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Delete',
           style: 'destructive',
           onPress: async () => {
-            await deletePost({ postId: item.id as Id<'confessions'> });
+            setDeleting(true);
+            await deletePost({ postId: item._id as Id<'confessions'> });
           },
         },
       ]);
     } catch (error) {
       console.error(error);
       Alert.alert('Error', 'Failed to delete post');
+    } finally {
+      setDeleting(false);
     }
   };
 
   const handleOpenPostDetails = () => {
     if (isDetails) return;
     router.push({
-      pathname: '/post_details',
-      params: { postId: item.id },
+      pathname: '/(protected)/add_confession',
+      params: { postItem: JSON.stringify(item) },
     });
   };
 
-  const { theme } = useUnistyles();
-
-  // Memoize tag styles based on theme
   const htmlTagStyles = useMemo(
     () => ({
       div: {
-        color: theme.Colors.typography,
-        fontSize: 12,
+        color: themeColors.typography,
+        fontSize: 14,
       },
       p: {
-        color: theme.Colors.typography,
-        fontSize: 12,
+        color: themeColors.typography,
+        fontSize: 14,
       },
       ol: {
-        color: theme.Colors.typography,
-        fontSize: 12,
+        color: themeColors.typography,
+        fontSize: 14,
       },
       h1: {
-        color: theme.Colors.typography,
+        color: themeColors.typography,
       },
       h4: {
-        color: theme.Colors.typography,
+        color: themeColors.typography,
       },
     }),
-    [theme]
+    [themeColors]
   );
 
   return (
@@ -135,23 +147,26 @@ const PostCard: FC<any> = ({ item, index, router, isDetails = false, canDelete =
             </Text>
           </View>
         </View>
-        {!isDetails && (
-          <TouchableOpacity onPress={handleOpenPostDetails}>
-            <MaterialCommunityIcons
-              name="dots-horizontal"
-              size={24}
-              color={Colors.lightGray[400]}
-            />
-          </TouchableOpacity>
-        )}
+
         {canDelete && (
           <View style={styles.actions}>
-            <TouchableOpacity onPress={() => {}}>
-              <Feather name="edit-2" size={20} color={Colors.lightGray[400]} />
+            <TouchableOpacity
+              onPress={() => {
+                router.push({
+                  pathname: '/(protected)/add_confession',
+                  params: { postItem: JSON.stringify(item) },
+                });
+              }}
+            >
+              <Feather name="edit-2" size={20} color={themeColors.gray[400]} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleDeletePost}>
-              <Feather name="trash-2" size={20} color={Colors.error} />
-            </TouchableOpacity>
+            {deleting ? (
+              <ActivityIndicator size="small" color={Colors.error} />
+            ) : (
+              <TouchableOpacity onPress={handleDeletePost}>
+                <Feather name="trash-2" size={20} color={Colors.error} />
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </View>
@@ -169,30 +184,41 @@ const PostCard: FC<any> = ({ item, index, router, isDetails = false, canDelete =
             />
           )}
         </View>
-        {isImage && (
-          <Image
-            source={{ uri: item.fileUrl }}
-            contentFit="cover"
-            transition={100}
-            style={styles.postMedia}
-          />
-        )}
-        {isVideo && player && (
-          <VideoView
-            style={styles.videoPlayer}
-            player={player}
-            allowsFullscreen
-            allowsPictureInPicture
-          />
-        )}
+        {isImage &&
+          (imageUrl ? (
+            <Image
+              source={{ uri: item.fileUrl }}
+              contentFit="cover"
+              transition={100}
+              style={styles.postMedia}
+            />
+          ) : (
+            <View style={styles.postMedia}>
+              <MaterialIcons name="perm-media" size={50} color={themeColors.gray[400]} />
+            </View>
+          ))}
+        {isVideo &&
+          player &&
+          (videoLoading ? (
+            <View style={styles.videoPlayer}>
+              <MaterialIcons name="video-collection" size={50} color={themeColors.gray[400]} />
+            </View>
+          ) : (
+            <VideoView
+              style={styles.videoPlayer}
+              player={player}
+              allowsFullscreen
+              allowsPictureInPicture
+            />
+          ))}
       </View>
       <View style={styles.footer}>
         <View style={styles.footerButton}>
           <TouchableOpacity onPress={handleToggleLike} hitSlop={10}>
             <MaterialCommunityIcons
-              name={item.isLiked ? 'heart' : 'heart-outline'}
-              size={24}
-              color={item.isLiked ? Colors.primary : theme.Colors.gray[500]}
+              name={item.isLiked ? 'thumb-up' : 'thumb-up-outline'}
+              size={20}
+              color={item.isLiked ? Colors.primary : themeColors.gray[400]}
             />
           </TouchableOpacity>
           <AnimatedNumbers
@@ -205,9 +231,9 @@ const PostCard: FC<any> = ({ item, index, router, isDetails = false, canDelete =
         <View style={styles.footerButton}>
           <TouchableOpacity onPress={handleOpenPostDetails} hitSlop={10}>
             <MaterialCommunityIcons
-              name="comment-outline"
-              size={24}
-              color={theme.Colors.gray[500]}
+              name="comment-text-multiple-outline"
+              size={20}
+              color={themeColors.gray[400]}
             />
           </TouchableOpacity>
           <AnimatedNumbers
@@ -222,7 +248,7 @@ const PostCard: FC<any> = ({ item, index, router, isDetails = false, canDelete =
             {loading ? (
               <ActivityIndicator size="small" color={Colors.primary} />
             ) : (
-              <Feather name="share" size={22} color={theme.Colors.gray[500]} />
+              <MaterialCommunityIcons name="share" size={20} color={themeColors.gray[400]} />
             )}
           </TouchableOpacity>
         </View>
@@ -248,7 +274,7 @@ const styles = StyleSheet.create(theme => ({
   photoContainer: {
     width: 40,
     aspectRatio: 1,
-    borderRadius: 8,
+    borderRadius: 20,
     overflow: 'hidden',
   },
   photo: {
@@ -267,16 +293,21 @@ const styles = StyleSheet.create(theme => ({
     width: '100%',
     borderRadius: 8,
     borderCurve: 'continuous',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   videoPlayer: {
     height: 300,
     width: '100%',
     borderRadius: 8,
     borderCurve: 'continuous',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   displayName: {
     fontSize: 13,
     fontFamily: Fonts.Medium,
+    color: theme.Colors.typography,
   },
   userName: {
     fontSize: 12,
@@ -303,7 +334,7 @@ const styles = StyleSheet.create(theme => ({
     gap: 10,
   },
   count: {
-    fontSize: 14,
+    fontSize: 16,
     color: theme.Colors.typography,
     fontFamily: Fonts.Regular,
   },

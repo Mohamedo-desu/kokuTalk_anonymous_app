@@ -28,6 +28,7 @@ const TabsLayout = () => {
         name="profile"
         options={{
           tabBarLabel: 'Profile',
+          headerShown: false,
         }}
       />
     </TabsUnistyle>

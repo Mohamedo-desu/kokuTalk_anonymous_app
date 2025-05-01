@@ -1,5 +1,6 @@
 import Button from '@/components/common/Button';
 import RichTextEditor from '@/components/ui/RichTextEditor';
+import { Fonts } from '@/constants/Fonts';
 import { getMimeType } from '@/utils/mimeType';
 import { useAuth } from '@clerk/clerk-expo';
 import { useMutation } from 'convex/react';
@@ -108,11 +109,11 @@ const AddConfessionScreen: React.FC = () => {
       if (post) {
         // Update existing confession
         await updateConfession({
-          confessionId: post.id,
+          confessionId: post._id,
           text: bodyRef.current || undefined,
           visibility: postType,
           storageId,
-          fileType: file?.type === 'video' ? 'video' : 'image',
+          fileType: file ? (file.type === 'video' ? 'video' : 'image') : undefined,
         });
       } else {
         // Create new confession
@@ -120,14 +121,14 @@ const AddConfessionScreen: React.FC = () => {
           text: bodyRef.current || undefined,
           visibility: postType,
           storageId,
-          fileType: file?.type === 'video' ? 'video' : 'image',
+          fileType: file ? (file.type === 'video' ? 'video' : 'image') : undefined,
         });
       }
 
       bodyRef.current = '';
       setFile(null);
       editorRef.current?.setContentHTML('');
-      //router.back();
+      router.back();
     } catch (error: any) {
       console.error('Error submitting confession:', error);
       Alert.alert('Error', 'Failed to create confession');
@@ -149,22 +150,19 @@ const AddConfessionScreen: React.FC = () => {
 
   useEffect(() => {
     if (post) {
-      if (post.file) {
-        const fileType: 'video' | 'image' = post.file.includes('videos') ? 'video' : 'image';
+      if (post.fileUrl) {
         setFile({
-          uri: post.file,
-          type: fileType,
-          fileName: post.file.split('/').pop() ?? 'unknown_file',
-          width: 0,
-          height: 0,
+          uri: post.fileUrl,
+          type: post.fileType,
+          fileName: post.fileUrl.split('/').pop() ?? 'unknown_file',
         } as ImagePicker.ImagePickerAsset);
       }
-      bodyRef.current = post.body;
-      setPostType(post.type);
+      bodyRef.current = post.text;
+      setPostType(post.visibility);
 
       // Delay setting content to allow the editor to mount.
       const timeoutId = setTimeout(() => {
-        editorRef.current?.setContentHTML(post.body);
+        editorRef.current?.setContentHTML(post.text);
       }, 500);
 
       return () => clearTimeout(timeoutId);
@@ -290,7 +288,7 @@ const styles = StyleSheet.create((theme, rt) => ({
   },
   mediaButton: {
     padding: 10,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: theme.Colors.gray[500],
     borderRadius: 8,
     flex: 1,
     alignItems: 'center',
@@ -300,7 +298,9 @@ const styles = StyleSheet.create((theme, rt) => ({
   },
   postTypeTitle: {
     marginBottom: 8,
-    fontWeight: '600',
+    fontFamily: Fonts.Medium,
+    fontSize: 14,
+    color: theme.Colors.typography,
   },
   postTypeButtons: {
     flexDirection: 'row',
@@ -310,16 +310,16 @@ const styles = StyleSheet.create((theme, rt) => ({
     flex: 1,
     padding: 10,
     borderRadius: 8,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: theme.Colors.gray[300],
     alignItems: 'center',
   },
   selectedPostTypeButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: theme.Colors.success,
   },
   postTypeText: {
-    color: '#000',
+    color: theme.Colors.typography,
   },
   selectedPostTypeText: {
-    color: '#fff',
+    color: theme.Colors.typography,
   },
 }));
