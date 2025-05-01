@@ -64,6 +64,7 @@ http.route({
           email,
           clerkId: id,
           username: username ? username : email.split('@')[0],
+          image_url: image_url ? image_url : '',
         });
       } catch (error) {
         console.log('Error creating user', error);

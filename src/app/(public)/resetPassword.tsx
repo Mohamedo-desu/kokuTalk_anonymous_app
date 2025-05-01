@@ -8,7 +8,7 @@ import { useSignIn } from '@clerk/clerk-expo';
 import { zodResolver } from '@hookform/resolvers/zod';
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { Alert, View } from 'react-native';
+import { Alert, Keyboard, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const ResetPasswordScreen = () => {
@@ -37,6 +37,8 @@ const ResetPasswordScreen = () => {
         return null;
       }
       if (!checkNetwork()) return;
+
+      Keyboard.dismiss();
 
       const { newPassword, code } = data;
 

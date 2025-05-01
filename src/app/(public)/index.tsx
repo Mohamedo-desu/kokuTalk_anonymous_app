@@ -10,7 +10,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, router } from 'expo-router';
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { Alert, Text, View } from 'react-native';
+import { Alert, Keyboard, Text, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 // Custom link component to wrap the text
@@ -43,6 +43,8 @@ const LoginScreen = () => {
     try {
       if (!isLoaded) return;
       if (!checkNetwork()) return;
+
+      Keyboard.dismiss();
 
       const { email, password } = data;
 

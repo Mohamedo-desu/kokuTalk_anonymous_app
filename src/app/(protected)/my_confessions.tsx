@@ -1,14 +1,14 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-const MyConfessionsScreen = () => {
+const MyConfessions = () => {
   return (
     <View>
-      <Text>MyConfessionsScreen</Text>
+      <Text>MyConfessions</Text>
     </View>
   );
 };
 
-export default MyConfessionsScreen;
+export default MyConfessions;
 
 const styles = StyleSheet.create({});

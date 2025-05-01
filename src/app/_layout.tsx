@@ -2,7 +2,6 @@ import ClerkAndConvexProvider from '@/components/hocs/ClerkAndConvexProvider';
 import CustomThemeProvider from '@/components/hocs/CustomThemeProvider';
 import InitialLayout from '@/components/hocs/InitialLayout';
 import NetworkStatusToast from '@/components/ui/NetworkStatusToast';
-import useNetworkState from '@/hooks/useNetworkState';
 import * as Sentry from '@sentry/react-native';
 import { isRunningInExpoGo } from 'expo';
 import { useNavigationContainerRef } from 'expo-router';
@@ -11,7 +10,6 @@ import * as Updates from 'expo-updates';
 import React, { useEffect } from 'react';
 import { LogBox } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { StyleSheet } from 'react-native-unistyles';
 import sentryConfig from '../../sentry.config';
 
@@ -54,8 +52,6 @@ SplashScreen.setOptions({
 
 function RootLayout() {
   const ref = useNavigationContainerRef();
-  const { isConnected } = useNetworkState();
-  const translateY = useSharedValue(0);
 
   useEffect(() => {
     if (ref?.current) {
@@ -63,26 +59,12 @@ function RootLayout() {
     }
   }, [ref]);
 
-  useEffect(() => {
-    translateY.value = withSpring(isConnected === false ? 60 : 0, {
-      damping: 15,
-      stiffness: 100,
-      mass: 0.5,
-    });
-  }, [isConnected]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
-
   return (
     <ClerkAndConvexProvider>
       <GestureHandlerRootView style={styles.container}>
         <CustomThemeProvider>
           <NetworkStatusToast />
-          <Animated.View style={[styles.content, animatedStyle]}>
-            <InitialLayout />
-          </Animated.View>
+          <InitialLayout />
         </CustomThemeProvider>
       </GestureHandlerRootView>
     </ClerkAndConvexProvider>
@@ -93,5 +75,4 @@ export default Sentry.wrap(RootLayout);
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { flex: 1 },
 });

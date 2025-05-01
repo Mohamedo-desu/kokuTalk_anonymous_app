@@ -1,18 +1,65 @@
-import Button from '@/components/common/Button';
-import { useAuth } from '@clerk/clerk-expo';
-
+import Empty from '@/components/common/Empty';
+import Loader from '@/components/common/Loader';
+import RenderConfessionCard from '@/components/common/RenderConfessionCard';
+import { usePaginatedQuery } from 'convex/react';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+
+import Animated, { LinearTransition } from 'react-native-reanimated';
+import { StyleSheet } from 'react-native-unistyles';
+import { api } from '../../../../convex/_generated/api';
 
 const HomeScreen = () => {
-  const { signOut } = useAuth();
+  const {
+    results: confessions,
+    status,
+    loadMore,
+    isLoading,
+  } = usePaginatedQuery(
+    api.confessions.getPublicConfessions,
+    {},
+    {
+      initialNumItems: 10,
+    }
+  );
+
   return (
-    <View>
-      <Button label="Logout" onPress={() => signOut()} isValid={true} isSubmitting={false} />
-    </View>
+    <Animated.FlatList
+      data={confessions}
+      renderItem={RenderConfessionCard}
+      keyExtractor={item => item._id}
+      style={styles.flatList}
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={styles.contentContainerStyle}
+      showsVerticalScrollIndicator={false}
+      onEndReachedThreshold={0.5}
+      onEndReached={() => loadMore(10)}
+      ListEmptyComponent={
+        isLoading ? <Loader size="small" /> : <Empty text="Start creating confessions" />
+      }
+      ListFooterComponent={
+        status === 'LoadingMore' ? (
+          <Loader size="small" />
+        ) : status === 'Exhausted' && confessions.length !== 0 ? (
+          <Empty text="No more confessions" />
+        ) : null
+      }
+      itemLayoutAnimation={LinearTransition}
+    />
   );
 };
 
 export default HomeScreen;
 
-const styles = StyleSheet.create({});
+const styles = StyleSheet.create((theme, rt) => ({
+  flatList: {
+    flex: 1,
+  },
+  contentContainerStyle: {
+    flexGrow: 1,
+    backgroundColor: theme.Colors.background,
+    paddingHorizontal: 15,
+    gap: 10,
+    paddingBottom: rt.insets.bottom + 40,
+    paddingTop: 20,
+  },
+}));

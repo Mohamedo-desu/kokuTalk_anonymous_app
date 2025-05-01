@@ -4,7 +4,7 @@ import { ButtonProps } from '@/types/components/Button.types';
 import React, { FC } from 'react';
 import { ActivityIndicator, Text, TouchableOpacity } from 'react-native';
 
-const Button: FC<ButtonProps> = ({ isSubmitting, isValid, onPress, label }) => {
+const Button: FC<ButtonProps> = ({ isSubmitting = false, isValid = true, onPress, label }) => {
   return (
     <TouchableOpacity
       style={styles.btn(isValid && !isSubmitting)}

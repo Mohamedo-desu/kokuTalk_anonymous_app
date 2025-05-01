@@ -14,6 +14,7 @@ export const createUser = internalMutation({
     username: v.string(),
     email: v.string(),
     clerkId: v.string(),
+    image_url: v.string(),
   },
   handler: async (ctx, args) => {
     const existingUser = await ctx.db
@@ -27,6 +28,8 @@ export const createUser = internalMutation({
       username: args.username,
       email: args.email,
       clerkId: args.clerkId,
+      image_url: args.image_url,
+      confessionsCount: 0,
     });
   },
 });

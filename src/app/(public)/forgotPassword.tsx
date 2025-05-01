@@ -12,7 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { router } from 'expo-router';
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { Alert, View } from 'react-native';
+import { Alert, Keyboard, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const ForgotPassword = () => {
@@ -37,6 +37,8 @@ const ForgotPassword = () => {
     try {
       if (!isLoaded) return;
       if (!checkNetwork()) return;
+
+      Keyboard.dismiss();
 
       const { email } = data;
       await signIn.create({

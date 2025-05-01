@@ -34,6 +34,8 @@ export default function SignUpScreen() {
       if (!isLoaded) return;
       if (!checkNetwork()) return;
 
+      Keyboard.dismiss();
+
       const { username, email, password } = data;
 
       await signUp.create({
@@ -46,7 +48,7 @@ export default function SignUpScreen() {
       await signUp.prepareEmailAddressVerification({
         strategy: 'email_code',
       });
-      Keyboard.dismiss();
+
       router.push('/(public)/verificationModal');
     } catch (error) {
       console.log('signup error', error);

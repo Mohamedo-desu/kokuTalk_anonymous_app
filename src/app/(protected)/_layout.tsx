@@ -7,7 +7,17 @@ const ProtectedLayout = () => {
 
   if (!user) return <Redirect href={'/(public)'} />;
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Stack>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="add_confession"
+        options={{
+          headerTitle: 'Add Confession',
+        }}
+      />
+    </Stack>
+  );
 };
 
 export default ProtectedLayout;
