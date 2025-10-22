@@ -8,50 +8,24 @@ import { getAuthenticatedUser } from './users';
 // Create a new confession
 export const createConfession = mutation({
   args: {
-    text: v.optional(v.string()),
-    visibility: v.union(v.literal('public'), v.literal('private')),
-    storageId: v.optional(v.id('_storage')),
+    text: v.string(),
+    fileUrl: v.optional(v.string()),
     fileType: v.optional(v.union(v.literal('image'), v.literal('video'))),
+    visibility: v.union(v.literal('public'), v.literal('private')),
   },
-  handler: async (ctx, args) => {
-    const currentUser = await getAuthenticatedUser(ctx);
+  handler: async (ctx, { text, fileUrl, fileType, visibility }) => {
+    const user = await getAuthenticatedUser(ctx);
+    if (!user) return;
 
-    // Validate that at least text or file is provided
-    if (!args.text && !args.storageId) {
-      throw new ConvexError('Confession must contain either text or media');
-    }
-
-    if (!currentUser) {
-      throw new ConvexError('You must be logged in to create a confession');
-    }
-
-    let fileUrl: string | undefined | null;
-
-    // Update imageUrl if a storageId is provided.
-    if (args.storageId) {
-      const result = await ctx.runMutation(internal.storage.getDownloadUrl, {
-        storageId: args.storageId,
-      });
-      if (!result) throw new Error('fileUrl not found');
-      fileUrl = result || undefined;
-    }
-
-    const confession: Id<'confessions'> = await ctx.db.insert('confessions', {
-      userId: currentUser._id,
-      text: args.text,
-      visibility: args.visibility,
-      ...(fileUrl && { fileUrl, fileType: args.fileType }),
-      storageId: args.storageId,
+    return await ctx.db.insert('confessions', {
+      userId: user._id,
+      text,
+      fileUrl,
+      fileType,
+      visibility,
       likesCount: 0,
       commentsCount: 0,
     });
-
-    // Update user's confession count
-    await ctx.db.patch(currentUser._id, {
-      confessionsCount: (currentUser.confessionsCount || 0) + 1,
-    });
-
-    return confession;
   },
 });
 
@@ -135,19 +109,19 @@ export const getUserConfessions = query({
 // Get confession by ID
 export const getConfessionById = query({
   args: { id: v.id('confessions') },
-  handler: async (ctx, args) => {
-    const confession = await ctx.db.get(args.id);
-    if (!confession) {
-      throw new ConvexError('Confession not found');
-    }
+  handler: async (ctx, { id }) => {
+    const confession = await ctx.db.get(id);
+    if (!confession) return null;
 
     const user = await ctx.db.get(confession.userId);
+    if (!user) return null;
+
     return {
       ...confession,
       user: {
-        username: user?.username,
-        email: user?.email,
-        image_url: user?.image_url,
+        userId: user._id,
+        username: user.username,
+        image_url: user.image_url,
       },
     };
   },
@@ -155,59 +129,15 @@ export const getConfessionById = query({
 
 // Delete a confession
 export const deleteConfession = mutation({
-  args: {
-    confessionId: v.id('confessions'),
-  },
-  handler: async (ctx, args) => {
-    const currentUser = await getAuthenticatedUser(ctx);
+  args: { confessionId: v.id('confessions') },
+  handler: async (ctx, { confessionId }) => {
+    const user = await getAuthenticatedUser(ctx);
+    if (!user) return;
 
-    if (!currentUser) {
-      throw new ConvexError('You must be logged in to delete a confession');
-    }
+    const confession = await ctx.db.get(confessionId);
+    if (!confession || confession.userId !== user._id) return;
 
-    const confession = await ctx.db.get(args.confessionId);
-    if (!confession) {
-      throw new ConvexError('Confession not found');
-    }
-
-    if (confession.userId !== currentUser._id) {
-      throw new ConvexError('Not authorized to delete this confession');
-    }
-
-    // Delete associated file if it exists
-    if (confession.storageId) {
-      await ctx.runMutation(internal.storage.deleteFile, {
-        storageId: confession.storageId,
-      });
-    }
-
-    // Delete all likes for this confession
-    const likes = await ctx.db
-      .query('likes')
-      .withIndex('by_confession', q => q.eq('confessionId', args.confessionId))
-      .collect();
-    for (const like of likes) {
-      await ctx.db.delete(like._id);
-    }
-
-    // Delete all comments for this confession
-    const comments = await ctx.db
-      .query('comments')
-      .withIndex('by_confession', q => q.eq('confessionId', args.confessionId))
-      .collect();
-    for (const comment of comments) {
-      await ctx.db.delete(comment._id);
-    }
-
-    // Delete the confession
-    await ctx.db.delete(args.confessionId);
-
-    // Update user's confession count
-    await ctx.db.patch(currentUser._id, {
-      confessionsCount: Math.max(0, (currentUser.confessionsCount || 1) - 1),
-    });
-
-    return { success: true };
+    await ctx.db.delete(confessionId);
   },
 });
 
@@ -350,6 +280,7 @@ export const getConfessionWithUser = query({
     return {
       ...confession,
       user: {
+        userId: user._id,
         username: user.username,
         image_url: user.image_url,
       },
@@ -382,7 +313,7 @@ export const deletePost = mutation({
     // Delete associated file if it exists
     if (confession.storageId) {
       await ctx.runMutation(internal.storage.deleteFile, {
-        storageId: confession.storageId,
+        storageId: confession.storageId as Id<'_storage'>,
       });
     }
 
@@ -391,9 +322,32 @@ export const deletePost = mutation({
 
     // Update user's confession count
     await ctx.db.patch(currentUser._id, {
-      confessionsCount: Math.max(0, (currentUser.confessionsCount || 1) - 1),
+      confessionsCount: Math.max(0, (currentUser.confessionsCount || 0) - 1),
     });
 
     return { success: true };
+  },
+});
+
+export const getConfessions = query({
+  args: {},
+  handler: async ctx => {
+    const confessions = await ctx.db.query('confessions').order('desc').collect();
+
+    return Promise.all(
+      confessions.map(async confession => {
+        const user = await ctx.db.get(confession.userId);
+        if (!user) return null;
+
+        return {
+          ...confession,
+          user: {
+            userId: user._id,
+            username: user.username,
+            image_url: user.image_url,
+          },
+        };
+      })
+    ).then(confessions => confessions.filter(Boolean));
   },
 });

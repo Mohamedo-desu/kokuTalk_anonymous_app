@@ -1,13 +1,6 @@
 import { v } from 'convex/values';
 import { internal } from './_generated/api';
-import {
-  action,
-  internalMutation,
-  mutation,
-  MutationCtx,
-  query,
-  QueryCtx,
-} from './_generated/server';
+import { internalMutation, mutation, MutationCtx, query, QueryCtx } from './_generated/server';
 
 export const createUser = internalMutation({
   args: {
@@ -38,31 +31,26 @@ export const getAuthenticatedUser = async (ctx: QueryCtx | MutationCtx) => {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) return null;
 
-  const currentUser = await ctx.db
+  const user = await ctx.db
     .query('users')
     .withIndex('by_clerk_id', q => q.eq('clerkId', identity.subject))
-    .unique();
+    .first();
 
-  if (!currentUser) return null;
-
-  return currentUser;
+  return user;
 };
 
 export const getUserByClerkId = query({
-  args: {
-    clerkId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const user = await ctx.db
+  args: { clerkId: v.string() },
+  handler: async (ctx, { clerkId }) => {
+    return await ctx.db
       .query('users')
-      .withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId))
-      .unique();
-
-    return user;
+      .withIndex('by_clerk_id', q => q.eq('clerkId', clerkId))
+      .first();
   },
 });
 
-export const initiateAccountDeletion = action({
+export const initiateAccountDeletion = mutation({
+  args: { clerkId: v.string() },
   handler: async ctx => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
@@ -100,83 +88,148 @@ export const initiateAccountDeletion = action({
     }
   },
 });
-
 export const deleteUserData = internalMutation({
-  args: {
-    clerkId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const { db } = ctx;
-
-    const user = await db
+  args: { clerkId: v.string() },
+  handler: async (ctx, { clerkId }) => {
+    const user = await ctx.db
       .query('users')
-      .withIndex('by_clerk_id', q => q.eq('clerkId', args.clerkId))
-      .unique();
+      .withIndex('by_clerk_id', q => q.eq('clerkId', clerkId))
+      .first();
 
-    if (!user) {
-      console.log(`User with Clerk ID ${args.clerkId} not found in the database`);
-      return { success: false };
-    }
+    if (!user) return;
 
-    // Delete all confessions by this user (and their associations)
-    const confessions = await db
+    // Delete user's confessions and associated data
+    const confessions = await ctx.db
       .query('confessions')
       .withIndex('by_user', q => q.eq('userId', user._id))
       .collect();
 
     for (const confession of confessions) {
-      // Delete associated file if it exists
-      if (confession.storageId) {
-        await ctx.runMutation(internal.storage.deleteFile, {
-          storageId: confession.storageId,
-        });
-      }
-
-      // Delete all likes for this confession
-      const likes = await db
-        .query('likes')
-        .withIndex('by_confession', q => q.eq('confessionId', confession._id))
-        .collect();
-      for (const like of likes) {
-        await db.delete(like._id);
-      }
-
-      // Delete all comments for this confession
-      const comments = await db
+      // Delete confession's comments
+      const comments = await ctx.db
         .query('comments')
         .withIndex('by_confession', q => q.eq('confessionId', confession._id))
         .collect();
+
       for (const comment of comments) {
-        await db.delete(comment._id);
+        await ctx.db.delete(comment._id);
+
+        // Update confession's comment count
+        await ctx.db.patch(confession._id, {
+          commentsCount: Math.max(0, confession.commentsCount - 1),
+        });
       }
 
-      // Delete the confession
-      await db.delete(confession._id);
+      // Delete confession's likes
+      const likes = await ctx.db
+        .query('likes')
+        .withIndex('by_confession', q => q.eq('confessionId', confession._id))
+        .collect();
+
+      for (const like of likes) {
+        await ctx.db.delete(like._id);
+
+        // Update confession's like count
+        await ctx.db.patch(confession._id, {
+          likesCount: Math.max(0, confession.likesCount - 1),
+        });
+      }
+
+      // Delete confession's notifications
+      const confessionNotifications = await ctx.db
+        .query('notifications')
+        .filter(q => q.eq(q.field('confessionId'), confession._id))
+        .collect();
+
+      for (const notification of confessionNotifications) {
+        await ctx.db.delete(notification._id);
+      }
+
+      // Delete confession
+      await ctx.db.delete(confession._id);
     }
 
-    // Delete all likes by this user
-    const userLikes = await db
-      .query('likes')
-      .withIndex('by_user_confession', q => q.eq('userId', user._id))
-      .collect();
-    for (const like of userLikes) {
-      await db.delete(like._id);
-    }
-
-    // Delete all comments by this user
-    const userComments = await db
+    // Delete user's comments on other confessions
+    const userComments = await ctx.db
       .query('comments')
-      .filter(q => q.eq(q.field('userId'), user._id))
+      .withIndex('by_user', q => q.eq('userId', user._id))
       .collect();
+
     for (const comment of userComments) {
-      await db.delete(comment._id);
+      const confession = await ctx.db.get(comment.confessionId);
+      if (confession) {
+        await ctx.db.patch(confession._id, {
+          commentsCount: Math.max(0, confession.commentsCount - 1),
+        });
+      }
+
+      // Delete comment's notifications
+      const commentNotifications = await ctx.db
+        .query('notifications')
+        .filter(q => q.eq(q.field('commentId'), comment._id))
+        .collect();
+
+      for (const notification of commentNotifications) {
+        await ctx.db.delete(notification._id);
+      }
+
+      await ctx.db.delete(comment._id);
     }
 
-    // Delete the user
-    await db.delete(user._id);
+    // Delete user's likes on other confessions
+    const userLikes = await ctx.db
+      .query('likes')
+      .withIndex('by_user', q => q.eq('userId', user._id))
+      .collect();
 
-    console.log(`User data and all associations deleted for Clerk ID: ${args.clerkId}`);
-    return { success: true };
+    for (const like of userLikes) {
+      const confession = await ctx.db.get(like.confessionId);
+      if (confession) {
+        await ctx.db.patch(confession._id, {
+          likesCount: Math.max(0, confession.likesCount - 1),
+        });
+      }
+
+      // Delete like's notifications
+      const likeNotifications = await ctx.db
+        .query('notifications')
+        .filter(q =>
+          q.and(
+            q.eq(q.field('type'), 'like'),
+            q.eq(q.field('sourceUserId'), user._id),
+            q.eq(q.field('confessionId'), like.confessionId)
+          )
+        )
+        .collect();
+
+      for (const notification of likeNotifications) {
+        await ctx.db.delete(notification._id);
+      }
+
+      await ctx.db.delete(like._id);
+    }
+
+    // Delete user's notifications and notifications about the user
+    const notifications = await ctx.db
+      .query('notifications')
+      .withIndex('by_user', q => q.eq('userId', user._id))
+      .collect();
+
+    for (const notification of notifications) {
+      await ctx.db.delete(notification._id);
+    }
+
+    const notificationsAboutUser = await ctx.db
+      .query('notifications')
+      .filter(q => q.eq(q.field('sourceUserId'), user._id))
+      .collect();
+
+    for (const notification of notificationsAboutUser) {
+      await ctx.db.delete(notification._id);
+    }
+
+    // Delete user
+    await ctx.db.delete(user._id);
   },
 });
 

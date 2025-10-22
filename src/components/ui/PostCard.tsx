@@ -1,29 +1,37 @@
 import { Colors } from '@/constants/Colors';
 import { Fonts } from '@/constants/Fonts';
+import { Confession } from '@/types/schema';
 import { DEVICE_WIDTH } from '@/utils';
 import { stripHtmlTags } from '@/utils/stripHtmlTags';
 import { Feather, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { api } from 'convex/_generated/api';
+import { Id } from 'convex/_generated/dataModel';
 import { useMutation } from 'convex/react';
 import { formatDistanceToNowStrict } from 'date-fns';
 import { useEvent } from 'expo';
 import { Image, useImage } from 'expo-image';
+import { router } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import React, { FC, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Share, Text, TouchableOpacity, View } from 'react-native';
 import AnimatedNumbers from 'react-native-animated-numbers';
 import RenderHTML from 'react-native-render-html';
 import { StyleSheet } from 'react-native-unistyles';
-import { api } from '../../../convex/_generated/api';
-import { Id } from '../../../convex/_generated/dataModel';
 
-const PostCard: FC<any> = ({
-  item,
-  themeColors,
-  index,
-  router,
-  isDetails = false,
-  canDelete = true,
-}) => {
+interface PostCardProps {
+  item: Confession & {
+    confessor: {
+      username: string;
+      image_url: string;
+    };
+    isLiked?: boolean;
+  };
+  themeColors: any;
+  index: number;
+  isDetails?: boolean;
+}
+
+const PostCard: FC<PostCardProps> = ({ item, themeColors, index, isDetails = false }) => {
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -46,6 +54,8 @@ const PostCard: FC<any> = ({
   // Mutations
   const toggleLike = useMutation(api.confessions.toggleLike);
   const deletePost = useMutation(api.confessions.deletePost);
+
+  const canDelete = item.confessor.username === item.userId;
 
   const handleToggleLike = async (): Promise<void> => {
     try {
@@ -101,7 +111,14 @@ const PostCard: FC<any> = ({
   const handleOpenPostDetails = () => {
     if (isDetails) return;
     router.push({
-      pathname: '/(protected)/add_confession',
+      pathname: '/(protected)/(tabs)/confession/[id]',
+      params: { id: item._id },
+    });
+  };
+
+  const handleEditPost = () => {
+    router.push({
+      pathname: '/(protected)/(tabs)/add_confession',
       params: { postItem: JSON.stringify(item) },
     });
   };
@@ -150,21 +167,14 @@ const PostCard: FC<any> = ({
 
         {canDelete && (
           <View style={styles.actions}>
-            <TouchableOpacity
-              onPress={() => {
-                router.push({
-                  pathname: '/(protected)/add_confession',
-                  params: { postItem: JSON.stringify(item) },
-                });
-              }}
-            >
+            <TouchableOpacity onPress={handleEditPost}>
               <Feather name="edit-2" size={20} color={themeColors.gray[400]} />
             </TouchableOpacity>
             {deleting ? (
-              <ActivityIndicator size="small" color={Colors.error} />
+              <ActivityIndicator size="small" color={themeColors.error} />
             ) : (
               <TouchableOpacity onPress={handleDeletePost}>
-                <Feather name="trash-2" size={20} color={Colors.error} />
+                <Feather name="trash-2" size={20} color={themeColors.error} />
               </TouchableOpacity>
             )}
           </View>
